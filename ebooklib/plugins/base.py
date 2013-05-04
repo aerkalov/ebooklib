@@ -1,0 +1,4 @@
+
+
+class BasePlugin(object):
+    pass
