@@ -1,0 +1,12 @@
+#ignore these in git listings
+EbookLib.egg-info
+dist
+build
+*.pyc
+*~
+.emacs*
+.DS_Store
+.swp
+\#*#
+.#*
+\#*

@@ -1,0 +1,3 @@
+include *.txt
+include *.md
+recursive-include docs *.txt
