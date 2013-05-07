@@ -11,7 +11,7 @@ setup(
     license = 'LICENSE.txt',
     description = 'Ebook library which can handle EPUB2/EPUB3 and Kindle format',
     long_description = open('README.md').read(),
-    keywords = ['ebook', 'epub', 'kindle']
+    keywords = ['ebook', 'epub', 'kindle'],
     classifiers = [
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
