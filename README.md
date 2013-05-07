@@ -3,10 +3,6 @@ About EbookLib
 
 E-book library for Python capable of handling EPUB2/EPUB3 and Kindle format
 
-Installation
-============
-
-
 
 Usage
 =====
@@ -27,22 +23,21 @@ Writing
 
     # set metadata
     book.set_identifier('id123456')
-    book.set_title('This is my book')
+    book.set_title('Sample book')
     book.set_language('en')
 
     book.add_author('Author Authorowski')
     book.add_author('Danko Bananko', file_as='Gospodin Danko Bananko', role='ill', uid='coauthor')
 
     # create chapter
-    c1 = epub.EpubHtml(title='Intro 1', file_name='chap_01.xhtml', lang='hr')
-    c1.content=u'<html><head></head><body><h1>This is I!</h1><p>This is something i am writing.</p><p>Šime Đodan ima puno posla.</p></body></html>'
+    c1 = epub.EpubHtml(title='Intro', file_name='chap_01.xhtml', lang='hr')
+    c1.content=u'<h1>Intro heading</h1><p>Žaba je skočila u baru.</p>'
 
     # add chapter
     book.add_item(c1)
 
     # define Table Of Contents
-    book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
-                (epub.Section('Languages'),
+    book.toc = ((epub.Section('Simple book'),
                  (c1, ))
                 )
 
@@ -51,7 +46,7 @@ Writing
     book.add_item(epub.EpubNav())
 
     # define CSS style
-    nav_css = 'BODY {color: white;}'
+    style = 'BODY {color: white;}'
     nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
 
     # add CSS file
