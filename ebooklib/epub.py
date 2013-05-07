@@ -678,9 +678,9 @@ class EpubReader(object):
 
         self.book.metadata = nsdict
 
-        import pprint
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(self.book.metadata)
+#        import pprint
+#        pp = pprint.PrettyPrinter(indent=4)
+#        pp.pprint(self.book.metadata)
 
 
     def _load_manifest(self):
