@@ -13,6 +13,7 @@ setup(
     long_description = open('README.md').read(),
     keywords = ['ebook', 'epub', 'kindle']
     classifiers = [
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2",

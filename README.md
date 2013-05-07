@@ -37,7 +37,8 @@ Writing
     book.add_item(c1)
 
     # define Table Of Contents
-    book.toc = ((epub.Section('Simple book'),
+    book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
+                 (epub.Section('Simple book'),
                  (c1, ))
                 )
 
