@@ -8,7 +8,7 @@ setup(
     author_email = 'aerkalov@gmail.com',
     packages = ['ebooklib', 'ebooklib.plugins'],
     url = 'https://github.com/aerkalov/ebooklib',
-    license = 'LICENSE.txt',
+    license = 'GNU Affero General Public License',
     description = 'Ebook library which can handle EPUB2/EPUB3 and Kindle format',
     long_description = open('README.md').read(),
     keywords = ['ebook', 'epub', 'kindle'],
