@@ -1,1 +1,1 @@
-EbookLib 0.1
+EbookLib 0.15

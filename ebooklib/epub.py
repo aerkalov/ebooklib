@@ -27,7 +27,7 @@ import mimetypes
 mimetypes.init()
 
 # Version of EPUB library
-VERSION = (0, 1, 0)
+VERSION = (0, 15, 0)
 
 NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
               'EPUB': 'http://www.idpf.org/2007/ops',

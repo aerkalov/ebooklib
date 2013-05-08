@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name = 'EbookLib',
-    version = '0.1',
+    version = '0.15',
     author = 'Aleksandar Erkalovic',
     author_email = 'aerkalov@gmail.com',
     packages = ['ebooklib', 'ebooklib.plugins'],
