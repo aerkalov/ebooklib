@@ -421,8 +421,6 @@ class EpubWriter(object):
         self.out.writestr(CONTAINER_PATH, CONTAINER_XML, compress_type = zipfile.ZIP_DEFLATED)
 
     def _write_opf_file(self):
-        # TODO
-        # ovdje bi trebalo naci neki 
         root = etree.Element('package',
                              {'xmlns' : NAMESPACES['OPF'],
                               'unique-identifier' : self.book.IDENTIFIER_ID,
@@ -430,7 +428,6 @@ class EpubWriter(object):
 
         root.attrib['prefix'] = 'rendition: http://www.ipdf.org/vocab/rendition/#'
          
-
         ## METADATA
         metadata = etree.SubElement(root, 'metadata', nsmap = {'dc': NAMESPACES['DC'], 
                                                                'opf': NAMESPACES['OPF']})
@@ -513,7 +510,7 @@ class EpubWriter(object):
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
-        self.out.writestr('%s/content.opf' % self.book.FOLDER_NAME, tree_str, compress_type = zipfile.ZIP_STORED)
+        self.out.writestr('%s/content.opf' % self.book.FOLDER_NAME, tree_str)
 
     def _get_nav(self):
         # just a basic navigation for now
@@ -640,11 +637,11 @@ class EpubWriter(object):
             # TODO
             # Why did I put ZIP_STORED here?
             if isinstance(item, EpubNcx):
-                self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_ncx(), compress_type = zipfile.ZIP_STORED)
+                self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_ncx())
             elif isinstance(item, EpubNav):
-                self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_nav(), compress_type = zipfile.ZIP_STORED)
+                self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_nav())
             else:
-                self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), item.get_content(), compress_type = zipfile.ZIP_STORED)
+                self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), item.get_content())
 
     def write(self):
         self.out = zipfile.ZipFile(self.file_name, 'w')
