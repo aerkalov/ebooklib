@@ -105,6 +105,13 @@ class EpubException(Exception):
 
 ## Items
 
+ITEM_UNKNOWN = 0
+ITEM_IMAGE = 1
+ITEM_STYLE = 2
+ITEM_SCRIPT = 3
+ITEM_NAVIGATION = 4
+
+
 class EpubItem(object):
     def __init__(self, uid=None, file_name='', media_type='', content=''):
         self.id = uid
@@ -120,23 +127,51 @@ class EpubItem(object):
     def get_name(self):
         return self.file_name
 
+    def get_type(self):
+        """
+        Guess type according to the file extension. Not the best way to do it, but works for now.
+        """
+
+        _, ext = os.path.splitext(self.get_name())
+        ext = ext.lower()
+        
+        if ext in ['.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.png']:
+            return ITEM_UNKNOWN
+        elif ext in ['.css']:
+            return ITEM_STYLE
+        elif ext in ['.js']:
+            return ITEM_SCRIPT
+        elif ext in ['.ncx']:
+            return ITEM_NAVIGATION
+        else:
+            return ITEM_UNKNOWN
+
     def get_content(self, default=''):
         return self.content or default
 
+    def __str__(self):
+        return '<EpubItem:%s>' % self.id
 
 class EpubNcx(EpubItem):
     def __init__(self, uid='ncx', file_name='toc.ncx'):
         super(EpubNcx, self).__init__(uid=uid, file_name=file_name, media_type="application/x-dtbncx+xml")
 
+    def __str__(self):
+        return '<EpubNcx:%s>' % self.id
 
 class EpubNav(EpubItem):
     def __init__(self, uid='nav', file_name='nav.xhtml', media_type="application/xhtml+xml"):
         super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type)
 
+    def __str__(self):
+        return '<EpubNav:%s:>' % (self.id, self.file_name)
 
 class EpubCover(EpubItem):
     def __init__(self, uid='cover-img', file_name=''):
         super(EpubCover, self).__init__(uid=uid, file_name=file_name)
+
+    def __str__(self):
+        return '<EpubCover:%s:%s>' % (self.id, self.file_name)
 
         
 class EpubHtml(EpubItem):
@@ -156,9 +191,11 @@ class EpubHtml(EpubItem):
         self.links.append(kwgs)
 
     def add_item(self, item):
-        #self.add_link(href=item.file_name, 
-        #c2.add_link(href="style/default.css", rel="stylesheet", type="text/css")
+        if item.get_type() == 'css':
+            self.add_link(href=item.get_name(), rel="stylesheet", type="text/css")
 
+        if item.get_type() == 'javascript':
+            self.add_link(href=item.get_name(), type="text/javascript")
 
     def get_content(self, default=None):
         tree = parse_string(self.book.get_template('chapter'))
@@ -195,6 +232,9 @@ class EpubHtml(EpubItem):
         # have to check why it eats xml definition
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+tree_str
 
+    def __str__(self):
+        return '<EpubHtml:%s:%s>' % (self.id, self.file_name)
+
 
 class EpubCoverHtml(EpubItem):
     def __init__(self, uid='cover', file_name='cover.xhtml', image_name=''):
@@ -218,10 +258,17 @@ class EpubCoverHtml(EpubItem):
 #        print tree_str
         return tree_str
 
+    def __str__(self):
+        return '<EpubCoverHtml:%s:%s>' % (self.id, self.file_name)
+
+
 
 class EpubImage(EpubItem):
     def __init__(self):
         super(EpubImage, self).__init__()
+
+    def __str__(self):
+        return '<EpubImage:%s:%s>' % (self.id, self.file_name)
 
 
 ## EpubBook
