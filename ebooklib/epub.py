@@ -80,6 +80,13 @@ def parse_string(s):
 
     return tree
 
+def debug(obj):
+    import pprint
+
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(obj)
+
+
 ## TOC elements
 
 class Section(object):
@@ -118,6 +125,7 @@ class EpubItem(object):
         self.file_name = file_name
         self.media_type = media_type
         self.content = content
+        self.is_linear = True
 
         self.book = None
 
@@ -240,6 +248,7 @@ class EpubCoverHtml(EpubItem):
         super(EpubCoverHtml, self).__init__(uid=uid, file_name=file_name)
 
         self.image_name = image_name
+        self.is_linear = False
 
     def get_content(self):
         tree = parse_string(self.book.get_template('cover'))
@@ -497,11 +506,25 @@ class EpubWriter(object):
                 if len(item.properties) > 0:
                     opts['properties'] = ' '.join(item.properties)
 
-                etree.SubElement(spine, 'itemref', opts)
+                if not item.is_linear:
+                    opts['linear'] = 'no'
             elif isinstance(item, EpubItem):
-                etree.SubElement(spine, 'itemref', {'idref': item.get_id()})
+                opts = {'idref': item.get_id()}
+
+                if not item.is_linear:
+                    opts['linear'] = 'no'
             else:
-                etree.SubElement(spine, 'itemref', {'idref': item})
+                opts = {'idref': item}
+
+                try:
+                    itm = self.book.get_item_with_id(item)
+
+                    if not itm.is_linear:
+                        opts['linear'] = 'no'
+                except:
+                    pass
+
+            etree.SubElement(spine, 'itemref', opts)
 
         # GUIDE
 #        guide = etree.SubElement(root, 'guide', {})
@@ -728,10 +751,7 @@ class EpubReader(object):
 
         self.book.metadata = nsdict
 
-#        import pprint
-#        pp = pprint.PrettyPrinter(indent=4)
-#        pp.pprint(self.book.metadata)
-
+        # debug(self.book.metadata)
 
     def _load_manifest(self):
         for r in self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'manifest')):
@@ -803,10 +823,7 @@ class EpubReader(object):
 
 
         self.book.toc = _get_children(nav_map, 0, '')
-#        import pprint
-#        pp = pprint.PrettyPrinter(indent=4)
-#        pp.pprint(self.book.toc)
-
+        # debug(self.book.toc)
 
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
