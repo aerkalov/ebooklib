@@ -17,21 +17,24 @@ if __name__ == '__main__':
     c1 = epub.EpubHtml(title='Introduction', file_name='intro.xhtml', lang='hr')
     c1.content=u'<html><head></head><body><h1>Introduction</h1><p>Introduction paragraph where i explain what is happening.</p></body></html>'
 
+    # defube style
+    style = '''BODY { text-align: justify;}'''
+
+    default_css = epub.EpubItem(uid="style_default", file_name="style/default.css", media_type="text/css", content=style)
+    book.add_item(default_css)
+
+
     # about chapter
     c2 = epub.EpubHtml(title='About this book', file_name='about.xhtml')
     c2.content='<h1>About this book</h1><p>Helou, this is my book! There are many books, but this one is mine.</p>'
     c2.set_language('hr')
     c2.properties.append('rendition:layout-pre-paginated rendition:orientation-landscape rendition:spread-none')
-    c2.add_link(href="style/default.css", rel="stylesheet", type="text/css")
+    c2.add_item(default_css)
 
     # add chapters to the book
     book.add_item(c1)
     book.add_item(c2)
 
-    style = '''BODY { text-align: justify;}'''
-
-    default_css = epub.EpubItem(uid="style_default", file_name="style/default.css", media_type="text/css", content=style)
-    book.add_item(default_css)
 
     
     # create table of contents

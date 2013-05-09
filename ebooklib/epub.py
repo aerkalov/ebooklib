@@ -191,10 +191,10 @@ class EpubHtml(EpubItem):
         self.links.append(kwgs)
 
     def add_item(self, item):
-        if item.get_type() == 'css':
+        if item.get_type() == ITEM_STYLE:
             self.add_link(href=item.get_name(), rel="stylesheet", type="text/css")
 
-        if item.get_type() == 'javascript':
+        if item.get_type() == ITEM_SCRIPT:
             self.add_link(href=item.get_name(), type="text/javascript")
 
     def get_content(self, default=None):
