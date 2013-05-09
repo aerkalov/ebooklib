@@ -227,10 +227,9 @@ class EpubHtml(EpubItem):
             for i in body.getchildren():
                 _body.append(i)
                                    
-        tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8')        
+        tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
-        # have to check why it eats xml definition
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+tree_str
+        return tree_str
 
     def __str__(self):
         return '<EpubHtml:%s:%s>' % (self.id, self.file_name)
@@ -254,8 +253,8 @@ class EpubCoverHtml(EpubItem):
         images[0].set('src', self.image_name)
         images[0].set('alt', 'Cover')
 
-        tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8')        
-#        print tree_str
+        tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True)        
+
         return tree_str
 
     def __str__(self):
@@ -512,7 +511,7 @@ class EpubWriter(object):
 #        for item in self.guide:
 #            etree.SubElement(guide, 'reference', item)
 
-        tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8')        
+        tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
         self.out.writestr('%s/content.opf' % self.book.FOLDER_NAME, tree_str, compress_type = zipfile.ZIP_STORED)
 
@@ -562,7 +561,7 @@ class EpubWriter(object):
 
         _create_section(nav, self.book.toc)
 
-        tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8')        
+        tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
         return tree_str
 
@@ -630,7 +629,7 @@ class EpubWriter(object):
 
         _create_section(nav_map, self.book.toc, 0)
 
-        tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8')        
+        tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
 #        print tree_str
 
