@@ -237,9 +237,9 @@ class EpubHtml(EpubItem):
         return '<EpubHtml:%s:%s>' % (self.id, self.file_name)
 
 
-class EpubCoverHtml(EpubItem):
-    def __init__(self, uid='cover', file_name='cover.xhtml', image_name=''):
-        super(EpubCoverHtml, self).__init__(uid=uid, file_name=file_name)
+class EpubCoverHtml(EpubHtml):
+    def __init__(self, uid='cover', file_name='cover.xhtml', image_name='', title='Cover'):
+        super(EpubCoverHtml, self).__init__(uid=uid, file_name=file_name, title=title)
 
         self.image_name = image_name
         self.is_linear = False
@@ -248,13 +248,19 @@ class EpubCoverHtml(EpubItem):
         tree = parse_string(self.book.get_template('cover'))
         tree_root = tree.getroot()
 
+        _head = tree_root.xpath('//xhtml:head', namespaces={'xhtml': NAMESPACES['XHTML']})
+
+        if len(_head) > 0:
+            for lnk in self.links:
+                _lnk = etree.SubElement(_head[0], 'link', lnk)        
+
         titles = tree_root.xpath('//xhtml:title', namespaces={'xhtml': NAMESPACES['XHTML']})
-        titles[0].text = 'Cover'
+        titles[0].text = self.title
 
         images = tree_root.xpath('//xhtml:img', namespaces={'xhtml': NAMESPACES['XHTML']})
 
         images[0].set('src', self.image_name)
-        images[0].set('alt', 'Cover')
+        images[0].set('alt', self.title)
 
         tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
