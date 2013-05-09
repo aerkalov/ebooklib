@@ -167,12 +167,6 @@ class EpubNcx(EpubItem):
     def __str__(self):
         return '<EpubNcx:%s>' % self.id
 
-class EpubNav(EpubItem):
-    def __init__(self, uid='nav', file_name='nav.xhtml', media_type="application/xhtml+xml"):
-        super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type)
-
-    def __str__(self):
-        return '<EpubNav:%s:>' % (self.id, self.file_name)
 
 class EpubCover(EpubItem):
     def __init__(self, uid='cover-img', file_name=''):
@@ -269,6 +263,12 @@ class EpubCoverHtml(EpubItem):
     def __str__(self):
         return '<EpubCoverHtml:%s:%s>' % (self.id, self.file_name)
 
+class EpubNav(EpubHtml):
+    def __init__(self, uid='nav', file_name='nav.xhtml', media_type="application/xhtml+xml"):
+        super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type)
+
+    def __str__(self):
+        return '<EpubNav:%s:>' % (self.id, self.file_name)
 
 
 class EpubImage(EpubItem):
@@ -535,7 +535,7 @@ class EpubWriter(object):
 
         self.out.writestr('%s/content.opf' % self.book.FOLDER_NAME, tree_str)
 
-    def _get_nav(self):
+    def _get_nav(self, item):
         # just a basic navigation for now
         ncx = parse_string(self.book.get_template('nav'))
         root = ncx.getroot()
@@ -548,9 +548,9 @@ class EpubWriter(object):
         title = etree.SubElement(head, 'title')
         title.text = self.book.title
 
-        # this is hardcoded for now
-        # this should not be hard coded
-        _lnk = etree.SubElement(head, 'link', {"href":"style/nav.css", "rel":"stylesheet", "type":"text/css"})        
+        # for now this just handles css files and ignores others
+        for _link in item.links:
+            _lnk = etree.SubElement(head, 'link', {"href":_link.get('href', ''), "rel":"stylesheet", "type":"text/css"})        
 
 
         body = etree.SubElement(root, 'body')
@@ -662,7 +662,7 @@ class EpubWriter(object):
             if isinstance(item, EpubNcx):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_ncx())
             elif isinstance(item, EpubNav):
-                self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_nav())
+                self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_nav(item))
             else:
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), item.get_content())
 
