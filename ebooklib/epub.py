@@ -1,18 +1,18 @@
 # This file is part of EbookLib.
 # Copyright (c) 2013 Aleksandar Erkalovic <aerkalov@gmail.com>
 #
-# Booktype is free software: you can redistribute it and/or modify
+# EbookLib is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Booktype is distributed in the hope that it will be useful,
+# EbookLib is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with Booktype.  If not, see <http://www.gnu.org/licenses/>.
+# along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import os.path
@@ -154,6 +154,11 @@ class EpubHtml(EpubItem):
 
     def add_link(self, **kwgs):
         self.links.append(kwgs)
+
+    def add_item(self, item):
+        #self.add_link(href=item.file_name, 
+        #c2.add_link(href="style/default.css", rel="stylesheet", type="text/css")
+
 
     def get_content(self, default=None):
         tree = parse_string(self.book.get_template('chapter'))
@@ -586,6 +591,8 @@ class EpubWriter(object):
         
     def _write_items(self):
         for item in self.book.items:
+            # TODO
+            # Why did I put ZIP_STORED here?
             if isinstance(item, EpubNcx):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_ncx(), compress_type = zipfile.ZIP_STORED)
             elif isinstance(item, EpubNav):
