@@ -19,7 +19,6 @@ import os.path
 import zipfile
 import StringIO
 import urllib
-import itertools
 
 from lxml import etree
 
@@ -207,7 +206,7 @@ class EpubHtml(EpubItem):
         return (link for link in self.links)
 
     def get_links_of_type(self, link_type):
-        return itertools.ifilter(lambda x: x.get('type', '') == link_type, self.links)
+        return (link for link in self.links if link.get('type', '') == link_type)
 
     def add_item(self, item):
         if item.get_type() == ITEM_STYLE:
@@ -430,7 +429,7 @@ class EpubBook(object):
         return (item for item in self.items)
 
     def get_items_of_type(self, item_type):
-        return itertools.ifilter(lambda x: x.get_type() == item_type, self.items)
+        return (item for item in self.items if item.get_type() == item_type)
 
     def set_template(self, name, value):
         self.templates[name] = value
