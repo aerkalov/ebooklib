@@ -19,6 +19,7 @@ import os.path
 import zipfile
 import StringIO
 import urllib
+import itertools
 
 from lxml import etree
 
@@ -201,6 +202,12 @@ class EpubHtml(EpubItem):
 
     def add_link(self, **kwgs):
         self.links.append(kwgs)
+
+    def get_links(self):
+        return (link for link in self.links)
+
+    def get_links_of_type(self, link_type):
+        return itertools.ifilter(lambda x: x.get('type', '') == link_type, self.links)
 
     def add_item(self, item):
         if item.get_type() == ITEM_STYLE:
@@ -419,6 +426,12 @@ class EpubBook(object):
 
         return None
 
+    def get_items(self):
+        return (item for item in self.items)
+
+    def get_items_of_type(self, item_type):
+        return itertools.ifilter(lambda x: x.get_type() == item_type, self.items)
+
     def set_template(self, name, value):
         self.templates[name] = value
     
@@ -436,7 +449,7 @@ class EpubWriter(object):
 
     def process(self):
         # should cache this html parsing so we don't do it for every plugin
-        for item in self.book.items:
+        for item in self.book.get_items():
             if isinstance(item, EpubHtml):
                 for plg in self.options.get('plugins', []):
                     if hasattr(plg, 'process_html'):
@@ -486,7 +499,7 @@ class EpubWriter(object):
         # nav
         # cover-image
 
-        for item in self.book.items:
+        for item in self.book.get_items():
             if isinstance(item, EpubNav):
                 etree.SubElement(manifest, 'item', {'href': item.file_name,
                                                     'id': item.id,
@@ -605,7 +618,6 @@ class EpubWriter(object):
                     a = etree.SubElement(li, 'a', {'href': item.file_name})
                     a.text = item.title
 
-
         _create_section(nav, self.book.toc)
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
@@ -681,7 +693,7 @@ class EpubWriter(object):
         return tree_str
         
     def _write_items(self):
-        for item in self.book.items:
+        for item in self.book.get_items():
             if isinstance(item, EpubNcx):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_ncx())
             elif isinstance(item, EpubNav):
@@ -736,7 +748,8 @@ class EpubReader(object):
         self.book.version = container_root.get('version', None)
 
         # get unique-identifier
-        self.book.IDENTIFIER_ID = container_root.get('unique-identifier', 'id')
+        if container_root.get('unique-identifier', None):
+            self.book.IDENTIFIER_ID = container_root.get('unique-identifier')
 
         # get xml:lang
         # get metadata
@@ -751,6 +764,7 @@ class EpubReader(object):
         def add_item(ns, tag, value, extra):
             if ns not in nsdict:
                 nsdict[ns] = {}
+
             values = nsdict[ns].setdefault(tag, [])
             values.append((value, extra))
 
@@ -775,8 +789,6 @@ class EpubReader(object):
                 add_item(t.nsmap[t.prefix], tag, t.text, others)
 
         self.book.metadata = nsdict
-
-        # debug(self.book.metadata)
 
     def _load_manifest(self):
         for r in self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'manifest')):
