@@ -118,6 +118,7 @@ ITEM_STYLE = 2
 ITEM_SCRIPT = 3
 ITEM_NAVIGATION = 4
 ITEM_VECTOR = 5
+ITEM_FONT = 6
 
 class EpubItem(object):
     def __init__(self, uid=None, file_name='', media_type='', content=''):
@@ -147,6 +148,8 @@ class EpubItem(object):
             return ITEM_IMAGE
         if ext in ['.svg']:
             return ITEM_VECTOR
+        if ext in ['.otf', '.woff']:
+            return ITEM_FONT
         elif ext in ['.css']:
             return ITEM_STYLE
         elif ext in ['.js']:
@@ -479,6 +482,10 @@ class EpubWriter(object):
         manifest = etree.SubElement(root, 'manifest')
         _ncx_id = None
 
+        # mathml, scripted, svg, remote-resources, and switch
+        # nav
+        # cover-image
+
         for item in self.book.items:
             if isinstance(item, EpubNav):
                 etree.SubElement(manifest, 'item', {'href': item.file_name,
@@ -497,9 +504,14 @@ class EpubWriter(object):
                                                     'media-type': item.media_type,
                                                     'properties': 'cover-image'})
             else:
-                etree.SubElement(manifest, 'item', {'href': item.file_name,
-                                                    'id': item.id,
-                                                    'media-type': item.media_type})
+                opts = {'href': item.file_name,
+                        'id': item.id,
+                        'media-type': item.media_type}
+
+                if hasattr(item, 'properties') and len(item.properties) > 0:
+                    opts['properties' ] = ' '.join(item.properties)
+
+                etree.SubElement(manifest, 'item', opts)
             
         # SPINE
         spine = etree.SubElement(root, 'spine', {'toc': _ncx_id or 'ncx'})
@@ -521,9 +533,6 @@ class EpubWriter(object):
 
             if isinstance(item, EpubHtml):
                 opts =  {'idref': item.get_id()}
-
-                if len(item.properties) > 0:
-                    opts['properties'] = ' '.join(item.properties)
 
                 if not item.is_linear or not is_linear:
                     opts['linear'] = 'no'
@@ -683,7 +692,6 @@ class EpubWriter(object):
     def write(self):
         # check for the option allowZip64
         self.out = zipfile.ZipFile(self.file_name, 'w', zipfile.ZIP_DEFLATED)
-        self.out.debug = 3
         self.out.writestr('mimetype', 'application/epub+zip', compress_type=zipfile.ZIP_STORED)
 
         self._write_container()
@@ -736,7 +744,7 @@ class EpubReader(object):
 
         nsmap = metadata.nsmap
         nstags = dict((k, '{%s}' % v) for k, v in nsmap.iteritems())
-        default_ns = nstags[None]
+        default_ns = nstags.get(None, '')
 
         nsdict = dict((v, {}) for v in nsmap.values())
 
@@ -746,7 +754,7 @@ class EpubReader(object):
             values = nsdict[ns].setdefault(tag, [])
             values.append((value, extra))
 
-        for t in metadata:
+        for t in metadata.iter(tag=etree.Element):
             if t.tag == default_ns + 'meta':
                 name = t.get('name')
                 others = dict((k, v) for k, v in t.items())
