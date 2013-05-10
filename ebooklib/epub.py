@@ -18,6 +18,7 @@ import sys
 import os.path
 import zipfile
 import StringIO
+import urllib
 
 from lxml import etree
 
@@ -157,6 +158,9 @@ class EpubItem(object):
 
     def get_content(self, default=''):
         return self.content or default
+
+    def set_content(self, content):
+        self.content = content
 
     def __str__(self):
         return '<EpubItem:%s>' % self.id
@@ -722,9 +726,11 @@ class EpubReader(object):
 
         # get epub version
         self.book.version = container_root.get('version', None)
-        # get unique-identifier
-        # get xml:lang
 
+        # get unique-identifier
+        self.book.IDENTIFIER_ID = container_root.get('unique-identifier', 'id')
+
+        # get xml:lang
         # get metadata
         metadata = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'metadata'))
 
@@ -749,12 +755,12 @@ class EpubReader(object):
                     prefix, name = name.split(':', 1)
                 else:
                     prefix = None
-
-                add_item(t.nsmap[prefix], name, t.text, others)
+                
+                add_item(t.nsmap.get(prefix, prefix), name, t.text, others)
             else:
                 tag = t.tag[t.tag.rfind('}') + 1:]
 
-                if t.prefix.lower() == 'dc' and tag == 'identifier':
+                if (t.prefix and t.prefix.lower() == 'dc') and tag == 'identifier':
                     self.book.IDENTIFIER_ID = t.get('id', None)
 
                 others = dict((k, v) for k, v in t.items())
@@ -766,29 +772,37 @@ class EpubReader(object):
 
     def _load_manifest(self):
         for r in self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'manifest')):
+            if r is not None and r.tag != '{%s}item' % NAMESPACES['OPF']:
+                continue
+
             media_type = r.get('media-type')
-            properties = r.get('properties', '').split(' ')
+            _properties = r.get('properties', '') 
+
+            if _properties:
+                properties = _properties.split(' ')
+            else:
+                properties = []
 
             if media_type == 'application/x-dtbncx+xml':
                 ei = EpubNcx(uid=r.get('id'), file_name=r.get('href'))
 
-                ei.content = self.read_file(os.path.join(self.opf_dir, ei.file_name))
+                ei.content = self.read_file(os.path.join(self.opf_dir, urllib.unquote(ei.file_name)))
             elif media_type == 'application/xhtml+xml':
                 if 'nav' in properties:
                     ei = EpubNav(uid=r.get('id'), file_name=r.get('href'))
 
-                    ei.content = self.read_file(os.path.join(self.opf_dir,  r.get('href')))
+                    ei.content = self.read_file(os.path.join(self.opf_dir,  urllib.unquote(r.get('href'))))
                 elif 'cover' in properties:
                     ei = EpubCoverHtml()
 
-                    ei.content = self.read_file(os.path.join(self.opf_dir,  r.get('href')))
+                    ei.content = self.read_file(os.path.join(self.opf_dir,  urllib.unquote(r.get('href'))))
                 else:
                     ei = EpubHtml()
 
                     ei.id = r.get('id')
                     ei.file_name = r.get('href')
                     ei.media_type = media_type
-                    ei.content = self.read_file(os.path.join(self.opf_dir, ei.file_name))
+                    ei.content = self.read_file(os.path.join(self.opf_dir, urllib.unquote(ei.file_name)))
                     ei.properties = properties
             elif media_type in IMAGE_MEDIA_TYPES:
                 ei = EpubImage()
@@ -796,7 +810,7 @@ class EpubReader(object):
                 ei.id = r.get('id')
                 ei.file_name = r.get('href')
                 ei.media_type = media_type
-                ei.content = self.read_file(os.path.join(self.opf_dir, ei.file_name))
+                ei.content = self.read_file(os.path.join(self.opf_dir, urllib.unquote(ei.file_name)))
             else:
                 # different types
                 ei = EpubItem()
@@ -804,7 +818,8 @@ class EpubReader(object):
                 ei.id = r.get('id')
                 ei.file_name = r.get('href')
                 ei.media_type = media_type
-                ei.content = self.read_file(os.path.join(self.opf_dir, ei.file_name))
+
+                ei.content = self.read_file(os.path.join(self.opf_dir, urllib.unquote(ei.file_name)))
               # r.get('properties')
 
             self.book.add_item(ei)
