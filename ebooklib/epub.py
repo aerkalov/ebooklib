@@ -116,7 +116,7 @@ ITEM_IMAGE = 1
 ITEM_STYLE = 2
 ITEM_SCRIPT = 3
 ITEM_NAVIGATION = 4
-
+ITEM_VECTOR = 5
 
 class EpubItem(object):
     def __init__(self, uid=None, file_name='', media_type='', content=''):
@@ -143,7 +143,9 @@ class EpubItem(object):
         ext = ext.lower()
         
         if ext in ['.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.png']:
-            return ITEM_UNKNOWN
+            return ITEM_IMAGE
+        if ext in ['.svg']:
+            return ITEM_VECTOR
         elif ext in ['.css']:
             return ITEM_STYLE
         elif ext in ['.js']:
@@ -502,8 +504,14 @@ class EpubWriter(object):
             # this is for now
             # later we should be able to fetch things from tuple
 
+            is_linear = True
+
             if isinstance(_item, tuple):
                 item = _item[0]
+
+                if len(_item) > 1:
+                    if _item[1] == 'no':
+                        is_linear = False
             else:
                 item = _item
 
@@ -513,12 +521,12 @@ class EpubWriter(object):
                 if len(item.properties) > 0:
                     opts['properties'] = ' '.join(item.properties)
 
-                if not item.is_linear:
+                if not item.is_linear or not is_linear:
                     opts['linear'] = 'no'
             elif isinstance(item, EpubItem):
                 opts = {'idref': item.get_id()}
 
-                if not item.is_linear:
+                if not item.is_linear or not is_linear:
                     opts['linear'] = 'no'
             else:
                 opts = {'idref': item}
@@ -526,7 +534,7 @@ class EpubWriter(object):
                 try:
                     itm = self.book.get_item_with_id(item)
 
-                    if not itm.is_linear:
+                    if not itm.is_linear or not is_linear:
                         opts['linear'] = 'no'
                 except:
                     pass
@@ -836,7 +844,7 @@ class EpubReader(object):
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
         
-        self.book.spine = [(t.get('idref'), ) for t in spine]
+        self.book.spine = [(t.get('idref'), t.get('linear', 'yes')) for t in spine]
 
         toc = spine.get('toc', '')
 
