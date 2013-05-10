@@ -60,7 +60,6 @@ COVER_XML = '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
  <head>
-  <title></title>
   <style>
     body { margin: 0em; padding: 0em; }
     img { max-width: 100%; max-height: 100%; }
@@ -186,6 +185,8 @@ class EpubHtml(EpubItem):
         self.links = []
         self.properties = []
 
+        self._template_name = 'chapter'
+
     def set_language(self, lang):
         self.lang = lang
 
@@ -200,7 +201,7 @@ class EpubHtml(EpubItem):
             self.add_link(href=item.get_name(), type="text/javascript")
 
     def get_content(self, default=None):
-        tree = parse_string(self.book.get_template('chapter'))
+        tree = parse_string(self.book.get_template(self._template_name))
         tree_root = tree.getroot()
 
         tree_root.set('lang', self.lang or self.book.language)
@@ -217,6 +218,7 @@ class EpubHtml(EpubItem):
 
         if len(html_root.find('body')) != 0:
             body = html_tree.find('body')
+            head = html_root.find('head')
 
             _head = etree.SubElement(tree_root, 'head')
             _title = etree.SubElement(_head, 'title')
@@ -226,9 +228,15 @@ class EpubHtml(EpubItem):
                 _lnk = etree.SubElement(_head, 'link', lnk)        
 
             _body = etree.SubElement(tree_root, 'body')
-            for i in body.getchildren():
-                _body.append(i)
-                                   
+
+            if body is not None:
+                for i in body.getchildren():
+                    _body.append(i)
+
+            if head is not None:
+                for i in head.getchildren():
+                    _head.append(i)
+
         tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
         return tree_str
@@ -245,17 +253,10 @@ class EpubCoverHtml(EpubHtml):
         self.is_linear = False
 
     def get_content(self):
-        tree = parse_string(self.book.get_template('cover'))
+        self.content = self.book.get_template('cover')
+
+        tree = parse_string(super(EpubCoverHtml, self).get_content())
         tree_root = tree.getroot()
-
-        _head = tree_root.xpath('//xhtml:head', namespaces={'xhtml': NAMESPACES['XHTML']})
-
-        if len(_head) > 0:
-            for lnk in self.links:
-                _lnk = etree.SubElement(_head[0], 'link', lnk)        
-
-        titles = tree_root.xpath('//xhtml:title', namespaces={'xhtml': NAMESPACES['XHTML']})
-        titles[0].text = self.title
 
         images = tree_root.xpath('//xhtml:img', namespaces={'xhtml': NAMESPACES['XHTML']})
 
@@ -422,7 +423,7 @@ class EpubWriter(object):
     def __init__(self, name, book, options = None):
         self.file_name = name
         self.book = book
-        self.options = options
+        self.options = options or {}
 
     def process(self):
         # should cache this html parsing so we don't do it for every plugin
@@ -433,7 +434,7 @@ class EpubWriter(object):
                         plg.process_html(self.book, item)
 
     def _write_container(self):
-        self.out.writestr(CONTAINER_PATH, CONTAINER_XML, compress_type = zipfile.ZIP_DEFLATED)
+        self.out.writestr(CONTAINER_PATH, CONTAINER_XML)
 
     def _write_opf_file(self):
         root = etree.Element('package',
@@ -558,7 +559,6 @@ class EpubWriter(object):
         for _link in item.links:
             _lnk = etree.SubElement(head, 'link', {"href":_link.get('href', ''), "rel":"stylesheet", "type":"text/css"})        
 
-
         body = etree.SubElement(root, 'body')
         nav  = etree.SubElement(body, 'nav',  {'{%s}type' % NAMESPACES['EPUB']: 'toc', 'id': 'id'})
 
@@ -657,14 +657,10 @@ class EpubWriter(object):
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
-#        print tree_str
-
         return tree_str
         
     def _write_items(self):
         for item in self.book.items:
-            # TODO
-            # Why did I put ZIP_STORED here?
             if isinstance(item, EpubNcx):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_ncx())
             elif isinstance(item, EpubNav):
@@ -673,9 +669,10 @@ class EpubWriter(object):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), item.get_content())
 
     def write(self):
-        self.out = zipfile.ZipFile(self.file_name, 'w')
-
-        self.out.writestr('mimetype', 'application/epub+zip', compress_type = zipfile.ZIP_STORED)
+        # check for the option allowZip64
+        self.out = zipfile.ZipFile(self.file_name, 'w', zipfile.ZIP_DEFLATED)
+        self.out.debug = 3
+        self.out.writestr('mimetype', 'application/epub+zip', compress_type=zipfile.ZIP_STORED)
 
         self._write_container()
         self._write_opf_file()
@@ -766,16 +763,20 @@ class EpubReader(object):
 
             if media_type == 'application/x-dtbncx+xml':
                 ei = EpubNcx(uid=r.get('id'), file_name=r.get('href'))
+
                 ei.content = self.read_file(os.path.join(self.opf_dir, ei.file_name))
             elif media_type == 'application/xhtml+xml':
                 if 'nav' in properties:
                     ei = EpubNav(uid=r.get('id'), file_name=r.get('href'))
+
                     ei.content = self.read_file(os.path.join(self.opf_dir,  r.get('href')))
                 elif 'cover' in properties:
                     ei = EpubCoverHtml()
+
                     ei.content = self.read_file(os.path.join(self.opf_dir,  r.get('href')))
                 else:
                     ei = EpubHtml()
+
                     ei.id = r.get('id')
                     ei.file_name = r.get('href')
                     ei.media_type = media_type
@@ -783,6 +784,7 @@ class EpubReader(object):
                     ei.properties = properties
             elif media_type in IMAGE_MEDIA_TYPES:
                 ei = EpubImage()
+
                 ei.id = r.get('id')
                 ei.file_name = r.get('href')
                 ei.media_type = media_type
@@ -834,11 +836,7 @@ class EpubReader(object):
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
         
-        self.book.spine = []
-
-        # should read other spine info here
-        for t in spine:
-            self.book.spine.append((t.get('idref'), ))
+        self.book.spine = [(t.get('idref'), ) for t in spine]
 
         toc = spine.get('toc', '')
 
@@ -887,7 +885,11 @@ def writeEPUB(name, book, options = None):
     epub = EpubWriter(name, book, options)
 
     epub.process()
-    epub.write()
+
+    try:
+        epub.write()
+    except IOError:
+        pass
 
 ## READ
 
