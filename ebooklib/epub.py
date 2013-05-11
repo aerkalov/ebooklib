@@ -81,7 +81,10 @@ IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml']
 
 
 def parse_string(s):
-    tree = etree.parse(io.BytesIO(s))
+    try:
+        tree = etree.parse(io.BytesIO(s.encode('utf-8')))
+    except:
+        tree = etree.parse(io.BytesIO(s))
 
     return tree
 
@@ -481,7 +484,7 @@ class EpubWriter(object):
 
         for ns_name, values in self.book.metadata.items():
             if ns_name == NAMESPACES['OPF']:
-                for values in values.itervalues():
+                for values in values.values():
                     for v in values:
                         el = etree.SubElement(metadata, 'meta', v[1])
                         el.text = v[0]
