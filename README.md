@@ -14,7 +14,10 @@ Reading
 
     from ebooklib import epub
 
-    book = epub.readEPUB('test.epub')
+    book = epub.read_epub('test.epub')
+
+    for image in book.get_items_of_type(epub.ITEM_IMAGE):
+        print image
 
 Writing
 -------
@@ -59,7 +62,7 @@ Writing
     book.spine = ['nav', c1]
 
     # write to the file
-    epub.writeEPUB('test.epub', book, {})
+    epub.write_epub('test.epub', book, {})
 
 
 
