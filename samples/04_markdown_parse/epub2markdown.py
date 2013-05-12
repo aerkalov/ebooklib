@@ -7,9 +7,11 @@ import os.path
 
 from ebooklib import epub
 
+# This is just a basic example which can easily break in real world.
+
 if __name__ == '__main__':
     # read epub
-    book = epub.readEPUB(sys.argv[1])
+    book = epub.read_epub(sys.argv[1])
 
     # get base filename from the epub
     base_name = os.path.basename(os.path.splitext(sys.argv[1])[0])

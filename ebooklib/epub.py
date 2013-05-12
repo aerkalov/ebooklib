@@ -28,8 +28,7 @@ import mimetypes
 
 from lxml import etree
 
-
-# this really should not be here
+# This really should not be here
 mimetypes.init()
 
 # Version of EPUB library
@@ -931,7 +930,7 @@ class EpubReader(object):
 
 ## WRITE
 
-def writeEPUB(name, book, options = None):
+def write_epub(name, book, options = None):
     epub = EpubWriter(name, book, options)
 
     epub.process()
@@ -943,7 +942,7 @@ def writeEPUB(name, book, options = None):
 
 ## READ
 
-def readEPUB(name):
+def read_epub(name):
     reader = EpubReader(name)
 
     book = reader.load()

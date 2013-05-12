@@ -84,5 +84,5 @@ nav[epub|type~='toc'] > ol > li > ol > li {
     book.spine = ['cover', 'nav', c1, c2]
 
     # create epub file
-    epub.writeEPUB('test.epub', book, {})
+    epub.write_epub('test.epub', book, {})
 

@@ -214,7 +214,7 @@ nav[epub|type~='toc'] > ol > li > ol > li {
 
 
     # write book to the file    
-    epub.writeEPUB('test.epub', book, opts)
+    epub.write_epub('test.epub', book, opts)
 
 
 if __name__ == '__main__':
