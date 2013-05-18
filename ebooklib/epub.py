@@ -206,6 +206,9 @@ class EpubHtml(EpubItem):
     def set_language(self, lang):
         self.lang = lang
 
+    def get_language(self):
+        return self.lang
+
     def add_link(self, **kwgs):
         self.links.append(kwgs)
 
@@ -426,8 +429,15 @@ class EpubBook(object):
         return item
 
     def get_item_with_id(self, uid):
-        for item in self.items:
+        for item in self.get_items():
             if item.id == uid:
+                return item
+
+        return None
+
+    def get_item_with_href(self, href):
+        for item in self.get_items():
+            if item.file_name == href:
                 return item
 
         return None
@@ -437,6 +447,9 @@ class EpubBook(object):
 
     def get_items_of_type(self, item_type):
         return (item for item in self.items if item.get_type() == item_type)
+
+    def get_items_of_media_type(self, media_type):
+        return (item for item in self.items if item.media_type == media_type)
 
     def set_template(self, name, value):
         self.templates[name] = value
