@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml" style="font-size:1.136rem;">
+  <head>
+    <title>
+You</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" type="text/css" rel="stylesheet"/>
+<link href="../page_styles.css" type="text/css" rel="stylesheet"/>
+</head>
+  <body class="calibre1">
+<div class="calibre8" id="calibre_pb_0"></div><h1 class="chapter-number" id="calibre_pb_1"><a id="page-51"></a><a href="part0068.html#toc-chapter007">Chapter Seven</a></h1>
+<p class="noindent"><span class="dropcap">I</span> took the bug to Matt.</p>
+<p class="calibre9">“In <em class="calibre5">Realms VI</em>?” he said. “It’s possible, I guess. But it’s probably already DNF’ed.”</p>
+<p class="calibre9">“DNF?”</p>
+<p class="calibre9">“Do Not Fix.”</p>
+<p class="calibre9">“Why wouldn’t you fix a bug if you knew about it?”</p>
+<p class="calibre9">Matt sighed. “Okay. So <em class="calibre5">Realms VI</em> has on the order of a million lines of code. It’s not going to be perfect, but it has to be shipped. At some point the producer and the leads sit down and go through all the existing bugs and prioritize according to various totally subjective criteria. How often it happens. How bad it is—where the top end is, like, ‘Game crashes, hard drive is erased, user catches fire,’ and the low end is, ‘Yeah, the text in that Options menu could be a more eye-catching shade of blue.’ Fixability, i.e., how loudly and effectively are the people tasked with repairing it going to complain.</p>
+<p class="calibre9">“So these bugs are assigned priority numbers, but there’s a cutoff, and anything below that point is marked DNF, Do Not Fix, and officially closed. Ship it. So it’s, like, bugs that almost never happen, or are tiny aesthetic problems, or only come up when you have this or that shitty off-brand video card—it’s not our problem. Oh, and bugs that are part of a tricky section of code, so when you fix them you’d probably end up making new and worse bugs.”</p>
+<p class="calibre9"><a id="page-52"></a>“Okay, but what if this bug was pretty weird and noticeable?”</p>
+<p class="calibre9">“Well there’s another category of bugs that don’t get fixed, which is the ones that only ever happen once, and those are marked NR, No Repro.”</p>
+<p class="calibre9">“Wouldn’t you fix it anyway, just in case?” I asked. Before answering, Matt gestured me to roll my chair a little closer.</p>
+<p class="calibre9">“So I came up through playtest, so… here’s how it looks from that perspective. The fate of many, many bugs runs as follows: a playtester spots it once or twice, logs it in the database with a tentative classification—art, programming, design, or unknown. The report includes instructions on how to find the bug and make it happen again, but some bugs don’t happen reliably. Sometimes they come and go for whatever reason—there’s a little mystery there. But it goes to the bug meeting, where the lead for that area assigns it to a team member, who may or may not have caused it. Doesn’t matter.</p>
+<p class="calibre9">“So now the team member has to fix the bug, and they’re cranky because it’s a brand-new bug and they haven’t budgeted time for it and they’re going to be late for something else. So first thing they do is run the game and see if it reproduces. If it doesn’t happen on the first or second try, some guys will slap a No Repro on it, kick it back to playtest, and go on to their next bug.”</p>
+<p class="calibre9">“Do they think you’re making it up?”</p>
+<p class="calibre9">“You have no idea the contempt people hold toward playtest. You see the logic—everyone else’s job is to get the list of active bugs to zero, except us, whose job is add bugs to the list. So people just kick bugs back all the time. And some of them are pretty hard to verify, and you’ve got to figure out that the bug happens only if the game tries to autosave while you’re actively wielding a plus-three glass dagger and there are exactly four lizard men within three hexes. And then walk into a meeting and do it with—I’m not going to name names, but they’re literally standing over you, staking their reputations on the idea <a id="page-53"></a>that this bug absolutely cannot happen, that it is literally technologically impossible.”</p>
+<p class="calibre9">“So I guess you’re not in play test anymore.”</p>
+<p class="calibre9">“Not for this one, no. I guess that’s the grand prize.”</p>
+<p class="space-break">There was nothing going on the rest of the day except other designers speculating about what more Darren had planned. I found a database showing records of bugs from previous projects, all closed and confirmed before shipping, but the records were there. I sorted for the ones that weren’t active, strictly speaking, but neither had they been fixed. The DNFs.</p>
+<p class="calibre9">I searched around a little in the No Repro pile. It turned out there was no one bug exactly like the one I’d seen, but a few that might have been similar: “King Aerion dead when should be unkillable, WTF”; “Level three, dragon already dead when I arrived”; “Goblin children massacred? Why???” None of them repeated, and they could have been part of the same underlying bug or three entirely separate bugs.</p>
+<p class="calibre9">They could have been minor coincidences. I knew by now that a simulation-heavy game was unpredictable. A monster could wander too close to a torch and catch on fire; then it would go into its panic-run mode and anything else it bumped into might catch. Or a harmless goblin might nudge a rock, which then rolls and hits another creature just hard enough to inflict one hit point of damage, which then triggers a combat reaction, and next thing you know there’s an unscheduled goblin riot. The blessing and curse of simulation-driven engines was that although you could design the system, the world ran by itself, and accidents happened.</p>
+<p class="calibre9">They usually didn’t, because the game didn’t bother to simulate anything too far from the player in any detail—it would slow everything down too far. But maybe the game was having trouble deciding what not to simulate. Each one was marked No Repro, so maybe it just never happened again.</p>
+<p class="space-break"><a id="page-54"></a>I noticed that most of these bugs belonged to the same person, LMcknhpt. I sent Lisa a quick e-mail with the subject line “RoGVI bugs 2917, 40389, 51112.”</p>
+<div class="speech">
+<p class="speaker">Got something similar. Did this ever get figured out? Just curious.</p>
+<p class="speaker">Yours sincerely, &amp;c.</p>
+<p class="speaker">Russell</p>
+<p class="speaker">Assistant Game Designer</p>
+<p class="speaker"><em class="calibre5">Realms of Gold</em> Team</p>
+</div>
+<p class="noindent">The reply came a few minutes later.</p>
+<div class="speech">
+<p class="speaker">Re: RoGVI bugs 2917, 40389, 51112</p>
+<p class="speaker">Nope. Couldn’t repro any of these, sent back to Matt. Probably in data.</p>
+<p class="speaker">Lisa</p>
+</div>
+<p class="calibre9">That “probably in data” was an ever-so-slightly dickish sign-off. What she meant to say was that the code was working fine, so it must be the designer who screwed up—he just forgot to flag the king as unkillable, or he put a rock in the wrong place, or routed a goblin’s patrol path through a lit torch.</p>
+<p class="calibre9">I wrote back, “I triple-checked the data. Want to see?” but she didn’t respond at all, except that five minutes later, the bug database had sent me three separate automated messages.</p>
+<blockquote class="speech">
+<p class="speaker">RoGVI bug 2917 has been reassigned to you by LMcknhpt</p>
+<p class="speaker">RoGVI bug 40389 has been reassigned to you by LMcknhpt</p>
+<p class="speaker">RoGVI bug 51112 has been reassigned to you by LMcknhpt</p>
+</blockquote>
+<p class="calibre9"><a id="page-55"></a>Where was the bug? How did I even start thinking about fixing something like this? A bug could be in either of two elements of the game, data or code, or it could be in both.</p>
+<p class="calibre9">Something horrible was lurking in memory or code or whatever forsaken in-between region of space it lived in, and it was messing with our game. But bugs don’t happen without somebody making them, by stupidity or negligence. All I had to do was trace it back to where it lived. The first step, as everyone knew, was to find the version where it first occurred—the crucial change, an added feature or an attempt to fix some other problem, which had been copied from version to version ever since. So far I hadn’t even found a version where it didn’t occur, but there must be one. I’d just have to go back far enough.</p>
+</body></html>

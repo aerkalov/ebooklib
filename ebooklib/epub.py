@@ -20,6 +20,7 @@ import zipfile
 import io
 import six
 import mimetypes
+import logging
 
 try:
     from urllib.parse import unquote
@@ -82,7 +83,7 @@ COVER_XML = '''<?xml version="1.0" encoding="UTF-8"?>
 </html>'''
 
 
-IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml']
+IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
 
 
 ## TOC elements
@@ -106,7 +107,6 @@ class EpubException(Exception):
 
     def __str__(self):
         return repr(self.msg)
-
 
 ## Items
 
@@ -165,6 +165,8 @@ class EpubCover(EpubItem):
 
         
 class EpubHtml(EpubItem):
+    _template_name = 'chapter'
+
     def __init__(self, uid=None, file_name='', media_type='', content=None, title='', lang=None):
         super(EpubHtml, self).__init__(uid, file_name, media_type, content)
 
@@ -173,8 +175,6 @@ class EpubHtml(EpubItem):
 
         self.links = []
         self.properties = []
-
-        self._template_name = 'chapter'
 
     def set_language(self, lang):
         self.lang = lang
@@ -219,8 +219,10 @@ class EpubHtml(EpubItem):
             head = html_root.find('head')
 
             _head = etree.SubElement(tree_root, 'head')
-            _title = etree.SubElement(_head, 'title')
-            _title.text = self.title
+
+            if self.title != '':
+                _title = etree.SubElement(_head, 'title')
+                _title.text = self.title
 
             for lnk in self.links:
                 _lnk = etree.SubElement(_head, 'link', lnk)        
@@ -471,17 +473,24 @@ class EpubWriter(object):
             if ns_name == NAMESPACES['OPF']:
                 for values in values.values():
                     for v in values:
-                        el = etree.SubElement(metadata, 'meta', v[1])
-                        el.text = v[0]
+                        try:
+                            el = etree.SubElement(metadata, 'meta', v[1])
+                            el.text = v[0]
+                        except ValueError:
+                            logging.error('Could not create metadata.')
             else:
                 for name, values in six.iteritems(values):
                     for v in values:
-                        if ns_name:
-                            el = etree.SubElement(metadata, '{%s}%s' % (ns_name, name), v[1])
-                        else:
-                            el = etree.SubElement(metadata, '%s' % name, v[1])
+                        try:
+                            if ns_name:
+                                el = etree.SubElement(metadata, '{%s}%s' % (ns_name, name), v[1])
+                            else:
+                                el = etree.SubElement(metadata, '%s' % name, v[1])
 
-                        el.text = v[0]
+                            el.text = v[0]
+                        except ValueError:
+                            logging.error('Could not create metadata "{}".'.format(name))
+
 
         # MANIFEST
         manifest = etree.SubElement(root, 'manifest')
@@ -775,7 +784,10 @@ class EpubReader(object):
                 tag = t.tag[t.tag.rfind('}') + 1:]
 
                 if (t.prefix and t.prefix.lower() == 'dc') and tag == 'identifier':
-                    self.book.IDENTIFIER_ID = t.get('id', None)
+                    _id = t.get('id', None)
+
+                    if _id:
+                        self.book.IDENTIFIER_ID = _id
 
                 others = dict((k, v) for k, v in t.items())
                 add_item(t.nsmap[t.prefix], tag, t.text, others)
@@ -794,6 +806,10 @@ class EpubReader(object):
                 properties = _properties.split(' ')
             else:
                 properties = []
+
+            # people use wrong content types
+            if media_type == 'image/jpg':
+                media_type = 'image/jpeg'
 
             if media_type == 'application/x-dtbncx+xml':
                 ei = EpubNcx(uid=r.get('id'), file_name=unquote(r.get('href')))
@@ -847,6 +863,7 @@ class EpubReader(object):
             label, content = '', ''
             children = []
             _id = ''
+
             for a in elems.getchildren():
                 if a.tag == '{%s}navLabel' %  NAMESPACES['DAISY']:
                     label = a.getchildren()[0].text
@@ -895,6 +912,7 @@ class EpubReader(object):
         self._load_metadata()
         self._load_manifest()
         self._load_spine()
+
         # should read nav file if found
 
     

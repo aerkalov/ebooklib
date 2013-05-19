@@ -16,5 +16,8 @@ for it in book.items:
 for x in  book.get_items_of_type(ebooklib.ITEM_IMAGE):
     debug( x)
 
+from ebooklib.plugins import standard
 
-epub.write_epub('test.epub', book)
+opts = {'plugins': [standard.SyntaxPlugin()]}
+
+epub.write_epub('test.epub', book, opts)
