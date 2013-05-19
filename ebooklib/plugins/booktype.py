@@ -23,9 +23,12 @@ class BooktypeLinks(BasePlugin):
         self.booktype_book = booktype_book
 
     def process_html(self, book, chapter):
-        from urlparse import urlparse, urljoin
-
         from lxml import html, etree
+
+        try:
+            from urlparse import urlparse, urljoin
+        except ImportError:
+            from urllib.parse import urlparse, urljoin
 
         utf8_parser = html.HTMLParser(encoding='utf-8')
         tree = html.document_fromstring(chapter.content, parser=utf8_parser)

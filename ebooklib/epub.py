@@ -19,17 +19,18 @@ import os.path
 import zipfile
 import io
 import six
+import mimetypes
 
 try:
     from urllib.parse import unquote
 except ImportError:
     from urllib import unquote
 
-import mimetypes
-
 from lxml import etree
 
 import ebooklib
+
+from ebooklib.utils import parse_string
 
 
 # This really should not be here
@@ -82,21 +83,6 @@ COVER_XML = '''<?xml version="1.0" encoding="UTF-8"?>
 
 
 IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml']
-
-
-def parse_string(s):
-    try:
-        tree = etree.parse(io.BytesIO(s.encode('utf-8')))
-    except:
-        tree = etree.parse(io.BytesIO(s))
-
-    return tree
-
-def debug(obj):
-    import pprint
-
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(obj)
 
 
 ## TOC elements
@@ -777,7 +763,7 @@ class EpubReader(object):
         for t in metadata.iter(tag=etree.Element):
             if t.tag == default_ns + 'meta':
                 name = t.get('name')
-                others = dict((k, v) for k, v in six.iteritems(t))
+                others = dict((k, v) for k, v in t.items())
 
                 if name and ':' in name:
                     prefix, name = name.split(':', 1)
@@ -791,7 +777,7 @@ class EpubReader(object):
                 if (t.prefix and t.prefix.lower() == 'dc') and tag == 'identifier':
                     self.book.IDENTIFIER_ID = t.get('id', None)
 
-                others = dict((k, v) for k, v in six.iteritems(t))
+                others = dict((k, v) for k, v in t.items())
                 add_item(t.nsmap[t.prefix], tag, t.text, others)
 
         self.book.metadata = nsdict
@@ -880,7 +866,6 @@ class EpubReader(object):
 
 
         self.book.toc = _get_children(nav_map, 0, '')
-        # debug(self.book.toc)
 
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))

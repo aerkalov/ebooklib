@@ -1,16 +1,20 @@
 import sys
 
+import ebooklib
 from ebooklib import epub
+from ebooklib.utils import debug
 
 book = epub.read_epub(sys.argv[1])
 
-epub.debug(book.metadata)
-epub.debug(book.spine)
-epub.debug(book.toc)
+debug(book.metadata)
+debug(book.spine)
+debug(book.toc)
+
 for it in book.items:
-    epub.debug( it.file_name)
+    debug( it.get_type())
 
-for x in  book.get_items_of_type(epub.ITEM_IMAGE):
-    print x
+for x in  book.get_items_of_type(ebooklib.ITEM_IMAGE):
+    debug( x)
 
 
+epub.write_epub('test.epub', book)
