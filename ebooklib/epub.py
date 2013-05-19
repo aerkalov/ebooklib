@@ -18,6 +18,7 @@ import sys
 import os.path
 import zipfile
 import io
+import six
 
 try:
     from urllib.parse import unquote
@@ -28,8 +29,12 @@ import mimetypes
 
 from lxml import etree
 
+import ebooklib
+
+
 # This really should not be here
 mimetypes.init()
+
 
 # Version of EPUB library
 VERSION = (0, 15, 0)
@@ -119,14 +124,6 @@ class EpubException(Exception):
 
 ## Items
 
-ITEM_UNKNOWN = 0
-ITEM_IMAGE = 1
-ITEM_STYLE = 2
-ITEM_SCRIPT = 3
-ITEM_NAVIGATION = 4
-ITEM_VECTOR = 5
-ITEM_FONT = 6
-
 class EpubItem(object):
     def __init__(self, uid=None, file_name='', media_type='', content=''):
         self.id = uid
@@ -147,25 +144,15 @@ class EpubItem(object):
         """
         Guess type according to the file extension. Not the best way to do it, but works for now.
         """
-
         _, ext = os.path.splitext(self.get_name())
         ext = ext.lower()
-        
-        if ext in ['.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.png']:
-            return ITEM_IMAGE
-        if ext in ['.svg']:
-            return ITEM_VECTOR
-        if ext in ['.otf', '.woff']:
-            return ITEM_FONT
-        elif ext in ['.css']:
-            return ITEM_STYLE
-        elif ext in ['.js']:
-            return ITEM_SCRIPT
-        elif ext in ['.ncx']:
-            return ITEM_NAVIGATION
-        else:
-            return ITEM_UNKNOWN
 
+        for uid, ext_list in six.iteritems(ebooklib.EXTENSIONS):
+            if ext in ext_list:
+                return uid
+
+        return ebooklib.ITEM_UNKNOWN
+        
     def get_content(self, default=''):
         return self.content or default
 
@@ -219,10 +206,10 @@ class EpubHtml(EpubItem):
         return (link for link in self.links if link.get('type', '') == link_type)
 
     def add_item(self, item):
-        if item.get_type() == ITEM_STYLE:
+        if item.get_type() == ebooklib.ITEM_STYLE:
             self.add_link(href=item.get_name(), rel="stylesheet", type="text/css")
 
-        if item.get_type() == ITEM_SCRIPT:
+        if item.get_type() == ebooklib.ITEM_SCRIPT:
             self.add_link(href=item.get_name(), type="text/javascript")
 
     def get_content(self, default=None):
@@ -494,14 +481,14 @@ class EpubWriter(object):
         el = etree.SubElement(metadata, 'meta', {'property':'dcterms:modified'})
         el.text = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-        for ns_name, values in self.book.metadata.items():
+        for ns_name, values in six.iteritems(self.book.metadata):
             if ns_name == NAMESPACES['OPF']:
                 for values in values.values():
                     for v in values:
                         el = etree.SubElement(metadata, 'meta', v[1])
                         el.text = v[0]
             else:
-                for name, values in values.items():
+                for name, values in six.iteritems(values):
                     for v in values:
                         if ns_name:
                             el = etree.SubElement(metadata, '{%s}%s' % (ns_name, name), v[1])
@@ -775,7 +762,7 @@ class EpubReader(object):
         metadata = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'metadata'))
 
         nsmap = metadata.nsmap
-        nstags = dict((k, '{%s}' % v) for k, v in nsmap.items())
+        nstags = dict((k, '{%s}' % v) for k, v in six.iteritems(nsmap))
         default_ns = nstags.get(None, '')
 
         nsdict = dict((v, {}) for v in nsmap.values())
@@ -790,7 +777,7 @@ class EpubReader(object):
         for t in metadata.iter(tag=etree.Element):
             if t.tag == default_ns + 'meta':
                 name = t.get('name')
-                others = dict((k, v) for k, v in t.items())
+                others = dict((k, v) for k, v in six.iteritems(t))
 
                 if name and ':' in name:
                     prefix, name = name.split(':', 1)
@@ -804,7 +791,7 @@ class EpubReader(object):
                 if (t.prefix and t.prefix.lower() == 'dc') and tag == 'identifier':
                     self.book.IDENTIFIER_ID = t.get('id', None)
 
-                others = dict((k, v) for k, v in t.items())
+                others = dict((k, v) for k, v in six.iteritems(t))
                 add_item(t.nsmap[t.prefix], tag, t.text, others)
 
         self.book.metadata = nsdict
