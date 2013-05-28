@@ -30,3 +30,12 @@ def parse_string(s):
         tree = etree.parse(io.BytesIO(s))
 
     return tree
+
+def parse_html_string(s):
+    from lxml import html
+
+    utf8_parser = html.HTMLParser(encoding='utf-8')
+
+    html_tree = html.document_fromstring(s , parser=utf8_parser)
+
+    return html_tree
