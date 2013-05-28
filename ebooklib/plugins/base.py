@@ -16,4 +16,14 @@
 
 
 class BasePlugin(object):
-    pass
+    def before_processing(self, book):
+        "Processing before save"
+        return True
+
+    def after_processing(self, book):
+        "Processing after save"
+        return True
+
+    def process_html(self, book, chapter):
+        "Processing HTML before save."
+        return True

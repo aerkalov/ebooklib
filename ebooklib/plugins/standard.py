@@ -17,13 +17,16 @@
 import six
 
 from ebooklib.plugins.base import BasePlugin
+from ebooklib.utils import parse_html_string
 
+# TODO:
+#   - should also look for the _required_ elements
 # http://www.w3.org/html/wg/drafts/html/master/tabular-data.html#the-table-element
 
 ATTRIBUTES_GLOBAL = ['accesskey', 'class', 'contenteditable', 'contextmenu', 'dir', 'draggable',
                      'dropzone', 'hidden',  'id', 'inert', 'itemid', 'itemprop', 'itemref',
                      'itemscope', 'itemtype', 'lang', 'spellcheck', 'style', 'tabindex',
-                     'title', 'translate']
+                     'title', 'translate', 'epub:type']
 
 DEPRECATED_TAGS = ['acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'font', 'frame',
                    'frameset', 'isindex', 'noframes', 's', 'strike', 'tt', 'u']
@@ -39,10 +42,13 @@ class SyntaxPlugin(BasePlugin):
     NAME = 'Check HTML syntax'
 
     def process_html(self, book, chapter):
-        from lxml import html, etree
+        from lxml import etree
 
-        utf8_parser = html.HTMLParser(encoding='utf-8')
-        tree = html.document_fromstring(chapter.content, parser=utf8_parser)
+        try:
+            tree = parse_html_string(chapter.content)
+        except:
+            return
+
         root = tree.getroottree()
 
         # delete deprecated tags
@@ -50,9 +56,10 @@ class SyntaxPlugin(BasePlugin):
         for tag in DEPRECATED_TAGS:
             etree.strip_tags(root, tag)
 
-        if len(root.find('head')) != 0:
-            head = tree.find('head')
-
+        head = tree.find('head')
+        
+        if head is not None and len(head) != 0:
+            
             for _item in head:
                 if _item.tag == 'base':
                     leave_only(_item, ATTRIBUTES_GLOBAL + ['href', 'target'])
@@ -88,8 +95,6 @@ class SyntaxPlugin(BasePlugin):
                     leave_only(_item, ATTRIBUTES_GLOBAL + ['alt', 'coords', 'shape', 'href', 'target', 'download', 'rel', 'hreflang', 'type'])
                 elif _item.tag == 'audio':
                     leave_only(_item, ATTRIBUTES_GLOBAL + ['src', 'crossorigin', 'preload', 'autoplay', 'mediagroup', 'loop', 'muted', 'controls'])
-                elif _item.tag == 'audio':
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ['src', 'crossorigin', 'preload', 'autoplay', 'mediagroup', 'loop', 'muted', 'controls'])
                 elif _item.tag == 'blockquote':
                     leave_only(_item, ATTRIBUTES_GLOBAL + ['cite'])
                 elif _item.tag == 'button':
@@ -112,6 +117,15 @@ class SyntaxPlugin(BasePlugin):
                 elif _item.tag == 'iframe':
                     leave_only(_item, ATTRIBUTES_GLOBAL + ['src', 'srcdoc', 'name', 'sandbox', 'seamless', 'allowfullscreen', 'width', 'height'])
                 elif _item.tag == 'img':
+                    _src =  _item.get('src', '').lower()
+                    if _src.startswith('http://') or _src.startswith('https://'):
+                        if 'remote-resources' not in chapter.properties:
+                            chapter.properties.append('remote-resources')
+                            # THIS DOES NOT WORK, ONLY VIDEO AND AUDIO FILES CAN BE REMOTE RESOURCES
+                            # THAT MEANS I SHOULD ALSO CATCH <SOURCE TAG
+                            from ebooklib import epub
+                            _img = epub.EpubImage(file_name = _item.get('src'))
+                            book.add_item(_img)
                     leave_only(_item, ATTRIBUTES_GLOBAL + ['alt', 'src', 'crossorigin', 'usemap', 'ismap', 'width', 'height'])
                 elif _item.tag == 'input':
                     leave_only(_item, ATTRIBUTES_GLOBAL + ['accept', 'alt', 'autocomplete', 'autofocus', 'checked', 'dirname',

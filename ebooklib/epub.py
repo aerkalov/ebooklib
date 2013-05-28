@@ -31,7 +31,7 @@ from lxml import etree
 
 import ebooklib
 
-from ebooklib.utils import parse_string
+from ebooklib.utils import parse_string, parse_html_string
 
 
 # This really should not be here
@@ -208,10 +208,11 @@ class EpubHtml(EpubItem):
         # add to the head also
         #  <meta charset="utf-8" />
 
-        from lxml import html
+        try:
+            html_tree = parse_html_string(self.content)
+        except:
+            return ''
 
-        utf8_parser = html.HTMLParser(encoding='utf-8')
-        html_tree = html.document_fromstring(self.content , parser=utf8_parser)
         html_root = html_tree.getroottree()
 
         if len(html_root.find('body')) != 0:
@@ -385,7 +386,12 @@ class EpubBook(object):
 
     def add_item(self, item):
         if item.media_type == '':
-            item.media_type = mimetypes.types_map[os.path.splitext(item.file_name)[1]]
+            # TODO
+            # this will fail in case filename does not have extension
+            has_guessed, media_type = mimetypes.guess_type(os.path.splitext(item.file_name.lower())[1])
+
+            if has_guessed:
+                item.media_type = media_type
 
         if not item.get_id():
             if isinstance(item, EpubHtml):
