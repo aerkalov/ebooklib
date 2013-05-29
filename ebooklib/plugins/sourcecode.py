@@ -21,7 +21,7 @@ class SourceHighlighter(BasePlugin):
     def __init__(self):
         pass
 
-    def process_html(self, book, chapter):
+    def html_before_write(self, book, chapter):
         from lxml import etree, html
 
         from pygments import highlight

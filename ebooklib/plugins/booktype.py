@@ -23,7 +23,7 @@ class BooktypeLinks(BasePlugin):
     def __init__(self, booktype_book):
         self.booktype_book = booktype_book
 
-    def process_html(self, book, chapter):
+    def html_before_write(self, book, chapter):
         from lxml import  etree
 
         try:
@@ -80,7 +80,7 @@ class BooktypeFootnotes(BasePlugin):
     def __init__(self, booktype_book):
         self.booktype_book = booktype_book
 
-    def process_html(self, book, chapter):
+    def html_before_write(self, book, chapter):
         from lxml import etree
 
         from ebooklib import epub

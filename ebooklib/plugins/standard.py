@@ -41,7 +41,7 @@ def leave_only(item, tag_list):
 class SyntaxPlugin(BasePlugin):
     NAME = 'Check HTML syntax'
 
-    def process_html(self, book, chapter):
+    def html_before_write(self, book, chapter):
         from lxml import etree
 
         try:

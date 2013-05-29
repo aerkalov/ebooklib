@@ -449,11 +449,15 @@ class EpubWriter(object):
 
     def process(self):
         # should cache this html parsing so we don't do it for every plugin
+        for plg in self.options.get('plugins', []):
+            if hasattr(plg, 'before_write'):
+                plg.before_write(self.book)
+
         for item in self.book.get_items():
             if isinstance(item, EpubHtml):
                 for plg in self.options.get('plugins', []):
-                    if hasattr(plg, 'process_html'):
-                        plg.process_html(self.book, item)
+                    if hasattr(plg, 'html_before_write'):
+                        plg.html_before_write(self.book, item)
 
     def _write_container(self):
         self.out.writestr(CONTAINER_PATH, CONTAINER_XML)
