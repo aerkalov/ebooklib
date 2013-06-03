@@ -386,12 +386,15 @@ class EpubBook(object):
 
     def add_item(self, item):
         if item.media_type == '':
-            # TODO
-            # this will fail in case filename does not have extension
-            has_guessed, media_type = mimetypes.guess_type(os.path.splitext(item.file_name.lower())[1])
+            (has_guessed, media_type) = mimetypes.guess_type(item.file_name.lower())
 
             if has_guessed:
-                item.media_type = media_type
+                if  media_type is not None:
+                    item.media_type = media_type
+                else:
+                    item.media_type = has_guessed
+            else:
+                item.media_type = 'application/octet-stream'
 
         if not item.get_id():
             if isinstance(item, EpubHtml):
@@ -733,6 +736,19 @@ class EpubReader(object):
 
         self.opf_file = ''
         self.opf_dir = ''
+        self.options = {}
+
+    def process(self):
+        # should cache this html parsing so we don't do it for every plugin
+        for plg in self.options.get('plugins', []):
+            if hasattr(plg, 'after_read'):
+                plg.after_read(self.book)
+
+        for item in self.book.get_items():
+            if isinstance(item, EpubHtml):
+                for plg in self.options.get('plugins', []):
+                    if hasattr(plg, 'html_after_read'):
+                        plg.html_after_read(self.book, item)
 
     def load(self):
         self._load()
@@ -959,6 +975,7 @@ def read_epub(name):
     reader = EpubReader(name)
 
     book = reader.load()
+    reader.process()
 
     return book
 
