@@ -294,6 +294,8 @@ class EpubBook(object):
         self.EPUB_VERSION = None
 
         self.reset()
+
+        # we should have options here
         
     def reset(self):
         "Initialises all needed variables to default values"
@@ -302,6 +304,7 @@ class EpubBook(object):
         self.metadata = {}
         self.items = []
         self.spine = []
+        self.guide = []
 
         self.IDENTIFIER_ID = 'id'
         self.FOLDER_NAME = 'EPUB'
@@ -397,6 +400,7 @@ class EpubBook(object):
                 item.media_type = 'application/octet-stream'
 
         if not item.get_id():
+            # make chapter_, image_ and static_ configurable
             if isinstance(item, EpubHtml):
                 item.id = 'chapter_%d' % self._id_html
                 self._id_html += 1
@@ -445,10 +449,18 @@ class EpubBook(object):
 ###########################################################################################################
 
 class EpubWriter(object):    
+    DEFAULT_OPTIONS = {'epub2_guide': True,
+                       'epub3_landmark': True,
+                       'landmark_title': 'Guide'
+                      }
+
     def __init__(self, name, book, options = None):
         self.file_name = name
         self.book = book
-        self.options = options or {}
+
+        self.options = dict(self.DEFAULT_OPTIONS)
+        if options:
+            self.options.update(options)
 
     def process(self):
         # should cache this html parsing so we don't do it for every plugin
@@ -582,9 +594,24 @@ class EpubWriter(object):
             etree.SubElement(spine, 'itemref', opts)
 
         # GUIDE
-#        guide = etree.SubElement(root, 'guide', {})
-#        for item in self.guide:
-#            etree.SubElement(guide, 'reference', item)
+        # - http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6
+        
+        if len(self.book.guide)  > 0 and self.options.get('epub2_guide'):
+            guide = etree.SubElement(root, 'guide', {})
+
+            for item in self.book.guide:
+                if 'item' in item:
+                    chap = item.get('item')
+                    if chap:
+                        _href = chap.file_name
+                        _title = chap.title
+                else:
+                    _href = item.get('href', '')
+                    _title = item.get('title', '')
+
+                ref = etree.SubElement(guide, 'reference', {'type': item.get('type', ''), 
+                                                            'title': _title,
+                                                            'href': _href})
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
@@ -633,6 +660,32 @@ class EpubWriter(object):
                     a.text = item.title
 
         _create_section(nav, self.book.toc)
+
+        # LANDMARKS / GUIDE
+        # - http://www.idpf.org/epub/30/spec/epub30-contentdocs.html#sec-xhtml-nav-def-types-landmarks
+
+        if len(self.book.guide) > 0 and self.options.get('epub3_landmark'): 
+            guide_nav  = etree.SubElement(body, 'nav',  {'{%s}type' % NAMESPACES['EPUB']: 'landmarks'})
+
+            guide_content_title = etree.SubElement(guide_nav, 'h2')
+            guide_content_title.text = self.options.get('landmark_title', 'Guide')
+
+            guild_ol = etree.SubElement(guide_nav, 'ol')
+            
+            for elem in self.book.guide:
+                li_item = etree.SubElement(guild_ol, 'li')
+                
+                if 'item' in elem:
+                    chap = elem.get('item', None)
+                    if chap:
+                        _href = chap.file_name
+                        _title = chap.title
+                else:
+                    _href = elem.get('href', '')
+                    _title = elem.get('title', '')
+
+                a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: elem.get('type', ''), 'href': _href})
+                a_item.text = _title
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
@@ -729,14 +782,19 @@ class EpubWriter(object):
 ###########################################################################################################
 
 class EpubReader(object):
-    def __init__(self, epub_file_name):
+    DEFAULT_OPTIONS = {}
+
+    def __init__(self, epub_file_name, options = None):
         self.file_name = epub_file_name
         self.book = EpubBook()
         self.zf = None
 
         self.opf_file = ''
         self.opf_dir = ''
-        self.options = {}
+
+        self.options = dict(self.DEFAULT_OPTIONS)
+        if options:
+            self.options.update(options)
 
     def process(self):
         # should cache this html parsing so we don't do it for every plugin
@@ -971,8 +1029,8 @@ def write_epub(name, book, options = None):
 
 ## READ
 
-def read_epub(name):
-    reader = EpubReader(name)
+def read_epub(name, options = None):
+    reader = EpubReader(name, options)
 
     book = reader.load()
     reader.process()
