@@ -236,6 +236,9 @@ class EpubHtml(EpubItem):
 
             if head is not None:
                 for i in head.getchildren():
+                    if i.tag == 'title' and self.title != '':
+                        continue
+
                     _head.append(i)
 
         tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True)        
@@ -389,7 +392,7 @@ class EpubBook(object):
 
     def add_item(self, item):
         if item.media_type == '':
-            (has_guessed, media_type) = mimetypes.guess_type(item.file_name.lower())
+            (has_guessed, media_type) = mimetypes.guess_type(item.get_name().lower())
 
             if has_guessed:
                 if  media_type is not None:
@@ -425,7 +428,7 @@ class EpubBook(object):
 
     def get_item_with_href(self, href):
         for item in self.get_items():
-            if item.file_name == href:
+            if item.get_name() == href:
                 return item
 
         return None
@@ -527,7 +530,7 @@ class EpubWriter(object):
 
         for item in self.book.get_items():
             if isinstance(item, EpubNav):
-                etree.SubElement(manifest, 'item', {'href': item.file_name,
+                etree.SubElement(manifest, 'item', {'href': item.get_name(),
                                                     'id': item.id,
                                                     'media-type': item.media_type,
                                                     'properties': 'nav'})
@@ -595,7 +598,7 @@ class EpubWriter(object):
 
         # GUIDE
         # - http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6
-        
+
         if len(self.book.guide)  > 0 and self.options.get('epub2_guide'):
             guide = etree.SubElement(root, 'guide', {})
 
@@ -914,7 +917,7 @@ class EpubReader(object):
                     ei.id = r.get('id')
                     ei.file_name = unquote(r.get('href'))
                     ei.media_type = media_type
-                    ei.content = self.read_file(os.path.join(self.opf_dir, ei.file_name))
+                    ei.content = self.read_file(os.path.join(self.opf_dir, ei.get_name()))
                     ei.properties = properties
             elif media_type in IMAGE_MEDIA_TYPES:
                 ei = EpubImage()
@@ -922,7 +925,7 @@ class EpubReader(object):
                 ei.id = r.get('id')
                 ei.file_name = unquote(r.get('href'))
                 ei.media_type = media_type
-                ei.content = self.read_file(os.path.join(self.opf_dir, ei.file_name))
+                ei.content = self.read_file(os.path.join(self.opf_dir, ei.get_name()))
             else:
                 # different types
                 ei = EpubItem()
@@ -931,7 +934,7 @@ class EpubReader(object):
                 ei.file_name = unquote(r.get('href'))
                 ei.media_type = media_type
 
-                ei.content = self.read_file(os.path.join(self.opf_dir, ei.file_name))
+                ei.content = self.read_file(os.path.join(self.opf_dir, ei.get_name()))
               # r.get('properties')
 
             self.book.add_item(ei)
@@ -978,7 +981,7 @@ class EpubReader(object):
         # should read ncx or nav file
         if toc:
             try:
-                ncxFile = self.read_file(os.path.join(self.opf_dir, self.book.get_item_with_id(toc).file_name))
+                ncxFile = self.read_file(os.path.join(self.opf_dir, self.book.get_item_with_id(toc).get_name()))
             except KeyError:
                 raise EpubError(-1, 'Can not find ncx file.')
 
