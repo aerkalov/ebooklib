@@ -25,24 +25,15 @@ def tidy_cleanup(content, **extra):
         return (3, None)
 
     p.stdin.write(content)
-    p.stdin.close()
+
+    (cont, p_err) = p.communicate()
 
     # 0 - all ok
     # 1 - there were warnings
     # 2 - there were errors
     # 3 - exception
 
-    ret_code = p.wait()
-
-    cont = ''
-    while True:
-        s = p.stdout.read(1024)
-        if s == '':
-            break
-        cont += s
-
-    return (ret_code, cont)
-
+    return (p.returncode, cont)
 
 
 class TidyPlugin(BasePlugin):
