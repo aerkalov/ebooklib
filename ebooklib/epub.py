@@ -176,6 +176,12 @@ class EpubHtml(EpubItem):
         self.links = []
         self.properties = []
 
+    def is_chapter(self):
+        return True
+
+    def get_type(self):
+        return ebooklib.ITEM_DOCUMENT
+
     def set_language(self, lang):
         self.lang = lang
 
@@ -197,6 +203,31 @@ class EpubHtml(EpubItem):
 
         if item.get_type() == ebooklib.ITEM_SCRIPT:
             self.add_link(href=item.get_name(), type="text/javascript")
+
+    def get_body_content(self):
+        content = self.get_content()
+
+        try:
+            html_tree = parse_html_string(self.content)
+        except:
+            return ''
+
+        html_root = html_tree.getroottree()
+
+        if len(html_root.find('body')) != 0:
+            body = html_tree.find('body')
+
+            tree_str = etree.tostring(body, pretty_print=True, encoding='utf-8', xml_declaration=False)        
+            # this is so stupid
+            if tree_str.startswith('<body>'):
+                n = tree_str.rindex('</body>')
+
+                return tree_str[7:n]
+
+            return tree_str
+
+        return ''
+
 
     def get_content(self, default=None):
         tree = parse_string(self.book.get_template(self._template_name))
@@ -234,12 +265,13 @@ class EpubHtml(EpubItem):
                 for i in body.getchildren():
                     _body.append(i)
 
-            if head is not None:
-                for i in head.getchildren():
-                    if i.tag == 'title' and self.title != '':
-                        continue
+            # this should not be like this
+            # if head is not None:
+            #     for i in head.getchildren():
+            #         if i.tag == 'title' and self.title != '':
+            #             continue
 
-                    _head.append(i)
+            #         _head.append(i)
 
         tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
@@ -255,6 +287,9 @@ class EpubCoverHtml(EpubHtml):
 
         self.image_name = image_name
         self.is_linear = False
+
+    def is_chapter(self):
+        return False
 
     def get_content(self):
         self.content = self.book.get_template('cover')
@@ -278,6 +313,9 @@ class EpubNav(EpubHtml):
     def __init__(self, uid='nav', file_name='nav.xhtml', media_type="application/xhtml+xml"):
         super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type)
 
+    def is_chapter(self):
+        return False        
+
     def __str__(self):
         return '<EpubNav:%s:>' % (self.id, self.file_name)
 
@@ -285,6 +323,9 @@ class EpubNav(EpubHtml):
 class EpubImage(EpubItem):
     def __init__(self):
         super(EpubImage, self).__init__()
+
+    def get_type(self):
+        return ebooklib.ITEM_IMAGE
 
     def __str__(self):
         return '<EpubImage:%s:%s>' % (self.id, self.file_name)
@@ -489,8 +530,20 @@ class EpubWriter(object):
         root.attrib['prefix'] = 'rendition: http://www.ipdf.org/vocab/rendition/#'
          
         ## METADATA
-        metadata = etree.SubElement(root, 'metadata', nsmap = {'dc': NAMESPACES['DC'], 
-                                                               'opf': NAMESPACES['OPF']})
+
+
+        nsmap = {'dc': NAMESPACES['DC'], 'opf': NAMESPACES['OPF']}
+
+        # This is really not needed 
+        # problem is uppercase/lowercase
+
+        # for ns_name, values in six.iteritems(self.book.metadata):
+        #     if ns_name:
+        #         for n_id, ns_url in six.iteritems(NAMESPACES):
+        #             if ns_name == ns_url:
+        #                 nsmap[n_id.lower()] = NAMESPACES[n_id]        
+
+        metadata = etree.SubElement(root, 'metadata', nsmap = nsmap)
 
         import datetime
 
@@ -1024,7 +1077,7 @@ def write_epub(name, book, options = None):
     epub = EpubWriter(name, book, options)
 
     epub.process()
-
+    
     try:
         epub.write()
     except IOError:

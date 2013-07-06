@@ -225,4 +225,5 @@ class SyntaxPlugin(BasePlugin):
                             del _item.attrib[_attr]
 
         chapter.content = etree.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True)
-            
+        
+        return chapter.content

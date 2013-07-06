@@ -12,6 +12,7 @@ ITEM_VECTOR = 5
 ITEM_FONT = 6
 ITEM_VIDEO = 7
 ITEM_AUDIO = 8
+ITEM_DOCUMENT = 9
 
 # EXTENSION MAPPER
 EXTENSIONS = {ITEM_IMAGE: ['.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.png'],

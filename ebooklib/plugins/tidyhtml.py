@@ -53,3 +53,12 @@ class TidyPlugin(BasePlugin):
         (_, chapter.content) = tidy_cleanup(chapter.content, **self.options)
 
         return chapter.content
+
+    def html_after_read(self, book, chapter):
+        if not chapter.content:
+            return None
+
+        (_, chapter.content) = tidy_cleanup(chapter.content, **self.options)
+
+        return chapter.content
+
