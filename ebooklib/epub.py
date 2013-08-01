@@ -56,7 +56,7 @@ CONTAINER_PATH = 'META-INF/container.xml'
 CONTAINER_XML = '''<?xml version='1.0' encoding='utf-8'?>
 <container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">
   <rootfiles>
-    <rootfile media-type="application/oebps-package+xml" full-path="EPUB/content.opf"/>
+    <rootfile media-type="application/oebps-package+xml" full-path="%(folder_name)s/content.opf"/>
   </rootfiles>
 </container>
 '''
@@ -519,7 +519,8 @@ class EpubWriter(object):
                         plg.html_before_write(self.book, item)
 
     def _write_container(self):
-        self.out.writestr(CONTAINER_PATH, CONTAINER_XML)
+        container_xml = CONTAINER_XML % { 'folder_name' : self.book.FOLDER_NAME }
+        self.out.writestr(CONTAINER_PATH, container_xml)
 
     def _write_opf_file(self):
         root = etree.Element('package',
