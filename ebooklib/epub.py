@@ -565,7 +565,8 @@ class EpubWriter(object):
                     for v in values:
                         try:
                             el = etree.SubElement(metadata, 'meta', v[1])
-                            el.text = v[0]
+                            if v[0]:
+                                el.text = v[0]
                         except ValueError:
                             logging.error('Could not create metadata.')
             else:
@@ -923,7 +924,9 @@ class EpubReader(object):
             values = nsdict[ns].setdefault(tag, [])
             values.append((value, extra))
 
-        for t in metadata.iter(tag=etree.Element):
+        for t in metadata:
+            if not etree.iselement(t):
+                continue
             if t.tag == default_ns + 'meta':
                 name = t.get('name')
                 others = dict((k, v) for k, v in t.items())
