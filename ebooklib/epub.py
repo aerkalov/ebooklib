@@ -317,7 +317,7 @@ class EpubNav(EpubHtml):
         return False        
 
     def __str__(self):
-        return '<EpubNav:%s:>' % (self.id, self.file_name)
+        return '<EpubNav:%s:%s>' % (self.id, self.file_name)
 
 
 class EpubImage(EpubItem):
