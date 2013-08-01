@@ -431,6 +431,14 @@ class EpubBook(object):
 
         self.metadata[namespace][name].append(( value, others))
 
+    def get_metadata(self, namespace, name):
+        "Retrieve metadata"
+
+        if namespace in NAMESPACES:
+            namespace = NAMESPACES[namespace]
+
+        return self.metadata[namespace][name]
+
     def add_item(self, item):
         if item.media_type == '':
             (has_guessed, media_type) = mimetypes.guess_type(item.get_name().lower())
@@ -934,6 +942,14 @@ class EpubReader(object):
                 add_item(t.nsmap[t.prefix], tag, t.text, others)
 
         self.book.metadata = nsdict
+
+        titles = self.book.get_metadata('DC', 'title')
+        if len(titles) > 0:
+            self.book.title = titles[0][0]
+
+        for value, others in self.book.get_metadata("DC", "identifier"):
+            if others.get("id") == self.book.IDENTIFIER_ID:
+                self.book.uid = value
 
     def _load_manifest(self):
         for r in self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'manifest')):
