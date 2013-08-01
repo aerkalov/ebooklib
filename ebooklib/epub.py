@@ -784,16 +784,21 @@ class EpubWriter(object):
         def _create_section(itm, items, uid):
             for item in items:
                 if isinstance(item, tuple) or isinstance(item, list):
+                    section, chapters = item[0], item[1]
+
                     np = etree.SubElement(itm, 'navPoint', {'id': 'sep_%d' % uid})
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
-                    nt.text = item[0].title
+                    nt.text = section.title
 
+                    section_src = ''
+                    if chapters:
+                        section_src = chapters[0].href
                     # CAN NOT HAVE EMPTY SRC HERE
-                    nc = etree.SubElement(np, 'content', {'src': ''})
+                    nc = etree.SubElement(np, 'content', {'src': section_src})
 
                     #uid += 1
-                    uid = _create_section(np, item[1], uid+1)
+                    uid = _create_section(np, chapters, uid+1)
 
                 elif isinstance(item, Link):
                     np = etree.SubElement(itm, 'navPoint', {'id': item.uid})
