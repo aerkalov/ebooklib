@@ -246,32 +246,33 @@ class EpubHtml(EpubItem):
 
         html_root = html_tree.getroottree()
 
-        if len(html_root.find('body')) != 0:
-            body = html_tree.find('body')
-            head = html_root.find('head')
+        # create and populate head
 
-            _head = etree.SubElement(tree_root, 'head')
+        _head = etree.SubElement(tree_root, 'head')
 
-            if self.title != '':
-                _title = etree.SubElement(_head, 'title')
-                _title.text = self.title
+        if self.title != '':
+            _title = etree.SubElement(_head, 'title')
+            _title.text = self.title
 
-            for lnk in self.links:
-                _lnk = etree.SubElement(_head, 'link', lnk)        
+        for lnk in self.links:
+            _lnk = etree.SubElement(_head, 'link', lnk)
 
-            _body = etree.SubElement(tree_root, 'body')
+        # this should not be like this
+        # head = html_root.find('head')
+        # if head is not None:
+        #     for i in head.getchildren():
+        #         if i.tag == 'title' and self.title != '':
+        #             continue
+        #         _head.append(i)
 
-            if body is not None:
-                for i in body.getchildren():
-                    _body.append(i)
+        # create and populate body
 
-            # this should not be like this
-            # if head is not None:
-            #     for i in head.getchildren():
-            #         if i.tag == 'title' and self.title != '':
-            #             continue
+        _body = etree.SubElement(tree_root, 'body')
 
-            #         _head.append(i)
+        body = html_tree.find('body')
+        if body is not None:
+            for i in body.getchildren():
+                _body.append(i)
 
         tree_str = etree.tostring(tree, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
