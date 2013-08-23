@@ -350,6 +350,7 @@ class EpubBook(object):
         self.items = []
         self.spine = []
         self.guide = []
+        self.toc   = []
 
         self.IDENTIFIER_ID = 'id'
         self.FOLDER_NAME = 'EPUB'
@@ -1056,6 +1057,36 @@ class EpubReader(object):
 
         self.book.toc = _get_children(nav_map, 0, '')
 
+
+    def _parse_nav(self, data, base_path):
+        html_node = parse_html_string(data)
+        nav_node = html_node.xpath("//nav[@*='toc']")[0]
+
+        def parse_list(list_node):
+            items = []
+
+            for item_node in list_node.findall("li"):
+
+                sublist_node = item_node.find("ol")
+                link_node    = item_node.find("a")
+
+                if sublist_node is not None:
+                    title    = item_node[0].text
+                    children = parse_list(sublist_node)
+
+                    items.append((Section(title), children))
+
+                elif link_node is not None:
+                    title = link_node.text
+                    href  = os.path.normpath(os.path.join(base_path, link_node.get("href")))
+
+                    items.append(Link(href, title))
+
+            return items
+
+        self.book.toc = parse_list(nav_node.find("ol"))
+
+
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
         
@@ -1085,7 +1116,12 @@ class EpubReader(object):
         self._load_manifest()
         self._load_spine()
 
-        # should read nav file if found
+        # read nav file if found
+        #
+        if not self.book.toc:
+            nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
+            if nav_item:
+                self._parse_nav(nav_item.content, os.path.dirname(nav_item.file_name))
 
     
     def _load(self):
