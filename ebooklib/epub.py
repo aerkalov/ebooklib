@@ -1104,6 +1104,12 @@ class EpubReader(object):
             self._parse_ncx(ncxFile)
 
 
+    def _load_guide(self):
+        guide = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'guide'))
+        if guide is not None:
+            self.book.guide = [{'href': t.get('href'), 'title': t.get('title'), 'type': t.get('type')} for t in guide]
+
+
     def _load_opf_file(self):
         try:
             s = self.read_file(self.opf_file)
@@ -1115,6 +1121,7 @@ class EpubReader(object):
         self._load_metadata()
         self._load_manifest()
         self._load_spine()
+        self._load_guide()
 
         # read nav file if found
         #
