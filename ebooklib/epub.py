@@ -798,10 +798,10 @@ class EpubWriter(object):
                     nt.text = section.title
 
                     # CAN NOT HAVE EMPTY SRC HERE
-                    nc = etree.SubElement(np, 'content', {'src': ''})
+                    nc = etree.SubElement(np, 'content', {'src': section.file_name if isinstance(section, EpubHtml) else ''})
 
                     #uid += 1
-                    nc = etree.SubElement(np, 'content', {'src': section.file_name if isinstance(section, EpubHtml) else ''})
+                    uid = _create_section(np, subsection, uid+1)
 
                 elif isinstance(item, Link):
                     _parent = itm
