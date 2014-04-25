@@ -1,0 +1,213 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ebooklib.plugins.booktype &mdash; EBookLib 0.15 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.15',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="EBookLib 0.15 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EBookLib 0.15 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for ebooklib.plugins.booktype</h1><div class="highlight"><pre>
+<span class="c"># This file is part of EbookLib.</span>
+<span class="c"># Copyright (c) 2013 Aleksandar Erkalovic &lt;aerkalov@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># EbookLib is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU Affero General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># EbookLib is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU Affero General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU Affero General Public License</span>
+<span class="c"># along with EbookLib.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="kn">from</span> <span class="nn">ebooklib.plugins.base</span> <span class="kn">import</span> <span class="n">BasePlugin</span>
+<span class="kn">from</span> <span class="nn">ebooklib.utils</span> <span class="kn">import</span> <span class="n">parse_html_string</span>
+
+<div class="viewcode-block" id="BooktypeLinks"><a class="viewcode-back" href="../../../ebooklib.plugins.html#ebooklib.plugins.booktype.BooktypeLinks">[docs]</a><span class="k">class</span> <span class="nc">BooktypeLinks</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
+    <span class="n">NAME</span> <span class="o">=</span> <span class="s">&#39;Booktype Links&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">booktype_book</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">booktype_book</span> <span class="o">=</span> <span class="n">booktype_book</span>
+
+<div class="viewcode-block" id="BooktypeLinks.html_before_write"><a class="viewcode-back" href="../../../ebooklib.plugins.html#ebooklib.plugins.booktype.BooktypeLinks.html_before_write">[docs]</a>    <span class="k">def</span> <span class="nf">html_before_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">book</span><span class="p">,</span> <span class="n">chapter</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span>  <span class="n">etree</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">urlparse</span> <span class="kn">import</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">urljoin</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">urljoin</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">parse_html_string</span><span class="p">(</span><span class="n">chapter</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroottree</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;body&#39;</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;body&#39;</span><span class="p">)</span>
+
+            <span class="c"># should also be aware to handle</span>
+            <span class="c"># ../chapter/</span>
+            <span class="c"># ../chapter/#reference</span>
+            <span class="c"># ../chapter#reference</span>
+
+            <span class="k">for</span> <span class="n">_link</span> <span class="ow">in</span> <span class="n">body</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s">&#39;//a&#39;</span><span class="p">):</span>
+                <span class="c"># This is just temporary for the footnotes</span>
+                <span class="k">if</span> <span class="n">_link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;InsertNoteID&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">_ln</span> <span class="o">=</span> <span class="n">_link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+                    <span class="n">i</span> <span class="o">=</span> <span class="n">_ln</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;#&#39;</span><span class="p">)</span>                                       
+                    <span class="n">_link</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="n">_ln</span><span class="p">[</span><span class="n">i</span><span class="p">:]);</span>
+
+                    <span class="k">continue</span>
+
+                <span class="n">_u</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">_link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+
+                <span class="c"># Let us care only for internal links at the moment</span>
+                <span class="k">if</span> <span class="n">_u</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">_u</span><span class="o">.</span><span class="n">path</span> <span class="o">!=</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+                        <span class="n">_link</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.xhtml&#39;</span> <span class="o">%</span> <span class="n">_u</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                    
+                    <span class="k">if</span> <span class="n">_u</span><span class="o">.</span><span class="n">fragment</span> <span class="o">!=</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+                        <span class="n">_link</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="n">urljoin</span><span class="p">(</span><span class="n">_link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">),</span> <span class="s">&#39;#</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">_u</span><span class="o">.</span><span class="n">fragment</span><span class="p">))</span>
+
+                    <span class="k">if</span> <span class="n">_link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">_link</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="n">_link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">))</span>
+                        <span class="n">etree</span><span class="o">.</span><span class="n">strip_attributes</span><span class="p">(</span><span class="n">_link</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">)</span>
+                    
+        <span class="n">chapter</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+            
+
+
+</div></div>
+<div class="viewcode-block" id="BooktypeFootnotes"><a class="viewcode-back" href="../../../ebooklib.plugins.html#ebooklib.plugins.booktype.BooktypeFootnotes">[docs]</a><span class="k">class</span> <span class="nc">BooktypeFootnotes</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
+    <span class="n">NAME</span> <span class="o">=</span> <span class="s">&#39;Booktype Footnotes&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">booktype_book</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">booktype_book</span> <span class="o">=</span> <span class="n">booktype_book</span>
+
+<div class="viewcode-block" id="BooktypeFootnotes.html_before_write"><a class="viewcode-back" href="../../../ebooklib.plugins.html#ebooklib.plugins.booktype.BooktypeFootnotes.html_before_write">[docs]</a>    <span class="k">def</span> <span class="nf">html_before_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">book</span><span class="p">,</span> <span class="n">chapter</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
+
+        <span class="kn">from</span> <span class="nn">ebooklib</span> <span class="kn">import</span> <span class="n">epub</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">parse_html_string</span><span class="p">(</span><span class="n">chapter</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroottree</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;body&#39;</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;body&#39;</span><span class="p">)</span>
+
+            <span class="c"># &lt;span id=&quot;InsertNoteID_1_marker1&quot; class=&quot;InsertNoteMarker&quot;&gt;&lt;sup&gt;&lt;a href=&quot;#InsertNoteID_1&quot;&gt;1&lt;/a&gt;&lt;/sup&gt;&lt;span&gt;</span>
+            <span class="c"># &lt;ol id=&quot;InsertNote_NoteList&quot;&gt;&lt;li id=&quot;InsertNoteID_1&quot;&gt;prvi footnote &lt;span id=&quot;InsertNoteID_1_LinkBacks&quot;&gt;&lt;sup&gt;&lt;a href=&quot;#InsertNoteID_1_marker1&quot;&gt;^&lt;/a&gt;&lt;/sup&gt;&lt;/span&gt;&lt;/li&gt;</span>
+
+            <span class="c"># &lt;a epub:type=&quot;noteref&quot; href=&quot;#n1&quot;&gt;1&lt;/a&gt;&lt;/p&gt;</span>
+            <span class="c"># &lt;aside epub:type=&quot;footnote&quot; id=&quot;n1&quot;&gt;&lt;p&gt;These have been corrected in this EPUB3 edition.&lt;/p&gt;&lt;/aside&gt;</span>
+            <span class="k">for</span> <span class="n">footnote</span> <span class="ow">in</span> <span class="n">body</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s">&#39;//span[@class=&quot;InsertNoteMarker&quot;]&#39;</span><span class="p">):</span>
+                <span class="n">footnote_id</span> <span class="o">=</span> <span class="n">footnote</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">8</span><span class="p">]</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="n">footnote</span><span class="o">.</span><span class="n">getchildren</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">getchildren</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                
+                <span class="n">footnote_text</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s">&#39;//li[@id=&quot;</span><span class="si">%s</span><span class="s">&quot;]&#39;</span> <span class="o">%</span> <span class="n">footnote_id</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                
+                <span class="n">a</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s">&#39;{</span><span class="si">%s</span><span class="s">}type&#39;</span> <span class="o">%</span> <span class="n">epub</span><span class="o">.</span><span class="n">NAMESPACES</span><span class="p">[</span><span class="s">&#39;EPUB&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="s">&#39;noteref&#39;</span>
+                <span class="n">ftn</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="s">&#39;aside&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;id&#39;</span><span class="p">:</span> <span class="n">footnote_id</span><span class="p">})</span>
+                <span class="n">ftn</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s">&#39;{</span><span class="si">%s</span><span class="s">}type&#39;</span> <span class="o">%</span> <span class="n">epub</span><span class="o">.</span><span class="n">NAMESPACES</span><span class="p">[</span><span class="s">&#39;EPUB&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="s">&#39;footnote&#39;</span>
+                <span class="n">ftn_p</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">ftn</span><span class="p">,</span> <span class="s">&#39;p&#39;</span><span class="p">)</span>
+                <span class="n">ftn_p</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">footnote_text</span><span class="o">.</span><span class="n">text</span>
+
+            <span class="n">old_footnote</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s">&#39;//ol[@id=&quot;InsertNote_NoteList&quot;]&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">old_footnote</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">body</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">old_footnote</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            
+        <span class="n">chapter</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>        </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EBookLib 0.15 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Aleksandar Erkalovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
