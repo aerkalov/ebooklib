@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="EBookLib 0.15 documentation" href="#" />
-    <link rel="next" title="Modules" href="modules.html" /> 
+    <link rel="next" title="ebooklib Package" href="ebooklib.html" /> 
   </head>
   <body>
     <div class="related">
@@ -39,7 +39,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="Modules"
+          <a href="ebooklib.html" title="ebooklib Package"
              accesskey="N">next</a> |</li>
         <li><a href="#">EBookLib 0.15 documentation</a> &raquo;</li> 
       </ul>
@@ -57,13 +57,17 @@
 <p>Homepage: <a class="reference external" href="https://github.com/aerkalov/ebooklib/">https://github.com/aerkalov/ebooklib/</a></p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="ebooklib.html">ebooklib Package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="ebooklib.html#id1"><tt class="docutils literal"><span class="pre">ebooklib</span></tt> Package</a></li>
-<li class="toctree-l3"><a class="reference internal" href="ebooklib.html#module-ebooklib.epub"><tt class="docutils literal"><span class="pre">epub</span></tt> Module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="ebooklib.html#module-ebooklib.utils"><tt class="docutils literal"><span class="pre">utils</span></tt> Module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="ebooklib.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="ebooklib.plugins.html">plugins Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ebooklib.html">ebooklib Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ebooklib.html#id1"><tt class="docutils literal"><span class="pre">ebooklib</span></tt> Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ebooklib.html#module-ebooklib.epub"><tt class="docutils literal"><span class="pre">epub</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ebooklib.html#module-ebooklib.utils"><tt class="docutils literal"><span class="pre">utils</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ebooklib.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ebooklib.plugins.html">plugins Package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ebooklib.plugins.html#module-ebooklib.plugins.base"><tt class="docutils literal"><span class="pre">base</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ebooklib.plugins.html#module-ebooklib.plugins.booktype"><tt class="docutils literal"><span class="pre">booktype</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ebooklib.plugins.html#module-ebooklib.plugins.sourcecode"><tt class="docutils literal"><span class="pre">sourcecode</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ebooklib.plugins.html#module-ebooklib.plugins.standard"><tt class="docutils literal"><span class="pre">standard</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ebooklib.plugins.html#module-ebooklib.plugins.tidyhtml"><tt class="docutils literal"><span class="pre">tidyhtml</span></tt> Module</a></li>
 </ul>
 </li>
 </ul>
@@ -71,6 +75,67 @@
 </ul>
 </li>
 </ul>
+</div>
+</div>
+<div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="reading">
+<h2>Reading<a class="headerlink" href="#reading" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">ebooklib</span> <span class="kn">import</span> <span class="n">epub</span>
+
+<span class="n">book</span> <span class="o">=</span> <span class="n">epub</span><span class="o">.</span><span class="n">read_epub</span><span class="p">(</span><span class="s">&#39;test.epub&#39;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">book</span><span class="o">.</span><span class="n">get_items_of_type</span><span class="p">(</span><span class="n">epub</span><span class="o">.</span><span class="n">ITEM_IMAGE</span><span class="p">):</span>
+    <span class="k">print</span> <span class="n">image</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="writing">
+<h2>Writing<a class="headerlink" href="#writing" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">ebooklib</span> <span class="kn">import</span> <span class="n">epub</span>
+
+<span class="n">book</span> <span class="o">=</span> <span class="n">epub</span><span class="o">.</span><span class="n">EpubBook</span><span class="p">()</span>
+
+<span class="c"># set metadata</span>
+<span class="n">book</span><span class="o">.</span><span class="n">set_identifier</span><span class="p">(</span><span class="s">&#39;id123456&#39;</span><span class="p">)</span>
+<span class="n">book</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;Sample book&#39;</span><span class="p">)</span>
+<span class="n">book</span><span class="o">.</span><span class="n">set_language</span><span class="p">(</span><span class="s">&#39;en&#39;</span><span class="p">)</span>
+
+<span class="n">book</span><span class="o">.</span><span class="n">add_author</span><span class="p">(</span><span class="s">&#39;Author Authorowski&#39;</span><span class="p">)</span>
+<span class="n">book</span><span class="o">.</span><span class="n">add_author</span><span class="p">(</span><span class="s">&#39;Danko Bananko&#39;</span><span class="p">,</span> <span class="n">file_as</span><span class="o">=</span><span class="s">&#39;Gospodin Danko Bananko&#39;</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="s">&#39;ill&#39;</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="s">&#39;coauthor&#39;</span><span class="p">)</span>
+
+<span class="c"># create chapter</span>
+<span class="n">c1</span> <span class="o">=</span> <span class="n">epub</span><span class="o">.</span><span class="n">EpubHtml</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Intro&#39;</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="s">&#39;chap_01.xhtml&#39;</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="s">&#39;hr&#39;</span><span class="p">)</span>
+<span class="n">c1</span><span class="o">.</span><span class="n">content</span><span class="o">=</span><span class="s">u&#39;&lt;h1&gt;Intro heading&lt;/h1&gt;&lt;p&gt;Žaba je skočila u baru.&lt;/p&gt;&#39;</span>
+
+<span class="c"># add chapter</span>
+<span class="n">book</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="n">c1</span><span class="p">)</span>
+
+<span class="c"># define Table Of Contents</span>
+<span class="n">book</span><span class="o">.</span><span class="n">toc</span> <span class="o">=</span> <span class="p">(</span><span class="n">epub</span><span class="o">.</span><span class="n">Link</span><span class="p">(</span><span class="s">&#39;chap_01.xhtml&#39;</span><span class="p">,</span> <span class="s">&#39;Introduction&#39;</span><span class="p">,</span> <span class="s">&#39;intro&#39;</span><span class="p">),</span>
+             <span class="p">(</span><span class="n">epub</span><span class="o">.</span><span class="n">Section</span><span class="p">(</span><span class="s">&#39;Simple book&#39;</span><span class="p">),</span>
+             <span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="p">))</span>
+            <span class="p">)</span>
+
+<span class="c"># add default NCX and Nav file</span>
+<span class="n">book</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="n">epub</span><span class="o">.</span><span class="n">EpubNcx</span><span class="p">())</span>
+<span class="n">book</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="n">epub</span><span class="o">.</span><span class="n">EpubNav</span><span class="p">())</span>
+
+<span class="c"># define CSS style</span>
+<span class="n">style</span> <span class="o">=</span> <span class="s">&#39;BODY {color: white;}&#39;</span>
+<span class="n">nav_css</span> <span class="o">=</span> <span class="n">epub</span><span class="o">.</span><span class="n">EpubItem</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="s">&quot;style_nav&quot;</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="s">&quot;style/nav.css&quot;</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="s">&quot;text/css&quot;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
+
+<span class="c"># add CSS file</span>
+<span class="n">book</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="n">nav_css</span><span class="p">)</span>
+
+<span class="c"># basic spine</span>
+<span class="n">book</span><span class="o">.</span><span class="n">spine</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;nav&#39;</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span>
+
+<span class="c"># write to the file</span>
+<span class="n">epub</span><span class="o">.</span><span class="n">write_epub</span><span class="p">(</span><span class="s">&#39;test.epub&#39;</span><span class="p">,</span> <span class="n">book</span><span class="p">,</span> <span class="p">{})</span>
+</pre></div>
+</div>
+<p>Further examples are available in <a class="reference external" href="https://github.com/aerkalov/ebooklib/tree/master/samples">https://github.com/aerkalov/ebooklib/tree/master/samples</a></p>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
@@ -93,12 +158,17 @@
 <li><a class="reference internal" href="#">Welcome to EBookLib&#8217;s documentation!</a><ul>
 </ul>
 </li>
+<li><a class="reference internal" href="#usage">Usage</a><ul>
+<li><a class="reference internal" href="#reading">Reading</a></li>
+<li><a class="reference internal" href="#writing">Writing</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 
   <h4>Next topic</h4>
-  <p class="topless"><a href="modules.html"
-                        title="next chapter">Modules</a></p>
+  <p class="topless"><a href="ebooklib.html"
+                        title="next chapter">ebooklib Package</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/index.txt"
@@ -131,7 +201,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="modules.html" title="Modules"
+          <a href="ebooklib.html" title="ebooklib Package"
              >next</a> |</li>
         <li><a href="#">EBookLib 0.15 documentation</a> &raquo;</li> 
       </ul>
