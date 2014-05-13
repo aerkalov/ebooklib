@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# EBookLib documentation build configuration file, created by
+# EbookLib documentation build configuration file, created by
 # sphinx-quickstart on Fri Apr 25 11:49:49 2014.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -40,8 +40,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'EBookLib'
-copyright = u'2013, Aleksandar Erkalovic'
+project = u'EbookLib'
+copyright = u'2014, Aleksandar Erkalovic'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'EBookLibdoc'
+htmlhelp_basename = 'EbookLibdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'EBookLib.tex', u'EBookLib Documentation',
+  ('index', 'EbookLib.tex', u'EbookLib Documentation',
    u'Aleksandar Erkalovic', 'manual'),
 ]
 
@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'ebooklib', u'EBookLib Documentation',
+    ('index', 'ebooklib', u'EbookLib Documentation',
      [u'Aleksandar Erkalovic'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'EBookLib', u'EBookLib Documentation',
-   u'Aleksandar Erkalovic', 'EBookLib', 'Python library for EPUB and Kindle formats.',
+  ('index', 'EbookLib', u'EbookLib Documentation',
+   u'Aleksandar Erkalovic', 'EbookLib', 'Python library for EPUB and Kindle formats.',
    'Miscellaneous'),
 ]
 
@@ -245,10 +245,10 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'EBookLib'
+epub_title = u'EbookLib'
 epub_author = u'Aleksandar Erkalovic'
 epub_publisher = u'Aleksandar Erkalovic'
-epub_copyright = u'2013, Aleksandar Erkalovic'
+epub_copyright = u'2014, Aleksandar Erkalovic'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

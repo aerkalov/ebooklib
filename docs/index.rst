@@ -1,9 +1,9 @@
-.. EBookLib documentation master file, created by
+.. EbookLib documentation master file, created by
    sphinx-quickstart on Fri Apr 25 11:49:49 2014.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to EBookLib's documentation!
+Welcome to EbookLib's documentation!
 ====================================
 
 EbookLib is a Python library for managing EPUB2/EPUB3 and Kindle files. It's capable of reading and writing EPUB files programmatically (Kindle support is under development).
