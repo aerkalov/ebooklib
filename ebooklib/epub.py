@@ -713,7 +713,10 @@ class EpubWriter(object):
             for item in items:
                 if isinstance(item, tuple) or isinstance(item, list):
                     li = etree.SubElement(ol, 'li')
-                    a = etree.SubElement(li, 'span')
+                    if isinstance(item[0], EpubHtml):
+                        a = etree.SubElement(li, 'a', {'href': item[0].file_name})
+                    else:
+                        a = etree.SubElement(li, 'span')
                     a.text = item[0].title
 
                     _create_section(li, item[1])
@@ -789,13 +792,13 @@ class EpubWriter(object):
                 if isinstance(item, tuple) or isinstance(item, list):
                     section, subsection = item[0], item[1]
 
-                    np = etree.SubElement(itm, 'navPoint', {'id': 'sep_%d' % uid})
+                    np = etree.SubElement(itm, 'navPoint', {'id': section.get_id() if isinstance(section, EpubHtml) else 'sep_%d' % uid})
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
                     nt.text = section.title
 
                     # CAN NOT HAVE EMPTY SRC HERE
-                    nc = etree.SubElement(np, 'content', {'src': ''})
+                    nc = etree.SubElement(np, 'content', {'src': section.file_name if isinstance(section, EpubHtml) else ''})
 
                     #uid += 1
                     uid = _create_section(np, subsection, uid+1)
