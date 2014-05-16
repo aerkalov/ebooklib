@@ -111,12 +111,13 @@ class EpubException(Exception):
 ## Items
 
 class EpubItem(object):
-    def __init__(self, uid=None, file_name='', media_type='', content=''):
+    def __init__(self, uid=None, file_name='', media_type='', content='', manifest=True):
         self.id = uid
         self.file_name = file_name
         self.media_type = media_type
         self.content = content
         self.is_linear = True
+        self.manifest = manifest
 
         self.book = None
 
@@ -250,12 +251,20 @@ class EpubHtml(EpubItem):
 
         _head = etree.SubElement(tree_root, 'head')
 
+        if hasattr(self, 'viewport'):
+            etree.SubElement(_head, 'meta', self.viewport)
+        elif hasattr(self.book, 'global_viewport'):
+            etree.SubElement(_head, 'meta', self.book.global_viewport)
+
         if self.title != '':
             _title = etree.SubElement(_head, 'title')
             _title.text = self.title
 
         for lnk in self.links:
-            _lnk = etree.SubElement(_head, 'link', lnk)
+            if lnk.get('type', '') == 'text/javascript':
+                _script = etree.SubElement(_head, 'script', lnk).text = ''
+            else:
+                _lnk = etree.SubElement(_head, 'link', lnk)
 
         # this should not be like this
         # head = html_root.find('head')
@@ -351,6 +360,7 @@ class EpubBook(object):
         self.spine = []
         self.guide = []
         self.toc   = []
+        self.bindings   = []
 
         self.IDENTIFIER_ID = 'id'
         self.FOLDER_NAME = 'EPUB'
@@ -538,7 +548,7 @@ class EpubWriter(object):
                               'unique-identifier' : self.book.IDENTIFIER_ID,
                               'version' : '3.0'})
 
-        root.attrib['prefix'] = 'rendition: http://www.ipdf.org/vocab/rendition/#'
+        root.attrib['prefix'] = 'rendition: http://www.idpf.org/vocab/rendition/#'
          
         ## METADATA
 
@@ -594,6 +604,9 @@ class EpubWriter(object):
         # cover-image
 
         for item in self.book.get_items():
+            if not item.manifest:
+                continue
+
             if isinstance(item, EpubNav):
                 etree.SubElement(manifest, 'item', {'href': item.get_name(),
                                                     'id': item.id,
@@ -681,6 +694,11 @@ class EpubWriter(object):
                                                             'title': _title,
                                                             'href': _href})
 
+        if len(self.book.bindings) > 0:
+            bindings = etree.SubElement(root, 'bindings', {})
+            for item in self.book.bindings:
+                etree.SubElement(bindings, 'mediaType', item)
+
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)        
 
         self.out.writestr('%s/content.opf' % self.book.FOLDER_NAME, tree_str)
@@ -695,6 +713,11 @@ class EpubWriter(object):
 
 
         head = etree.SubElement(root, 'head')
+        if hasattr(self, 'viewport'):
+            etree.SubElement(head, 'meta', self.viewport)
+        elif hasattr(self.book, 'global_viewport'):
+            etree.SubElement(head, 'meta', self.book.global_viewport)
+
         title = etree.SubElement(head, 'title')
         title.text = self.book.title
 
@@ -847,8 +870,10 @@ class EpubWriter(object):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_ncx())
             elif isinstance(item, EpubNav):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_nav(item))
-            else:
+            elif item.manifest:
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), item.get_content())
+            else:
+                self.out.writestr('%s' % (item.file_name), item.get_content())
 
     def write(self):
         # check for the option allowZip64
