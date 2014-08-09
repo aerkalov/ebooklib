@@ -556,10 +556,13 @@ class EpubWriter(object):
 
         metadata = etree.SubElement(root, 'metadata', nsmap = nsmap)
 
-        import datetime
-
         el = etree.SubElement(metadata, 'meta', {'property':'dcterms:modified'})
-        el.text = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+        if 'mtime' in self.options:
+            mtime = self.options['mtime']
+        else:
+            import datetime
+            mtime = datetime.datetime.now()
+        el.text = mtime.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         for ns_name, values in six.iteritems(self.book.metadata):
             if ns_name == NAMESPACES['OPF']:
