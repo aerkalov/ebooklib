@@ -36,6 +36,7 @@ from ebooklib.utils import parse_string, parse_html_string
 
 # This really should not be here
 mimetypes.init()
+mimetypes.add_type('application/xhtml+xml', '.xhtml')
 
 
 # Version of EPUB library
