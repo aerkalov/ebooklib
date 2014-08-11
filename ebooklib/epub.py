@@ -36,6 +36,7 @@ from ebooklib.utils import parse_string, parse_html_string
 
 # This really should not be here
 mimetypes.init()
+mimetypes.add_type('application/xhtml+xml', '.xhtml')
 
 
 # Version of EPUB library
@@ -450,9 +451,6 @@ class EpubBook(object):
                     item.media_type = media_type
                 else:
                     item.media_type = has_guessed
-            elif item.get_name().lower().endswith('.xhtml'):
-                # mimetypes library isn't aware of xhtml (as of 08/11/2014)
-                item.media_type = 'application/xhtml+xml'
             else:
                 item.media_type = 'application/octet-stream'
 
