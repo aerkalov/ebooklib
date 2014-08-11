@@ -20,6 +20,7 @@ import io
 import six
 import mimetypes
 import logging
+import uuid
 import posixpath as zip_path
 
 try:
@@ -351,7 +352,6 @@ class EpubBook(object):
     def reset(self):
         "Initialises all needed variables to default values"
 
-        self.uid = ''
         self.metadata = {}
         self.items = []
         self.spine = []
@@ -376,13 +376,16 @@ class EpubBook(object):
 
         self.add_metadata('OPF', 'generator', '', {'name': 'generator', 'content': 'Ebook-lib %s' % '.'.join([str(s) for s in VERSION])})
 
+        # default to using a randomly-unique identifier if one is not specified manually
+        self.set_identifier(str(uuid.uuid4()))
+
 
     def set_identifier(self, uid):
         "Sets unique id for this epub"
 
         self.uid = uid
 
-        self.add_metadata('DC', 'identifier', self.uid, {'id': self.IDENTIFIER_ID})
+        self.set_unique_metadata('DC', 'identifier', self.uid, {'id': self.IDENTIFIER_ID})
 
     def set_title(self, title):
         "Set title. You can set multiple titles."
@@ -447,6 +450,17 @@ class EpubBook(object):
             namespace = NAMESPACES[namespace]
 
         return self.metadata[namespace][name]
+
+    def set_unique_metadata(self, namespace, name, value, others = None):
+        "Add metadata if metadata with this identifier does not already exist, otherwise update existing metadata."
+        
+        if namespace in NAMESPACES:
+            namespace = NAMESPACES[namespace]
+
+        if namespace in self.metadata and name in self.metadata[namespace]:
+            self.metadata[namespace][name] = [(value, others)]
+        else:
+            self.add_metadata(namespace, name, value, others)
 
     def add_item(self, item):
         if item.media_type == '':
