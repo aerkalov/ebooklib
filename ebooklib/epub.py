@@ -941,7 +941,7 @@ class EpubReader(object):
             values.append((value, extra))
 
         for t in metadata:
-            if not etree.iselement(t):
+            if not etree.iselement(t) or t.tag is etree.Comment:
                 continue
             if t.tag == default_ns + 'meta':
                 name = t.get('name')
