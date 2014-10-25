@@ -202,7 +202,7 @@ class EpubHtml(EpubItem):
             self.add_link(href=item.get_name(), rel="stylesheet", type="text/css")
 
         if item.get_type() == ebooklib.ITEM_SCRIPT:
-            self.add_link(href=item.get_name(), type="text/javascript")
+            self.add_link(src=item.get_name(), type="text/javascript")
 
     def get_body_content(self):
         content = self.get_content()
@@ -255,7 +255,12 @@ class EpubHtml(EpubItem):
             _title.text = self.title
 
         for lnk in self.links:
-            _lnk = etree.SubElement(_head, 'link', lnk)
+            if lnk.get("type") == "text/javascript":
+                _lnk = etree.SubElement(_head, 'script', lnk)
+                # force <script></script>
+                _lnk.text = ''
+            else:
+                _lnk = etree.SubElement(_head, 'link', lnk)
 
         # this should not be like this
         # head = html_root.find('head')
