@@ -356,6 +356,7 @@ class EpubBook(object):
         self.spine = []
         self.guide = []
         self.toc   = []
+        self.bindings = []
 
         self.IDENTIFIER_ID = 'id'
         self.FOLDER_NAME = 'EPUB'
@@ -688,6 +689,10 @@ class EpubWriter(object):
                 ref = etree.SubElement(guide, 'reference', {'type': item.get('type', ''),
                                                             'title': _title,
                                                             'href': _href})
+        if len(self.book.bindings) > 0:
+            bindings = etree.SubElement(root, 'bindings', {})
+            for item in self.book.bindings:
+                etree.SubElement(bindings, 'mediaType', item)
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)
 
