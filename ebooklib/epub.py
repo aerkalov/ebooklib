@@ -262,13 +262,12 @@ class EpubHtml(EpubItem):
             else:
                 _lnk = etree.SubElement(_head, 'link', lnk)
 
-        # this should not be like this
-        # head = html_root.find('head')
-        # if head is not None:
-        #     for i in head.getchildren():
-        #         if i.tag == 'title' and self.title != '':
-        #             continue
-        #         _head.append(i)
+        head = html_root.find('head')
+        if head is not None:
+            for i in head.getchildren():
+                if i.tag == 'title' and self.title != '':
+                    continue
+                _head.append(i)
 
         # create and populate body
 
