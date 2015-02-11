@@ -749,6 +749,13 @@ class EpubWriter(object):
         # - http://www.idpf.org/epub/30/spec/epub30-contentdocs.html#sec-xhtml-nav-def-types-landmarks
 
         if len(self.book.guide) > 0 and self.options.get('epub3_landmark'):
+
+            # Epub2 guide types do not map completely to epub3 landmark types. 
+            guideToLandscapeMap = {
+                'notes': 'rearnotes',
+                'text': 'bodymatter'
+            }
+
             guide_nav  = etree.SubElement(body, 'nav',  {'{%s}type' % NAMESPACES['EPUB']: 'landmarks'})
 
             guide_content_title = etree.SubElement(guide_nav, 'h2')
@@ -768,7 +775,8 @@ class EpubWriter(object):
                     _href = elem.get('href', '')
                     _title = elem.get('title', '')
 
-                a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: elem.get('type', ''), 'href': _href})
+                guideType = elem.get('type', '') 
+                a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: guideToLandscapeMap.get(guideType, guideType), 'href': _href})
                 a_item.text = _title
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)
