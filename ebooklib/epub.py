@@ -574,6 +574,8 @@ class EpubWriter(object):
             if ns_name == NAMESPACES['OPF']:
                 for values in values.values():
                     for v in values:
+                        if 'property' in v[1] and v[1]['property'] == "dcterms:modified":
+                            continue
                         try:
                             el = etree.SubElement(metadata, 'meta', v[1])
                             if v[0]:
