@@ -20,6 +20,7 @@ import io
 import six
 import mimetypes
 import logging
+import uuid
 import posixpath as zip_path
 
 try:
@@ -36,6 +37,7 @@ from ebooklib.utils import parse_string, parse_html_string
 
 # This really should not be here
 mimetypes.init()
+mimetypes.add_type('application/xhtml+xml', '.xhtml')
 
 
 # Version of EPUB library
@@ -111,12 +113,13 @@ class EpubException(Exception):
 ## Items
 
 class EpubItem(object):
-    def __init__(self, uid=None, file_name='', media_type='', content=''):
+    def __init__(self, uid=None, file_name='', media_type='', content='', manifest=True):
         self.id = uid
         self.file_name = file_name
         self.media_type = media_type
         self.content = content
         self.is_linear = True
+        self.manifest = manifest
 
         self.book = None
 
@@ -350,7 +353,6 @@ class EpubBook(object):
     def reset(self):
         "Initialises all needed variables to default values"
 
-        self.uid = ''
         self.metadata = {}
         self.items = []
         self.spine = []
@@ -375,13 +377,16 @@ class EpubBook(object):
 
         self.add_metadata('OPF', 'generator', '', {'name': 'generator', 'content': 'Ebook-lib %s' % '.'.join([str(s) for s in VERSION])})
 
+        # default to using a randomly-unique identifier if one is not specified manually
+        self.set_identifier(str(uuid.uuid4()))
+
 
     def set_identifier(self, uid):
         "Sets unique id for this epub"
 
         self.uid = uid
 
-        self.add_metadata('DC', 'identifier', self.uid, {'id': self.IDENTIFIER_ID})
+        self.set_unique_metadata('DC', 'identifier', self.uid, {'id': self.IDENTIFIER_ID})
 
     def set_title(self, title):
         "Set title. You can set multiple titles."
@@ -446,6 +451,17 @@ class EpubBook(object):
             namespace = NAMESPACES[namespace]
 
         return self.metadata[namespace][name]
+
+    def set_unique_metadata(self, namespace, name, value, others = None):
+        "Add metadata if metadata with this identifier does not already exist, otherwise update existing metadata."
+        
+        if namespace in NAMESPACES:
+            namespace = NAMESPACES[namespace]
+
+        if namespace in self.metadata and name in self.metadata[namespace]:
+            self.metadata[namespace][name] = [(value, others)]
+        else:
+            self.add_metadata(namespace, name, value, others)
 
     def add_item(self, item):
         if item.media_type == '':
@@ -603,6 +619,9 @@ class EpubWriter(object):
         # cover-image
 
         for item in self.book.get_items():
+            if not item.manifest:
+                continue
+
             if isinstance(item, EpubNav):
                 etree.SubElement(manifest, 'item', {'href': item.get_name(),
                                                     'id': item.id,
@@ -749,6 +768,13 @@ class EpubWriter(object):
         # - http://www.idpf.org/epub/30/spec/epub30-contentdocs.html#sec-xhtml-nav-def-types-landmarks
 
         if len(self.book.guide) > 0 and self.options.get('epub3_landmark'):
+
+            # Epub2 guide types do not map completely to epub3 landmark types. 
+            guide_to_landscape_map = {
+                'notes': 'rearnotes',
+                'text': 'bodymatter'
+            }
+
             guide_nav  = etree.SubElement(body, 'nav',  {'{%s}type' % NAMESPACES['EPUB']: 'landmarks'})
 
             guide_content_title = etree.SubElement(guide_nav, 'h2')
@@ -768,7 +794,8 @@ class EpubWriter(object):
                     _href = elem.get('href', '')
                     _title = elem.get('title', '')
 
-                a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: elem.get('type', ''), 'href': _href})
+                guide_type = elem.get('type', '') 
+                a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type), 'href': _href})
                 a_item.text = _title
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)
@@ -860,8 +887,10 @@ class EpubWriter(object):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_ncx())
             elif isinstance(item, EpubNav):
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), self._get_nav(item))
-            else:
+            elif item.manifest:
                 self.out.writestr('%s/%s' % (self.book.FOLDER_NAME, item.file_name), item.get_content())
+            else:
+                self.out.writestr('%s' % item.file_name, item.get_content())
 
     def write(self):
         # check for the option allowZip64
