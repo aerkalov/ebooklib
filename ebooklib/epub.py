@@ -14,9 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import zipfile
-import io
 import six
 import mimetypes
 import logging
@@ -380,6 +378,10 @@ class EpubBook(object):
         # default to using a randomly-unique identifier if one is not specified manually
         self.set_identifier(str(uuid.uuid4()))
 
+        # custom prefixes and namespaces to be set to the content.opf doc
+        self.prefixes = []
+        self.namespaces = {}
+
 
     def set_identifier(self, uid):
         "Sets unique id for this epub"
@@ -454,7 +456,7 @@ class EpubBook(object):
 
     def set_unique_metadata(self, namespace, name, value, others = None):
         "Add metadata if metadata with this identifier does not already exist, otherwise update existing metadata."
-        
+
         if namespace in NAMESPACES:
             namespace = NAMESPACES[namespace]
 
@@ -468,7 +470,7 @@ class EpubBook(object):
             (has_guessed, media_type) = mimetypes.guess_type(item.get_name().lower())
 
             if has_guessed:
-                if  media_type is not None:
+                if media_type is not None:
                     item.media_type = media_type
                 else:
                     item.media_type = has_guessed
@@ -521,6 +523,12 @@ class EpubBook(object):
     def get_template(self, name):
         return self.templates.get(name)
 
+    def add_prefix(self, name, uri):
+        """Appends custom prefix to be added to the content.opf document"""
+
+        self.prefixes.append('%s: %s' % (name, uri))
+
+
 
 ###########################################################################################################
 
@@ -530,7 +538,7 @@ class EpubWriter(object):
                        'landmark_title': 'Guide'
                       }
 
-    def __init__(self, name, book, options = None):
+    def __init__(self, name, book, options=None):
         self.file_name = name
         self.book = book
 
@@ -551,21 +559,22 @@ class EpubWriter(object):
                         plg.html_before_write(self.book, item)
 
     def _write_container(self):
-        container_xml = CONTAINER_XML % { 'folder_name' : self.book.FOLDER_NAME }
+        container_xml = CONTAINER_XML % {'folder_name': self.book.FOLDER_NAME}
         self.out.writestr(CONTAINER_PATH, container_xml)
 
     def _write_opf_file(self):
         root = etree.Element('package',
-                             {'xmlns' : NAMESPACES['OPF'],
-                              'unique-identifier' : self.book.IDENTIFIER_ID,
-                              'version' : '3.0'})
+                             {'xmlns': NAMESPACES['OPF'],
+                              'unique-identifier': self.book.IDENTIFIER_ID,
+                              'version': '3.0'})
 
-        root.attrib['prefix'] = 'rendition: http://www.idpf.org/vocab/rendition/#'
+        prefixes = ['rendition: http://www.idpf.org/vocab/rendition/#'] + self.book.prefixes
+        root.attrib['prefix'] = ' '.join(prefixes)
 
         ## METADATA
-
-
         nsmap = {'dc': NAMESPACES['DC'], 'opf': NAMESPACES['OPF']}
+        nsmap.update(self.book.namespaces)
+
 
         # This is really not needed
         # problem is uppercase/lowercase
@@ -576,9 +585,9 @@ class EpubWriter(object):
         #             if ns_name == ns_url:
         #                 nsmap[n_id.lower()] = NAMESPACES[n_id]
 
-        metadata = etree.SubElement(root, 'metadata', nsmap = nsmap)
+        metadata = etree.SubElement(root, 'metadata', nsmap=nsmap)
 
-        el = etree.SubElement(metadata, 'meta', {'property':'dcterms:modified'})
+        el = etree.SubElement(metadata, 'meta', {'property': 'dcterms:modified'})
         if 'mtime' in self.options:
             mtime = self.options['mtime']
         else:
@@ -644,7 +653,7 @@ class EpubWriter(object):
                         'media-type': item.media_type}
 
                 if hasattr(item, 'properties') and len(item.properties) > 0:
-                    opts['properties' ] = ' '.join(item.properties)
+                    opts['properties'] = ' '.join(item.properties)
 
                 etree.SubElement(manifest, 'item', opts)
 
@@ -667,7 +676,7 @@ class EpubWriter(object):
                 item = _item
 
             if isinstance(item, EpubHtml):
-                opts =  {'idref': item.get_id()}
+                opts = {'idref': item.get_id()}
 
                 if not item.is_linear or not is_linear:
                     opts['linear'] = 'no'
@@ -692,7 +701,7 @@ class EpubWriter(object):
         # GUIDE
         # - http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6
 
-        if len(self.book.guide)  > 0 and self.options.get('epub2_guide'):
+        if len(self.book.guide) > 0 and self.options.get('epub2_guide'):
             guide = etree.SubElement(root, 'guide', {})
 
             for item in self.book.guide:
@@ -725,17 +734,16 @@ class EpubWriter(object):
         root.set('lang', self.book.language)
         root.attrib['{%s}lang' % NAMESPACES['XML']] = self.book.language
 
-
         head = etree.SubElement(root, 'head')
         title = etree.SubElement(head, 'title')
         title.text = self.book.title
 
         # for now this just handles css files and ignores others
         for _link in item.links:
-            _lnk = etree.SubElement(head, 'link', {"href":_link.get('href', ''), "rel":"stylesheet", "type":"text/css"})
+            _lnk = etree.SubElement(head, 'link', {"href":_link.get('href', ''), "rel": "stylesheet", "type": "text/css"})
 
         body = etree.SubElement(root, 'body')
-        nav  = etree.SubElement(body, 'nav',  {'{%s}type' % NAMESPACES['EPUB']: 'toc', 'id': 'id'})
+        nav = etree.SubElement(body, 'nav', {'{%s}type' % NAMESPACES['EPUB']: 'toc', 'id': 'id'})
 
         content_title = etree.SubElement(nav, 'h2')
         content_title.text = self.book.title
@@ -769,7 +777,7 @@ class EpubWriter(object):
 
         if len(self.book.guide) > 0 and self.options.get('epub3_landmark'):
 
-            # Epub2 guide types do not map completely to epub3 landmark types. 
+            # Epub2 guide types do not map completely to epub3 landmark types.
             guide_to_landscape_map = {
                 'notes': 'rearnotes',
                 'text': 'bodymatter'
@@ -794,7 +802,7 @@ class EpubWriter(object):
                     _href = elem.get('href', '')
                     _title = elem.get('title', '')
 
-                guide_type = elem.get('type', '') 
+                guide_type = elem.get('type', '')
                 a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type), 'href': _href})
                 a_item.text = _title
 
@@ -947,7 +955,7 @@ class EpubReader(object):
 
         for root_file in tree.findall('//xmlns:rootfile[@media-type]', namespaces = {'xmlns': NAMESPACES['CONTAINERNS']}):
             if root_file.get('media-type') == "application/oebps-package+xml":
-                self.opf_file =  root_file.get('full-path')
+                self.opf_file = root_file.get('full-path')
                 self.opf_dir = zip_path.dirname(self.opf_file)
 
     def _load_metadata(self):
