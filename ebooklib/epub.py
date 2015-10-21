@@ -39,7 +39,7 @@ mimetypes.add_type('application/xhtml+xml', '.xhtml')
 
 
 # Version of EPUB library
-VERSION = (0, 15, 0)
+VERSION = (0, 15, 1)
 
 NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
               'EPUB': 'http://www.idpf.org/2007/ops',
@@ -713,7 +713,10 @@ class EpubWriter(object):
                 else:
                     _href = item.get('href', '')
                     _title = item.get('title', '')
-
+                    
+                if _title is None:
+                    _title = ''
+                
                 ref = etree.SubElement(guide, 'reference', {'type': item.get('type', ''),
                                                             'title': _title,
                                                             'href': _href})
