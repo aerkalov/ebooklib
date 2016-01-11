@@ -89,8 +89,9 @@ IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
 ## TOC elements
 
 class Section(object):
-    def __init__(self, title):
+    def __init__(self, title, href=''):
         self.title = title
+        self.href = href
 
 class Link(object):
     def __init__(self, href, title, uid=None):
@@ -755,6 +756,10 @@ class EpubWriter(object):
                     li = etree.SubElement(ol, 'li')
                     if isinstance(item[0], EpubHtml):
                         a = etree.SubElement(li, 'a', {'href': item[0].file_name})
+                    elif isinstance(item[0], Section) and item[0].href != '':
+                        a = etree.SubElement(li, 'a', {'href': item[0].href})
+                    elif isinstance(item[0], Link):
+                        a = etree.SubElement(li, 'a', {'href': item[0].href})
                     else:
                         a = etree.SubElement(li, 'span')
                     a.text = item[0].title
@@ -846,11 +851,17 @@ class EpubWriter(object):
                     nt.text = section.title
 
                     # CAN NOT HAVE EMPTY SRC HERE
-                    nc = etree.SubElement(np, 'content', {'src': section.file_name if isinstance(section, EpubHtml) else ''})
+                    href = ''
+                    if isinstance(section, EpubHtml):
+                        href = section.file_name
+                    elif isinstance(section, Section) and section.href != '':
+                        href = section.href
+                    elif isinstance(section, Link):
+                        href = section.href
 
-                    #uid += 1
+                    nc = etree.SubElement(np, 'content', {'src': href})
+
                     uid = _create_section(np, subsection, uid+1)
-
                 elif isinstance(item, Link):
                     _parent = itm
                     _content = _parent.find('content')
@@ -865,7 +876,6 @@ class EpubWriter(object):
                     nt.text = item.title
 
                     nc = etree.SubElement(np, 'content', {'src': item.href})
-
                 elif isinstance(item, EpubHtml):
                     _parent = itm
                     _content = _parent.find('content')
@@ -1084,7 +1094,6 @@ class EpubReader(object):
 
             self.book.add_item(ei)
 
-
     def _parse_ncx(self, data):
         tree = parse_string(data);
         tree_root = tree.getroot()
@@ -1100,7 +1109,7 @@ class EpubReader(object):
                 if a.tag == '{%s}navLabel' %  NAMESPACES['DAISY']:
                     label = a.getchildren()[0].text
                 if a.tag == '{%s}content' %  NAMESPACES['DAISY']:
-                        content = a.get('src')
+                    content = a.get('src', '')
                 if a.tag == '{%s}navPoint' %  NAMESPACES['DAISY']:
                     children.append(_get_children(a, n+1, a.get('id', '')))
 
@@ -1108,14 +1117,12 @@ class EpubReader(object):
                 if n == 0:
                     return children
 
-                return (Section(label),
+                return (Section(label, href=content),
                         children)
             else:
                 return (Link(content, label, nid))
 
-
         self.book.toc = _get_children(nav_map, 0, '')
-
 
     def _parse_nav(self, data, base_path):
         html_node = parse_html_string(data)
@@ -1133,8 +1140,11 @@ class EpubReader(object):
                     title    = item_node[0].text
                     children = parse_list(sublist_node)
 
-                    items.append((Section(title), children))
-
+                    if link_node is not None:
+                        href  = zip_path.normpath(zip_path.join(base_path, link_node.get("href")))
+                        items.append((Section(title, href=href), children))
+                    else:
+                        items.append((Section(title), children))
                 elif link_node is not None:
                     title = link_node.text
                     href  = zip_path.normpath(zip_path.join(base_path, link_node.get("href")))
@@ -1144,7 +1154,6 @@ class EpubReader(object):
             return items
 
         self.book.toc = parse_list(nav_node.find("ol"))
-
 
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
@@ -1162,12 +1171,10 @@ class EpubReader(object):
 
             self._parse_ncx(ncxFile)
 
-
     def _load_guide(self):
         guide = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'guide'))
         if guide is not None:
             self.book.guide = [{'href': t.get('href'), 'title': t.get('title'), 'type': t.get('type')} for t in guide]
-
 
     def _load_opf_file(self):
         try:
@@ -1188,7 +1195,6 @@ class EpubReader(object):
             nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
             if nav_item:
                 self._parse_nav(nav_item.content, zip_path.dirname(nav_item.file_name))
-
 
     def _load(self):
         try:
