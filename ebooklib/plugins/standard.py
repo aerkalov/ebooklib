@@ -28,8 +28,9 @@ ATTRIBUTES_GLOBAL = ['accesskey', 'class', 'contenteditable', 'contextmenu', 'di
                      'itemscope', 'itemtype', 'lang', 'spellcheck', 'style', 'tabindex',
                      'title', 'translate', 'epub:type']
 
+# Remove <u> for now from here
 DEPRECATED_TAGS = ['acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'font', 'frame',
-                   'frameset', 'isindex', 'noframes', 's', 'strike', 'tt', 'u']
+                   'frameset', 'isindex', 'noframes', 's', 'strike', 'tt']
 
 
 def leave_only(item, tag_list):
