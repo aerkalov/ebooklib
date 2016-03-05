@@ -20,6 +20,7 @@ import mimetypes
 import logging
 import uuid
 import posixpath as zip_path
+import sys
 
 try:
     from urllib.parse import unquote
@@ -218,7 +219,11 @@ class EpubHtml(EpubItem):
         if len(html_root.find('body')) != 0:
             body = html_tree.find('body')
 
-            tree_str = etree.tostring(body, pretty_print=True, encoding='utf-8', xml_declaration=False)
+            if sys.version_info >= (3, 0):
+                tree_str = etree.tostring(body, encoding='unicode')
+            else:
+                tree_str = etree.tostring(body, pretty_print=True, encoding='utf-8', xml_declaration=False)
+
             # this is so stupid
             if tree_str.startswith('<body>'):
                 n = tree_str.rindex('</body>')
