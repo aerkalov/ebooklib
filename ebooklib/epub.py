@@ -61,14 +61,14 @@ CONTAINER_XML = '''<?xml version='1.0' encoding='utf-8'?>
 </container>
 '''
 
-NCX_XML = '''<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
-<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" />'''
+NCX_XML = six.b('''<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" />''')
 
-NAV_XML = '''<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"/>'''
+NAV_XML = six.b('''<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"/>''')
 
-CHAPTER_XML = '''<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"  epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/#"></html>'''
+CHAPTER_XML = six.b('''<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"  epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/#"></html>''')
 
-COVER_XML = '''<?xml version="1.0" encoding="UTF-8"?>
+COVER_XML = six.b('''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
  <head>
@@ -80,7 +80,7 @@ COVER_XML = '''<?xml version="1.0" encoding="UTF-8"?>
  <body>
    <img src="" alt="" />
  </body>
-</html>'''
+</html>''')
 
 
 IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
@@ -220,9 +220,10 @@ class EpubHtml(EpubItem):
             body = html_tree.find('body')
 
             tree_str = etree.tostring(body, pretty_print=True, encoding='utf-8', xml_declaration=False)
+
             # this is so stupid
-            if tree_str.startswith('<body>'):
-                n = tree_str.rindex('</body>')
+            if tree_str.startswith(six.b('<body>')):
+                n = tree_str.rindex(six.b('</body>'))
 
                 return tree_str[7:n]
 
