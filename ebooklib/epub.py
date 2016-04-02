@@ -716,6 +716,8 @@ class EpubWriter(object):
                     _href = item.get('href', '')
                     _title = item.get('title', '')
 
+                if _title is None:
+                    _title = ''
                 ref = etree.SubElement(guide, 'reference', {'type': item.get('type', ''),
                                                             'title': _title,
                                                             'href': _href})
