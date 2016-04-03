@@ -80,9 +80,5 @@ EbookLib is licensed under the AGPL license.
 
 Authors
 =======
-* Aleksandar Erkalovic <aerkalov@gmail.com>
-* Borko Jandras <bjandras@gmail.com>
 
-
-
-
+Full list of authors is in AUTHORS.txt file.
