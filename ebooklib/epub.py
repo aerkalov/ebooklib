@@ -20,6 +20,7 @@ import mimetypes
 import logging
 import uuid
 import posixpath as zip_path
+import os.path
 
 try:
     from urllib.parse import unquote
@@ -1010,6 +1011,8 @@ class EpubWriter(object):
         root.set('lang', self.book.language)
         root.attrib['{%s}lang' % NAMESPACES['XML']] = self.book.language
 
+        nav_dir_name = os.path.dirname(item.file_name)
+
         head = etree.SubElement(root, 'head')
         title = etree.SubElement(head, 'title')
         title.text = self.book.title
@@ -1030,11 +1033,11 @@ class EpubWriter(object):
                 if isinstance(item, tuple) or isinstance(item, list):
                     li = etree.SubElement(ol, 'li')
                     if isinstance(item[0], EpubHtml):
-                        a = etree.SubElement(li, 'a', {'href': item[0].file_name})
+                        a = etree.SubElement(li, 'a', {'href': os.path.relpath(item[0].file_name, nav_dir_name)})
                     elif isinstance(item[0], Section) and item[0].href != '':
-                        a = etree.SubElement(li, 'a', {'href': item[0].href})
+                        a = etree.SubElement(li, 'a', {'href': os.path.relpath(item[0].href, nav_dir_name)})
                     elif isinstance(item[0], Link):
-                        a = etree.SubElement(li, 'a', {'href': item[0].href})
+                        a = etree.SubElement(li, 'a', {'href': os.path.relpath(item[0].href, nav_dir_name)})
                     else:
                         a = etree.SubElement(li, 'span')
                     a.text = item[0].title
@@ -1043,11 +1046,12 @@ class EpubWriter(object):
 
                 elif isinstance(item, Link):
                     li = etree.SubElement(ol, 'li')
-                    a = etree.SubElement(li, 'a', {'href': item.href})
+                    a = etree.SubElement(li, 'a', {'href': os.path.relpath(item.href, nav_dir_name)})
                     a.text = item.title
                 elif isinstance(item, EpubHtml):
                     li = etree.SubElement(ol, 'li')
-                    a = etree.SubElement(li, 'a', {'href': item.file_name})
+                    
+                    a = etree.SubElement(li, 'a', {'href': os.path.relpath(item.file_name, nav_dir_name)})
                     a.text = item.title
 
         _create_section(nav, self.book.toc)
@@ -1083,7 +1087,7 @@ class EpubWriter(object):
                     _title = elem.get('title', '')
 
                 guide_type = elem.get('type', '')
-                a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type), 'href': _href})
+                a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type), 'href': os.path.relpath(_href, nav_dir_name)})
                 a_item.text = _title
 
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)
