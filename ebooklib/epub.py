@@ -152,7 +152,7 @@ class EpubItem(object):
         Returns name for this item. By default it is always file name but it does not have to be.
 
         :Returns:
-          Returns file name for this item. 
+          Returns file name for this item.
         """
         return self.file_name
 
@@ -288,7 +288,7 @@ class EpubHtml(EpubItem):
         """
         Add additional link to the document. Links will be embeded only inside of this document.
 
-        >>> add_link(href='styles.css', rel='stylesheet', type='text/css')        
+        >>> add_link(href='styles.css', rel='stylesheet', type='text/css')
         """
         self.links.append(kwgs)
 
@@ -798,7 +798,7 @@ class EpubBook(object):
         """
         Appends custom prefix to be added to the content.opf document
 
-        >>> epub_book.add_prefix('bkterms', 'http://booktype.org/')        
+        >>> epub_book.add_prefix('bkterms', 'http://booktype.org/')
 
         :Args:
           - name: namespave name
@@ -1050,7 +1050,7 @@ class EpubWriter(object):
                     a.text = item.title
                 elif isinstance(item, EpubHtml):
                     li = etree.SubElement(ol, 'li')
-                    
+
                     a = etree.SubElement(li, 'a', {'href': os.path.relpath(item.file_name, nav_dir_name)})
                     a.text = item.title
 
