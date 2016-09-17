@@ -1157,7 +1157,7 @@ class EpubWriter(object):
                     _parent = itm
                     _content = _parent.find('content')
 
-                    if _content != None:
+                    if _content is not None:
                         if _content.get('src') == '':
                             _content.set('src', item.href)
 
@@ -1171,7 +1171,7 @@ class EpubWriter(object):
                     _parent = itm
                     _content = _parent.find('content')
 
-                    if _content != None:
+                    if _content is not None:
                         if _content.get('src') == '':
                             _content.set('src', item.file_name)
 
@@ -1349,7 +1349,7 @@ class EpubReader(object):
                 elif 'cover' in properties:
                     ei = EpubCoverHtml()
 
-                    ei.content = self.read_file(os_path.join(self.opf_dir, unquote(r.get('href'))))
+                    ei.content = self.read_file(zip_path.join(self.opf_dir, unquote(r.get('href'))))
                 else:
                     ei = EpubHtml()
 
@@ -1393,7 +1393,6 @@ class EpubReader(object):
         def _get_children(elems, n, nid):
             label, content = '', ''
             children = []
-            _id = ''
 
             for a in elems.getchildren():
                 if a.tag == '{%s}navLabel' % NAMESPACES['DAISY']:
@@ -1458,7 +1457,7 @@ class EpubReader(object):
             try:
                 ncxFile = self.read_file(zip_path.join(self.opf_dir, self.book.get_item_with_id(toc).get_name()))
             except KeyError:
-                raise EpubError(-1, 'Can not find ncx file.')
+                raise EpubException(-1, 'Can not find ncx file.')
 
             self._parse_ncx(ncxFile)
 
@@ -1471,7 +1470,7 @@ class EpubReader(object):
         try:
             s = self.read_file(self.opf_file)
         except KeyError:
-            raise EpubError(-1, 'Can not find container file')
+            raise EpubException(-1, 'Can not find container file')
 
         self.container = parse_string(s)
 
