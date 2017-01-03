@@ -16,7 +16,6 @@
 
 import zipfile
 import six
-import mimetypes
 import logging
 import uuid
 import posixpath as zip_path
@@ -31,12 +30,7 @@ from lxml import etree
 
 import ebooklib
 
-from ebooklib.utils import parse_string, parse_html_string
-
-
-# This really should not be here
-mimetypes.init()
-mimetypes.add_type('application/xhtml+xml', '.xhtml')
+from ebooklib.utils import parse_string, parse_html_string, guess_type
 
 
 # Version of EPUB library
@@ -677,7 +671,7 @@ class EpubBook(object):
           - item: Item instance
         """
         if item.media_type == '':
-            (has_guessed, media_type) = mimetypes.guess_type(item.get_name().lower())
+            (has_guessed, media_type) = guess_type(item.get_name().lower())
 
             if has_guessed:
                 if media_type is not None:
