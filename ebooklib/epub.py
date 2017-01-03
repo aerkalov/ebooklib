@@ -114,7 +114,6 @@ class EpubException(Exception):
 
 # Items
 
-
 class EpubItem(object):
     """
     Base class for the items in a book.
@@ -239,11 +238,12 @@ class EpubHtml(EpubItem):
     """
     _template_name = 'chapter'
 
-    def __init__(self, uid=None, file_name='', media_type='', content=None, title='', lang=None):
+    def __init__(self, uid=None, file_name='', media_type='', content=None, title='', lang=None, direction=None):
         super(EpubHtml, self).__init__(uid, file_name, media_type, content)
 
         self.title = title
         self.lang = lang
+        self.direction = direction
 
         self.links = []
         self.properties = []
@@ -408,6 +408,8 @@ class EpubHtml(EpubItem):
         # create and populate body
 
         _body = etree.SubElement(tree_root, 'body')
+        if self.direction:
+            _body.set('dir', self.direction)
 
         body = html_tree.find('body')
         if body is not None:
@@ -535,6 +537,7 @@ class EpubBook(object):
 
         self.title = ''
         self.language = 'en'
+        self.direction = None
 
         self.templates = {
             'ncx': NCX_XML,
@@ -588,6 +591,14 @@ class EpubBook(object):
         self.language = lang
 
         self.add_metadata('DC', 'language', lang)
+
+    def set_direction(self, direction):
+        """
+        :Args:
+          - direction: Options are "ltr", "rtl" and "default"
+        """
+
+        self.direction = direction
 
     def set_cover(self, file_name, content, create_page=True):
         """
@@ -812,7 +823,9 @@ class EpubWriter(object):
     DEFAULT_OPTIONS = {
         'epub2_guide': True,
         'epub3_landmark': True,
-        'landmark_title': 'Guide'
+        'landmark_title': 'Guide',
+        'spine_direction': True,
+        'package_direction': False
     }
 
     def __init__(self, name, book, options=None):
@@ -840,10 +853,13 @@ class EpubWriter(object):
         self.out.writestr(CONTAINER_PATH, container_xml)
 
     def _write_opf_file(self):
-        root = etree.Element('package',
-                             {'xmlns': NAMESPACES['OPF'],
+        package_attributes = {'xmlns': NAMESPACES['OPF'],
                               'unique-identifier': self.book.IDENTIFIER_ID,
-                              'version': '3.0'})
+                              'version': '3.0'}
+        if self.book.direction and self.options['package_direction']:
+            package_attributes['dir'] = self.book.direction
+
+        root = etree.Element('package', package_attributes)
 
         prefixes = ['rendition: http://www.idpf.org/vocab/rendition/#'] + self.book.prefixes
         root.attrib['prefix'] = ' '.join(prefixes)
@@ -933,7 +949,11 @@ class EpubWriter(object):
                 etree.SubElement(manifest, 'item', opts)
 
         # SPINE
-        spine = etree.SubElement(root, 'spine', {'toc': _ncx_id or 'ncx'})
+        spine_attributes = {'toc': _ncx_id or 'ncx'}
+        if self.book.direction and self.options['spine_direction']:
+            spine_attributes['page-progression-direction'] = self.book.direction
+
+        spine = etree.SubElement(root, 'spine', spine_attributes)
 
         for _item in self.book.spine:
             # this is for now
@@ -1050,7 +1070,6 @@ class EpubWriter(object):
                     a.text = item.title
                 elif isinstance(item, EpubHtml):
                     li = etree.SubElement(ol, 'li')
-                    
                     a = etree.SubElement(li, 'a', {'href': os.path.relpath(item.file_name, nav_dir_name)})
                     a.text = item.title
 
@@ -1439,6 +1458,7 @@ class EpubReader(object):
         self.book.spine = [(t.get('idref'), t.get('linear', 'yes')) for t in spine]
 
         toc = spine.get('toc', '')
+        self.book.set_direction(spine.get('page-progression-direction', None))
 
         # should read ncx or nav file
         if toc:
