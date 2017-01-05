@@ -324,7 +324,6 @@ class EpubHtml(EpubItem):
         :Returns:
           Returns content of this document.
         """
-        content = self.get_content()
 
         try:
             html_tree = parse_html_string(self.content)
