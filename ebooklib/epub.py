@@ -1063,10 +1063,6 @@ class EpubWriter(object):
                     a.text = item.title
                 elif isinstance(item, EpubHtml):
                     li = etree.SubElement(ol, 'li')
-<<<<<<< HEAD
-=======
-
->>>>>>> bcc5aea... remove trailing whitespace
                     a = etree.SubElement(li, 'a', {'href': os.path.relpath(item.file_name, nav_dir_name)})
                     a.text = item.title
 
