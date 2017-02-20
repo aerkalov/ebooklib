@@ -1018,8 +1018,8 @@ class EpubWriter(object):
 
     def _get_nav(self, item):
         # just a basic navigation for now
-        ncx = parse_string(self.book.get_template('nav'))
-        root = ncx.getroot()
+        nav_xml = parse_string(self.book.get_template('nav'))
+        root = nav_xml.getroot()
 
         root.set('lang', self.book.language)
         root.attrib['{%s}lang' % NAMESPACES['XML']] = self.book.language
@@ -1102,7 +1102,7 @@ class EpubWriter(object):
                 a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type), 'href': os.path.relpath(_href, nav_dir_name)})
                 a_item.text = _title
 
-        tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)
+        tree_str = etree.tostring(nav_xml, pretty_print=True, encoding='utf-8', xml_declaration=True)
 
         return tree_str
 
