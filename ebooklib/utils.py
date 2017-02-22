@@ -30,19 +30,19 @@ def debug(obj):
     pp.pprint(obj)
 
 
-def parse_string(s):
+def parse_string(s, *args, **kwargs):
     try:
-        tree = etree.parse(io.BytesIO(s.encode('utf-8')))
+        tree = etree.parse(io.BytesIO(s.encode('utf-8')), *args, **kwargs)
     except:
-        tree = etree.parse(io.BytesIO(s))
+        tree = etree.parse(io.BytesIO(s), *args, **kwargs)
 
     return tree
 
 
-def parse_html_string(s):
+def parse_html_string(s, **kwargs):
     from lxml import html
 
-    utf8_parser = html.HTMLParser(encoding='utf-8')
+    utf8_parser = html.HTMLParser(encoding='utf-8', **kwargs)
 
     html_tree = html.document_fromstring(s, parser=utf8_parser)
 

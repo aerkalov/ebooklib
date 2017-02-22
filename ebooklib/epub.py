@@ -106,6 +106,20 @@ class EpubException(Exception):
     def __str__(self):
         return repr(self.msg)
 
+
+# Parser
+
+
+class EpubParser(object):
+    def parse_string(self, s, *args, **kwargs):
+        kwargs['parser'] = etree.XMLParser(remove_comments=True)
+        return parse_string(s, *args, **kwargs)
+
+    def parse_html_string(self, s, **kwargs):
+        kwargs['remove_comments'] = True
+        return parse_html_string(s, **kwargs)
+
+
 # Items
 
 class EpubItem(object):
@@ -226,7 +240,7 @@ class EpubCover(EpubItem):
         return '<EpubCover:%s:%s>' % (self.id, self.file_name)
 
 
-class EpubHtml(EpubItem):
+class EpubHtml(EpubItem, EpubParser):
     """
     Represents HTML document in the EPUB file.
     """
@@ -326,7 +340,7 @@ class EpubHtml(EpubItem):
         """
 
         try:
-            html_tree = parse_html_string(self.content)
+            html_tree = self.parse_html_string(self.content)
         except:
             return ''
 
@@ -358,7 +372,7 @@ class EpubHtml(EpubItem):
           Returns content of this document.
         """
 
-        tree = parse_string(self.book.get_template(self._template_name))
+        tree = self.parse_string(self.book.get_template(self._template_name))
         tree_root = tree.getroot()
 
         tree_root.set('lang', self.lang or self.book.language)
@@ -368,7 +382,7 @@ class EpubHtml(EpubItem):
         #  <meta charset="utf-8" />
 
         try:
-            html_tree = parse_html_string(self.content)
+            html_tree = self.parse_html_string(self.content)
         except:
             return ''
 
@@ -417,7 +431,7 @@ class EpubHtml(EpubItem):
         return '<EpubHtml:%s:%s>' % (self.id, self.file_name)
 
 
-class EpubCoverHtml(EpubHtml):
+class EpubCoverHtml(EpubHtml, EpubParser):
     """
     Represents Cover page in the EPUB file.
     """
@@ -448,7 +462,7 @@ class EpubCoverHtml(EpubHtml):
 
         self.content = self.book.get_template('cover')
 
-        tree = parse_string(super(EpubCoverHtml, self).get_content())
+        tree = self.parse_string(super(EpubCoverHtml, self).get_content())
         tree_root = tree.getroot()
 
         images = tree_root.xpath('//xhtml:img', namespaces={'xhtml': NAMESPACES['XHTML']})
@@ -812,7 +826,7 @@ class EpubBook(object):
         self.prefixes.append('%s: %s' % (name, uri))
 
 
-class EpubWriter(object):
+class EpubWriter(EpubParser):
     DEFAULT_OPTIONS = {
         'epub2_guide': True,
         'epub3_landmark': True,
@@ -1018,7 +1032,7 @@ class EpubWriter(object):
 
     def _get_nav(self, item):
         # just a basic navigation for now
-        nav_xml = parse_string(self.book.get_template('nav'))
+        nav_xml = self.parse_string(self.book.get_template('nav'))
         root = nav_xml.getroot()
 
         root.set('lang', self.book.language)
@@ -1109,7 +1123,7 @@ class EpubWriter(object):
     def _get_ncx(self):
 
         # we should be able to setup language for NCX as also
-        ncx = parse_string(self.book.get_template('ncx'))
+        ncx = self.parse_string(self.book.get_template('ncx'))
         root = ncx.getroot()
 
         head = etree.SubElement(root, 'head')
@@ -1213,7 +1227,7 @@ class EpubWriter(object):
         self.out.close()
 
 
-class EpubReader(object):
+class EpubReader(EpubParser):
     DEFAULT_OPTIONS = {}
 
     def __init__(self, epub_file_name, options=None):
@@ -1251,7 +1265,7 @@ class EpubReader(object):
 
     def _load_container(self):
         meta_inf = self.read_file('META-INF/container.xml')
-        tree = parse_string(meta_inf)
+        tree = self.parse_string(meta_inf)
 
         for root_file in tree.findall('//xmlns:rootfile[@media-type]', namespaces={'xmlns': NAMESPACES['CONTAINERNS']}):
             if root_file.get('media-type') == "application/oebps-package+xml":
@@ -1385,7 +1399,7 @@ class EpubReader(object):
             self.book.add_item(ei)
 
     def _parse_ncx(self, data):
-        tree = parse_string(data)
+        tree = self.parse_string(data)
         tree_root = tree.getroot()
 
         nav_map = tree_root.find('{%s}navMap' % NAMESPACES['DAISY'])
@@ -1414,7 +1428,7 @@ class EpubReader(object):
         self.book.toc = _get_children(nav_map, 0, '')
 
     def _parse_nav(self, data, base_path):
-        html_node = parse_html_string(data)
+        html_node = self.parse_html_string(data)
         nav_node = html_node.xpath("//nav[@*='toc']")[0]
 
         def parse_list(list_node):
@@ -1472,7 +1486,7 @@ class EpubReader(object):
         except KeyError:
             raise EpubException(-1, 'Can not find container file')
 
-        self.container = parse_string(s)
+        self.container = self.parse_string(s)
 
         self._load_metadata()
         self._load_manifest()
