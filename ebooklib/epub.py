@@ -20,6 +20,7 @@ import logging
 import uuid
 import posixpath as zip_path
 import os.path
+from collections import OrderedDict
 
 try:
     from urllib.parse import unquote
@@ -612,7 +613,7 @@ class EpubBook(object):
             c1 = EpubCoverHtml(image_name=file_name)
             self.add_item(c1)
 
-        self.add_metadata(None, 'meta', '', {'name': 'cover', 'content': 'cover-img'})
+        self.add_metadata(None, 'meta', '', OrderedDict([('name', 'cover'), ('content', 'cover-img')]))
 
     def add_author(self, author, file_as=None, role=None, uid='creator'):
         "Add author for this document"
