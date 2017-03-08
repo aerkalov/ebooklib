@@ -27,10 +27,12 @@ def tidy_cleanup(content, **extra):
     cmd = []
 
     for k, v in six.iteritems(extra):
-    	cmd.append('--%s' % k)
 
-    	if v:
-    		cmd.append(v)
+        if v:
+            cmd.append('--%s' % k)
+            cmd.append(v)
+        else:
+            cmd.append('-%s' % k)
 
     # must parse all other extra arguments
     try:
@@ -54,7 +56,7 @@ def tidy_cleanup(content, **extra):
 
 class TidyPlugin(BasePlugin):
     NAME = 'Tidy HTML'
-    OPTIONS = {'utf8': None,
+    OPTIONS = {'char-encoding': 'utf8',
                'tidy-mark': 'no'
               }
 
