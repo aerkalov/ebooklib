@@ -16,11 +16,11 @@
 
 import zipfile
 import six
-import mimetypes
 import logging
 import uuid
 import posixpath as zip_path
 import os.path
+from collections import OrderedDict
 
 try:
     from urllib.parse import unquote
@@ -31,12 +31,7 @@ from lxml import etree
 
 import ebooklib
 
-from ebooklib.utils import parse_string, parse_html_string
-
-
-# This really should not be here
-mimetypes.init()
-mimetypes.add_type('application/xhtml+xml', '.xhtml')
+from ebooklib.utils import parse_string, parse_html_string, guess_type
 
 
 # Version of EPUB library
@@ -114,7 +109,6 @@ class EpubException(Exception):
 
 # Items
 
-
 class EpubItem(object):
     """
     Base class for the items in a book.
@@ -152,7 +146,7 @@ class EpubItem(object):
         Returns name for this item. By default it is always file name but it does not have to be.
 
         :Returns:
-          Returns file name for this item. 
+          Returns file name for this item.
         """
         return self.file_name
 
@@ -239,11 +233,12 @@ class EpubHtml(EpubItem):
     """
     _template_name = 'chapter'
 
-    def __init__(self, uid=None, file_name='', media_type='', content=None, title='', lang=None):
+    def __init__(self, uid=None, file_name='', media_type='', content=None, title='', lang=None, direction=None):
         super(EpubHtml, self).__init__(uid, file_name, media_type, content)
 
         self.title = title
         self.lang = lang
+        self.direction = direction
 
         self.links = []
         self.properties = []
@@ -288,7 +283,7 @@ class EpubHtml(EpubItem):
         """
         Add additional link to the document. Links will be embeded only inside of this document.
 
-        >>> add_link(href='styles.css', rel='stylesheet', type='text/css')        
+        >>> add_link(href='styles.css', rel='stylesheet', type='text/css')
         """
         self.links.append(kwgs)
 
@@ -330,7 +325,6 @@ class EpubHtml(EpubItem):
         :Returns:
           Returns content of this document.
         """
-        content = self.get_content()
 
         try:
             html_tree = parse_html_string(self.content)
@@ -408,6 +402,8 @@ class EpubHtml(EpubItem):
         # create and populate body
 
         _body = etree.SubElement(tree_root, 'body')
+        if self.direction:
+            _body.set('dir', self.direction)
 
         body = html_tree.find('body')
         if body is not None:
@@ -535,6 +531,7 @@ class EpubBook(object):
 
         self.title = ''
         self.language = 'en'
+        self.direction = None
 
         self.templates = {
             'ncx': NCX_XML,
@@ -589,6 +586,14 @@ class EpubBook(object):
 
         self.add_metadata('DC', 'language', lang)
 
+    def set_direction(self, direction):
+        """
+        :Args:
+          - direction: Options are "ltr", "rtl" and "default"
+        """
+
+        self.direction = direction
+
     def set_cover(self, file_name, content, create_page=True):
         """
         Set cover and create cover document if needed.
@@ -608,7 +613,7 @@ class EpubBook(object):
             c1 = EpubCoverHtml(image_name=file_name)
             self.add_item(c1)
 
-        self.add_metadata(None, 'meta', '', {'name': 'cover', 'content': 'cover-img'})
+        self.add_metadata(None, 'meta', '', OrderedDict([('name', 'cover'), ('content', 'cover-img')]))
 
     def add_author(self, author, file_as=None, role=None, uid='creator'):
         "Add author for this document"
@@ -666,7 +671,7 @@ class EpubBook(object):
           - item: Item instance
         """
         if item.media_type == '':
-            (has_guessed, media_type) = mimetypes.guess_type(item.get_name().lower())
+            (has_guessed, media_type) = guess_type(item.get_name().lower())
 
             if has_guessed:
                 if media_type is not None:
@@ -798,7 +803,7 @@ class EpubBook(object):
         """
         Appends custom prefix to be added to the content.opf document
 
-        >>> epub_book.add_prefix('bkterms', 'http://booktype.org/')        
+        >>> epub_book.add_prefix('bkterms', 'http://booktype.org/')
 
         :Args:
           - name: namespave name
@@ -812,7 +817,9 @@ class EpubWriter(object):
     DEFAULT_OPTIONS = {
         'epub2_guide': True,
         'epub3_landmark': True,
-        'landmark_title': 'Guide'
+        'landmark_title': 'Guide',
+        'spine_direction': True,
+        'package_direction': False
     }
 
     def __init__(self, name, book, options=None):
@@ -840,10 +847,13 @@ class EpubWriter(object):
         self.out.writestr(CONTAINER_PATH, container_xml)
 
     def _write_opf_file(self):
-        root = etree.Element('package',
-                             {'xmlns': NAMESPACES['OPF'],
+        package_attributes = {'xmlns': NAMESPACES['OPF'],
                               'unique-identifier': self.book.IDENTIFIER_ID,
-                              'version': '3.0'})
+                              'version': '3.0'}
+        if self.book.direction and self.options['package_direction']:
+            package_attributes['dir'] = self.book.direction
+
+        root = etree.Element('package', package_attributes)
 
         prefixes = ['rendition: http://www.idpf.org/vocab/rendition/#'] + self.book.prefixes
         root.attrib['prefix'] = ' '.join(prefixes)
@@ -933,7 +943,11 @@ class EpubWriter(object):
                 etree.SubElement(manifest, 'item', opts)
 
         # SPINE
-        spine = etree.SubElement(root, 'spine', {'toc': _ncx_id or 'ncx'})
+        spine_attributes = {'toc': _ncx_id or 'ncx'}
+        if self.book.direction and self.options['spine_direction']:
+            spine_attributes['page-progression-direction'] = self.book.direction
+
+        spine = etree.SubElement(root, 'spine', spine_attributes)
 
         for _item in self.book.spine:
             # this is for now
@@ -1005,8 +1019,8 @@ class EpubWriter(object):
 
     def _get_nav(self, item):
         # just a basic navigation for now
-        ncx = parse_string(self.book.get_template('nav'))
-        root = ncx.getroot()
+        nav_xml = parse_string(self.book.get_template('nav'))
+        root = nav_xml.getroot()
 
         root.set('lang', self.book.language)
         root.attrib['{%s}lang' % NAMESPACES['XML']] = self.book.language
@@ -1050,7 +1064,6 @@ class EpubWriter(object):
                     a.text = item.title
                 elif isinstance(item, EpubHtml):
                     li = etree.SubElement(ol, 'li')
-                    
                     a = etree.SubElement(li, 'a', {'href': os.path.relpath(item.file_name, nav_dir_name)})
                     a.text = item.title
 
@@ -1090,7 +1103,7 @@ class EpubWriter(object):
                 a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type), 'href': os.path.relpath(_href, nav_dir_name)})
                 a_item.text = _title
 
-        tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)
+        tree_str = etree.tostring(nav_xml, pretty_print=True, encoding='utf-8', xml_declaration=True)
 
         return tree_str
 
@@ -1145,7 +1158,7 @@ class EpubWriter(object):
                     _parent = itm
                     _content = _parent.find('content')
 
-                    if _content != None:
+                    if _content is not None:
                         if _content.get('src') == '':
                             _content.set('src', item.href)
 
@@ -1159,7 +1172,7 @@ class EpubWriter(object):
                     _parent = itm
                     _content = _parent.find('content')
 
-                    if _content != None:
+                    if _content is not None:
                         if _content.get('src') == '':
                             _content.set('src', item.file_name)
 
@@ -1337,7 +1350,7 @@ class EpubReader(object):
                 elif 'cover' in properties:
                     ei = EpubCoverHtml()
 
-                    ei.content = self.read_file(os_path.join(self.opf_dir, unquote(r.get('href'))))
+                    ei.content = self.read_file(zip_path.join(self.opf_dir, unquote(r.get('href'))))
                 else:
                     ei = EpubHtml()
 
@@ -1381,7 +1394,6 @@ class EpubReader(object):
         def _get_children(elems, n, nid):
             label, content = '', ''
             children = []
-            _id = ''
 
             for a in elems.getchildren():
                 if a.tag == '{%s}navLabel' % NAMESPACES['DAISY']:
@@ -1439,13 +1451,14 @@ class EpubReader(object):
         self.book.spine = [(t.get('idref'), t.get('linear', 'yes')) for t in spine]
 
         toc = spine.get('toc', '')
+        self.book.set_direction(spine.get('page-progression-direction', None))
 
         # should read ncx or nav file
         if toc:
             try:
                 ncxFile = self.read_file(zip_path.join(self.opf_dir, self.book.get_item_with_id(toc).get_name()))
             except KeyError:
-                raise EpubError(-1, 'Can not find ncx file.')
+                raise EpubException(-1, 'Can not find ncx file.')
 
             self._parse_ncx(ncxFile)
 
@@ -1458,7 +1471,7 @@ class EpubReader(object):
         try:
             s = self.read_file(self.opf_file)
         except KeyError:
-            raise EpubError(-1, 'Can not find container file')
+            raise EpubException(-1, 'Can not find container file')
 
         self.container = parse_string(s)
 

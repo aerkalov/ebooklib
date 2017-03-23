@@ -15,13 +15,20 @@
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
+import mimetypes
+
 from lxml import etree
+
+
+mimetype_initialised = False
+
 
 def debug(obj):
     import pprint
 
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(obj)
+
 
 def parse_string(s):
     try:
@@ -31,11 +38,23 @@ def parse_string(s):
 
     return tree
 
+
 def parse_html_string(s):
     from lxml import html
 
     utf8_parser = html.HTMLParser(encoding='utf-8')
 
-    html_tree = html.document_fromstring(s , parser=utf8_parser)
+    html_tree = html.document_fromstring(s, parser=utf8_parser)
 
     return html_tree
+
+
+def guess_type(extenstion):
+    global mimetype_initialised
+
+    if not mimetype_initialised:
+        mimetypes.init()
+        mimetypes.add_type('application/xhtml+xml', '.xhtml')
+        mimetype_initialised = True
+
+    return mimetypes.guess_type(extenstion)
