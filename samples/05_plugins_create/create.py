@@ -107,5 +107,5 @@ nav[epub|type~='toc'] > ol > li > ol > li {
     opts = {'plugins': [SamplePlugin()]}
 
     # create epub file
-    epub.writeEPUB('test.epub', book, opts)
+    epub.write_epub('test.epub', book, opts)
 
