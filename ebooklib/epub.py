@@ -109,6 +109,7 @@ class EpubException(Exception):
 
 # Items
 
+
 class EpubItem(object):
     """
     Base class for the items in a book.
@@ -320,7 +321,8 @@ class EpubHtml(EpubItem):
 
     def get_body_content(self):
         """
-        Returns content of BODY element for this HTML document. Content will be of type 'str' (Python 2) or 'bytes' (Python 3).
+        Returns content of BODY element for this HTML document. Content will be of type 'str' (Python 2)
+        or 'bytes' (Python 3).
 
         :Returns:
           Returns content of this document.
@@ -350,7 +352,8 @@ class EpubHtml(EpubItem):
 
     def get_content(self, default=None):
         """
-        Returns content for this document as HTML string. Content will be of type 'str' (Python 2) or 'bytes' (Python 3).
+        Returns content for this document as HTML string. Content will be of type 'str' (Python 2)
+        or 'bytes' (Python 3).
 
         :Args:
           - default: Default value for the content if it is not defined.
@@ -540,7 +543,9 @@ class EpubBook(object):
             'cover': COVER_XML
         }
 
-        self.add_metadata('OPF', 'generator', '', {'name': 'generator', 'content': 'Ebook-lib %s' % '.'.join([str(s) for s in VERSION])})
+        self.add_metadata('OPF', 'generator', '', {
+            'name': 'generator', 'content': 'Ebook-lib %s' % '.'.join([str(s) for s in VERSION])
+            })
 
         # default to using a randomly-unique identifier if one is not specified manually
         self.set_identifier(str(uuid.uuid4()))
@@ -1033,7 +1038,9 @@ class EpubWriter(object):
 
         # for now this just handles css files and ignores others
         for _link in item.links:
-            _lnk = etree.SubElement(head, 'link', {"href": _link.get('href', ''), "rel": "stylesheet", "type": "text/css"})
+            _lnk = etree.SubElement(head, 'link', {
+                "href": _link.get('href', ''), "rel": "stylesheet", "type": "text/css"
+                })
 
         body = etree.SubElement(root, 'body')
         nav = etree.SubElement(body, 'nav', {'{%s}type' % NAMESPACES['EPUB']: 'toc', 'id': 'id'})
@@ -1100,7 +1107,10 @@ class EpubWriter(object):
                     _title = elem.get('title', '')
 
                 guide_type = elem.get('type', '')
-                a_item = etree.SubElement(li_item, 'a', {'{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type), 'href': os.path.relpath(_href, nav_dir_name)})
+                a_item = etree.SubElement(li_item, 'a', {
+                    '{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type),
+                    'href': os.path.relpath(_href, nav_dir_name)
+                    })
                 a_item.text = _title
 
         tree_str = etree.tostring(nav_xml, pretty_print=True, encoding='utf-8', xml_declaration=True)
@@ -1137,7 +1147,9 @@ class EpubWriter(object):
                 if isinstance(item, tuple) or isinstance(item, list):
                     section, subsection = item[0], item[1]
 
-                    np = etree.SubElement(itm, 'navPoint', {'id': section.get_id() if isinstance(section, EpubHtml) else 'sep_%d' % uid})
+                    np = etree.SubElement(itm, 'navPoint', {
+                        'id': section.get_id() if isinstance(section, EpubHtml) else 'sep_%d' % uid
+                        })
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
                     nt.text = section.title
@@ -1381,7 +1393,6 @@ class EpubReader(object):
                 ei.media_type = media_type
 
                 ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
-              # r.get('properties')
 
             self.book.add_item(ei)
 
@@ -1410,7 +1421,7 @@ class EpubReader(object):
                 return (Section(label, href=content),
                         children)
             else:
-                return (Link(content, label, nid))
+                return Link(content, label, nid)
 
         self.book.toc = _get_children(nav_map, 0, '')
 

@@ -13,3 +13,7 @@ Tom McLean <tom.a.mclean@gmail.com>
 Travis L <leleu@industrialinterface.com>
 Helmy Giacoman <helmygb@gmail.com>
 clach04 <Chris.Clark@actian.com>
+Edward Betts <edward@4angle.com>
+Kennyl <Kennyl@users.noreply.github.com>
+Oleg Pshenichniy <olegpshenichniy@gmail.com>
+clach04 <Chris.Clark@actian.com>
