@@ -42,7 +42,7 @@ NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
               'DAISY': 'http://www.daisy.org/z3986/2005/ncx/',
               'OPF': 'http://www.idpf.org/2007/opf',
               'CONTAINERNS': 'urn:oasis:names:tc:opendocument:xmlns:container',
-              'DC': "http://purl.org/dc/elements/1.1/",
+              'DC': 'http://purl.org/dc/elements/1.1/',
               'XHTML': 'http://www.w3.org/1999/xhtml'}
 
 # XML Templates
@@ -85,12 +85,14 @@ IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
 # TOC elements
 
 class Section(object):
+
     def __init__(self, title, href=''):
         self.title = title
         self.href = href
 
 
 class Link(object):
+
     def __init__(self, href, title, uid=None):
         self.href = href
         self.title = title
@@ -100,6 +102,7 @@ class Link(object):
 
 
 class EpubException(Exception):
+
     def __init__(self, code, msg):
         self.code = code
         self.msg = msg
@@ -111,6 +114,7 @@ class EpubException(Exception):
 
 
 class EpubItem(object):
+
     """
     Base class for the items in a book.
     """
@@ -207,16 +211,18 @@ class EpubItem(object):
 
 
 class EpubNcx(EpubItem):
+
     "Represents Navigation Control File (NCX) in the EPUB."
 
     def __init__(self, uid='ncx', file_name='toc.ncx'):
-        super(EpubNcx, self).__init__(uid=uid, file_name=file_name, media_type="application/x-dtbncx+xml")
+        super(EpubNcx, self).__init__(uid=uid, file_name=file_name, media_type='application/x-dtbncx+xml')
 
     def __str__(self):
         return '<EpubNcx:%s>' % self.id
 
 
 class EpubCover(EpubItem):
+
     """
     Represents Cover image in the EPUB file.
     """
@@ -229,6 +235,7 @@ class EpubCover(EpubItem):
 
 
 class EpubHtml(EpubItem):
+
     """
     Represents HTML document in the EPUB file.
     """
@@ -314,10 +321,10 @@ class EpubHtml(EpubItem):
           - item: item we want to add defined as instance of EpubItem
         """
         if item.get_type() == ebooklib.ITEM_STYLE:
-            self.add_link(href=item.get_name(), rel="stylesheet", type="text/css")
+            self.add_link(href=item.get_name(), rel='stylesheet', type='text/css')
 
         if item.get_type() == ebooklib.ITEM_SCRIPT:
-            self.add_link(src=item.get_name(), type="text/javascript")
+            self.add_link(src=item.get_name(), type='text/javascript')
 
     def get_body_content(self):
         """
@@ -387,7 +394,7 @@ class EpubHtml(EpubItem):
             _title.text = self.title
 
         for lnk in self.links:
-            if lnk.get("type") == "text/javascript":
+            if lnk.get('type') == 'text/javascript':
                 _lnk = etree.SubElement(_head, 'script', lnk)
                 # force <script></script>
                 _lnk.text = ''
@@ -422,6 +429,7 @@ class EpubHtml(EpubItem):
 
 
 class EpubCoverHtml(EpubHtml):
+
     """
     Represents Cover page in the EPUB file.
     """
@@ -469,11 +477,12 @@ class EpubCoverHtml(EpubHtml):
 
 
 class EpubNav(EpubHtml):
+
     """
     Represents Navigation Document in the EPUB file.
     """
 
-    def __init__(self, uid='nav', file_name='nav.xhtml', media_type="application/xhtml+xml"):
+    def __init__(self, uid='nav', file_name='nav.xhtml', media_type='application/xhtml+xml'):
         super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type)
 
     def is_chapter(self):
@@ -491,6 +500,7 @@ class EpubNav(EpubHtml):
 
 
 class EpubImage(EpubItem):
+
     """
     Represents Image in the EPUB file.
     """
@@ -508,6 +518,7 @@ class EpubImage(EpubItem):
 # EpubBook
 
 class EpubBook(object):
+
     def __init__(self):
         self.EPUB_VERSION = None
 
@@ -545,7 +556,7 @@ class EpubBook(object):
 
         self.add_metadata('OPF', 'generator', '', {
             'name': 'generator', 'content': 'Ebook-lib %s' % '.'.join([str(s) for s in VERSION])
-            })
+        })
 
         # default to using a randomly-unique identifier if one is not specified manually
         self.set_identifier(str(uuid.uuid4()))
@@ -888,7 +899,7 @@ class EpubWriter(object):
             if ns_name == NAMESPACES['OPF']:
                 for values in values.values():
                     for v in values:
-                        if 'property' in v[1] and v[1]['property'] == "dcterms:modified":
+                        if 'property' in v[1] and v[1]['property'] == 'dcterms:modified':
                             continue
                         try:
                             el = etree.SubElement(metadata, 'meta', v[1])
@@ -1039,8 +1050,8 @@ class EpubWriter(object):
         # for now this just handles css files and ignores others
         for _link in item.links:
             _lnk = etree.SubElement(head, 'link', {
-                "href": _link.get('href', ''), "rel": "stylesheet", "type": "text/css"
-                })
+                'href': _link.get('href', ''), 'rel': 'stylesheet', 'type': 'text/css'
+            })
 
         body = etree.SubElement(root, 'body')
         nav = etree.SubElement(body, 'nav', {'{%s}type' % NAMESPACES['EPUB']: 'toc', 'id': 'id'})
@@ -1110,7 +1121,7 @@ class EpubWriter(object):
                 a_item = etree.SubElement(li_item, 'a', {
                     '{%s}type' % NAMESPACES['EPUB']: guide_to_landscape_map.get(guide_type, guide_type),
                     'href': os.path.relpath(_href, nav_dir_name)
-                    })
+                })
                 a_item.text = _title
 
         tree_str = etree.tostring(nav_xml, pretty_print=True, encoding='utf-8', xml_declaration=True)
@@ -1149,7 +1160,7 @@ class EpubWriter(object):
 
                     np = etree.SubElement(itm, 'navPoint', {
                         'id': section.get_id() if isinstance(section, EpubHtml) else 'sep_%d' % uid
-                        })
+                    })
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
                     nt.text = section.title
@@ -1268,7 +1279,7 @@ class EpubReader(object):
         tree = parse_string(meta_inf)
 
         for root_file in tree.findall('//xmlns:rootfile[@media-type]', namespaces={'xmlns': NAMESPACES['CONTAINERNS']}):
-            if root_file.get('media-type') == "application/oebps-package+xml":
+            if root_file.get('media-type') == 'application/oebps-package+xml':
                 self.opf_file = root_file.get('full-path')
                 self.opf_dir = zip_path.dirname(self.opf_file)
 
@@ -1330,8 +1341,8 @@ class EpubReader(object):
         if len(titles) > 0:
             self.book.title = titles[0][0]
 
-        for value, others in self.book.get_metadata("DC", "identifier"):
-            if others.get("id") == self.book.IDENTIFIER_ID:
+        for value, others in self.book.get_metadata('DC', 'identifier'):
+            if others.get('id') == self.book.IDENTIFIER_ID:
                 self.book.uid = value
 
     def _load_manifest(self):
@@ -1433,29 +1444,29 @@ class EpubReader(object):
         def parse_list(list_node):
             items = []
 
-            for item_node in list_node.findall("li"):
+            for item_node in list_node.findall('li'):
 
-                sublist_node = item_node.find("ol")
-                link_node = item_node.find("a")
+                sublist_node = item_node.find('ol')
+                link_node = item_node.find('a')
 
                 if sublist_node is not None:
                     title = item_node[0].text
                     children = parse_list(sublist_node)
 
                     if link_node is not None:
-                        href = zip_path.normpath(zip_path.join(base_path, link_node.get("href")))
+                        href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
                         items.append((Section(title, href=href), children))
                     else:
                         items.append((Section(title), children))
                 elif link_node is not None:
                     title = link_node.text
-                    href = zip_path.normpath(zip_path.join(base_path, link_node.get("href")))
+                    href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
 
                     items.append(Link(href, title))
 
             return items
 
-        self.book.toc = parse_list(nav_node.find("ol"))
+        self.book.toc = parse_list(nav_node.find('ol'))
 
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
