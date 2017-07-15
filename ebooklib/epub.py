@@ -241,12 +241,16 @@ class EpubHtml(EpubItem):
     """
     _template_name = 'chapter'
 
-    def __init__(self, uid=None, file_name='', media_type='', content=None, title='', lang=None, direction=None):
+    def __init__(self, uid=None, file_name='', media_type='', content=None, title='',
+                 lang=None, direction=None, media_overlay=None, media_duration=None):
         super(EpubHtml, self).__init__(uid, file_name, media_type, content)
 
         self.title = title
         self.lang = lang
         self.direction = direction
+
+        self.media_overlay = media_overlay
+        self.media_duration = media_duration
 
         self.links = []
         self.properties = []
@@ -513,6 +517,18 @@ class EpubImage(EpubItem):
 
     def __str__(self):
         return '<EpubImage:%s:%s>' % (self.id, self.file_name)
+
+
+class EpubSMIL(EpubItem):
+
+    def __init__(self, uid=None, file_name='', content=None):
+        super(EpubSMIL, self).__init__(uid=uid, file_name=file_name, media_type='application/smil+xml', content=content)
+
+    def get_type(self):
+        return ebooklib.ITEM_SMIL
+
+    def __str__(self):
+        return '<EpubSMIL:%s:%s>' % (self.id, self.file_name)
 
 
 # EpubBook
@@ -944,6 +960,12 @@ class EpubWriter(object):
 
                 if hasattr(item, 'properties') and len(item.properties) > 0:
                     opts['properties'] = ' '.join(item.properties)
+
+                if hasattr(item, 'media_overlay') and item.media_overlay is not None:
+                    opts['media-overlay'] = item.media_overlay
+
+                if hasattr(item, 'media_duration') and item.media_duration is not None:
+                    opts['duration'] = item.media_duration
 
                 etree.SubElement(manifest, 'item', opts)
 
@@ -1390,6 +1412,10 @@ class EpubReader(object):
                 ei = EpubNcx(uid=r.get('id'), file_name=unquote(r.get('href')))
 
                 ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
+            if media_type == 'application/smil+xml':
+                ei = EpubSMIL(uid=r.get('id'), file_name=unquote(r.get('href')))
+
+                ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
             elif media_type == 'application/xhtml+xml':
                 if 'nav' in properties:
                     ei = EpubNav(uid=r.get('id'), file_name=unquote(r.get('href')))
@@ -1405,6 +1431,8 @@ class EpubReader(object):
                     ei.id = r.get('id')
                     ei.file_name = unquote(r.get('href'))
                     ei.media_type = media_type
+                    ei.media_overlay = r.get('media-overlay', None)
+                    ei.media_duration = r.get('duration', None)
                     ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
                     ei.properties = properties
             elif media_type in IMAGE_MEDIA_TYPES:
