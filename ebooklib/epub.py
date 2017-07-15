@@ -862,22 +862,7 @@ class EpubWriter(object):
         container_xml = CONTAINER_XML % {'folder_name': self.book.FOLDER_NAME}
         self.out.writestr(CONTAINER_PATH, container_xml)
 
-    def _write_opf_file(self):
-        package_attributes = {'xmlns': NAMESPACES['OPF'],
-                              'unique-identifier': self.book.IDENTIFIER_ID,
-                              'version': '3.0'}
-        if self.book.direction and self.options['package_direction']:
-            package_attributes['dir'] = self.book.direction
-
-        root = etree.Element('package', package_attributes)
-
-        prefixes = ['rendition: http://www.idpf.org/vocab/rendition/#'] + self.book.prefixes
-        root.attrib['prefix'] = ' '.join(prefixes)
-
-        # METADATA
-        nsmap = {'dc': NAMESPACES['DC'], 'opf': NAMESPACES['OPF']}
-        nsmap.update(self.book.namespaces)
-
+    def _write_opf_metadata(self, root):
         # This is really not needed
         # problem is uppercase/lowercase
         # for ns_name, values in six.iteritems(self.book.metadata):
@@ -885,6 +870,10 @@ class EpubWriter(object):
         #         for n_id, ns_url in six.iteritems(NAMESPACES):
         #             if ns_name == ns_url:
         #                 nsmap[n_id.lower()] = NAMESPACES[n_id]
+
+        nsmap = {'dc': NAMESPACES['DC'], 'opf': NAMESPACES['OPF']}
+        nsmap.update(self.book.namespaces)
+
         metadata = etree.SubElement(root, 'metadata', nsmap=nsmap)
 
         el = etree.SubElement(metadata, 'meta', {'property': 'dcterms:modified'})
@@ -920,7 +909,7 @@ class EpubWriter(object):
                         except ValueError:
                             logging.error('Could not create metadata "{}".'.format(name))
 
-        # MANIFEST
+    def _write_opf_manifest(self, root):
         manifest = etree.SubElement(root, 'manifest')
         _ncx_id = None
 
@@ -958,8 +947,10 @@ class EpubWriter(object):
 
                 etree.SubElement(manifest, 'item', opts)
 
-        # SPINE
-        spine_attributes = {'toc': _ncx_id or 'ncx'}
+        return _ncx_id
+
+    def _write_opf_spine(self, root, ncx_id):
+        spine_attributes = {'toc': ncx_id or 'ncx'}
         if self.book.direction and self.options['spine_direction']:
             spine_attributes['page-progression-direction'] = self.book.direction
 
@@ -1003,7 +994,7 @@ class EpubWriter(object):
 
             etree.SubElement(spine, 'itemref', opts)
 
-        # GUIDE
+    def _write_opf_guide(self, root):
         # - http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6
 
         if len(self.book.guide) > 0 and self.options.get('epub2_guide'):
@@ -1024,14 +1015,47 @@ class EpubWriter(object):
                 ref = etree.SubElement(guide, 'reference', {'type': item.get('type', ''),
                                                             'title': _title,
                                                             'href': _href})
+
+    def _write_opf_bindings(self, root):
         if len(self.book.bindings) > 0:
             bindings = etree.SubElement(root, 'bindings', {})
             for item in self.book.bindings:
                 etree.SubElement(bindings, 'mediaType', item)
 
+    def _write_opf_file(self, root):
         tree_str = etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True)
 
         self.out.writestr('%s/content.opf' % self.book.FOLDER_NAME, tree_str)
+
+    def _write_opf(self):
+        package_attributes = {'xmlns': NAMESPACES['OPF'],
+                              'unique-identifier': self.book.IDENTIFIER_ID,
+                              'version': '3.0'}
+        if self.book.direction and self.options['package_direction']:
+            package_attributes['dir'] = self.book.direction
+
+        root = etree.Element('package', package_attributes)
+
+        prefixes = ['rendition: http://www.idpf.org/vocab/rendition/#'] + self.book.prefixes
+        root.attrib['prefix'] = ' '.join(prefixes)
+
+        # METADATA
+        self._write_opf_metadata(root)
+
+        # MANIFEST
+        _ncx_id = self._write_opf_manifest(root)
+
+        # SPINE
+        self._write_opf_spine(root, _ncx_id)
+
+        # GUIDE
+        self._write_opf_guide(root)
+
+        # BINDINGS
+        self._write_opf_bindings(root)
+
+        # WRITE FILE
+        self._write_opf_file(root)
 
     def _get_nav(self, item):
         # just a basic navigation for now
@@ -1231,7 +1255,7 @@ class EpubWriter(object):
         self.out.writestr('mimetype', 'application/epub+zip', compress_type=zipfile.ZIP_STORED)
 
         self._write_container()
-        self._write_opf_file()
+        self._write_opf()
         self._write_items()
 
         self.out.close()
