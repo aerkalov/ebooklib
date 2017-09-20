@@ -82,7 +82,7 @@ COVER_XML = six.b('''<?xml version="1.0" encoding="UTF-8"?>
 IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
 
 
-# TOC elements
+# TOC and navigation elements
 
 class Section(object):
 
@@ -317,6 +317,32 @@ class EpubHtml(EpubItem):
         """
         return (link for link in self.links if link.get('type', '') == link_type)
 
+    def add_pageref(self, pageref, label=None):
+        """
+        Create a pagebreak element with optional visible content.
+        Append to the current end of the EpubHtml content.
+        Save for the page-list in the nav.
+        """
+
+        pageref_attributes = {
+                              '{%s}type' % NAMESPACES['EPUB']: 'pagebreak',
+                              'title': u'{}'.format(pageref),
+                              'id': u'{}'.format(pageref),
+                             }
+
+        pageref_elem = etree.Element('span', pageref_attributes)
+
+        if label:
+            pageref_elem.text = label
+
+        # Append a tuple to the pages list: The filename of this EpubHtml
+        # object, the id to reference, and a label to be used in the page-list.
+        self.book.pages.append((self.file_name, pageref, label or pageref))
+
+        # Append this pageref to the HTML content
+        self.content += etree.tostring(pageref_elem, encoding='unicode')
+
+
     def add_item(self, item):
         """
         Add other item to this document. It will create additional links according to the item type.
@@ -537,6 +563,7 @@ class EpubBook(object):
         self.items = []
         self.spine = []
         self.guide = []
+        self.pages = []
         self.toc = []
         self.bindings = []
 
@@ -837,7 +864,9 @@ class EpubWriter(object):
     DEFAULT_OPTIONS = {
         'epub2_guide': True,
         'epub3_landmark': True,
+        'epub3_pages': True,
         'landmark_title': 'Guide',
+        'pages_title': 'Pages',
         'spine_direction': True,
         'package_direction': False,
         'play_order': {
@@ -1174,6 +1203,35 @@ class EpubWriter(object):
                 })
                 a_item.text = _title
 
+        # PAGE-LIST
+        if len(self.book.pages) > 0 and self.options.get('epub3_pages'):
+            pagelist_nav = etree.SubElement(
+                body,
+                'nav',
+                {
+                    '{%s}type' % NAMESPACES['EPUB']: 'page-list',
+                    'id': 'pages',
+                    'hidden': 'hidden',
+                }
+            )
+            pagelist_content_title = etree.SubElement(pagelist_nav, 'h2')
+            pagelist_content_title.text = self.options.get(
+                'pages_title', 'Pages'
+            )
+
+            pages_ol = etree.SubElement(pagelist_nav, 'ol')
+
+            for filename, pageref, label in self.book.pages:
+                li_item = etree.SubElement(pages_ol, 'li')
+
+                _href = u'{}#{}'.format(filename, pageref)
+                _title = label
+
+                a_item = etree.SubElement(li_item, 'a', {
+                    'href': os.path.relpath(_href, nav_dir_name),
+                })
+                a_item.text = _title
+
         tree_str = etree.tostring(nav_xml, pretty_print=True, encoding='utf-8', xml_declaration=True)
 
         return tree_str
@@ -1503,9 +1561,14 @@ class EpubReader(object):
 
         self.book.toc = _get_children(nav_map, 0, '')
 
-    def _parse_nav(self, data, base_path):
+    def _parse_nav(self, data, base_path, navtype='toc'):
         html_node = parse_html_string(data)
-        nav_node = html_node.xpath("//nav[@*='toc']")[0]
+        if navtype == 'toc':
+            # parsing the table of contents
+            nav_node = html_node.xpath("//nav[@*='toc']")[0]
+        else:
+            # parsing the list of pages
+            nav_node = html_node.xpath("//nav[@*='page-list']")[0]
 
         def parse_list(list_node):
             items = []
@@ -1532,7 +1595,10 @@ class EpubReader(object):
 
             return items
 
-        self.book.toc = parse_list(nav_node.find('ol'))
+        if navtype == 'toc':
+            self.book.toc = parse_list(nav_node.find('ol'))
+        elif nav_node is not None:
+            self.book.pages = parse_list(nav_node.find('ol'))
 
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
@@ -1571,10 +1637,19 @@ class EpubReader(object):
 
         # read nav file if found
         #
-        if not self.book.toc:
-            nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
-            if nav_item:
-                self._parse_nav(nav_item.content, zip_path.dirname(nav_item.file_name))
+        nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
+        if nav_item:
+            if not self.book.toc:
+                self._parse_nav(
+                    nav_item.content,
+                    zip_path.dirname(nav_item.file_name),
+                    navtype='toc'
+                )
+            self._parse_nav(
+                nav_item.content,
+                zip_path.dirname(nav_item.file_name),
+                navtype='pages'
+            )
 
     def _load(self):
         try:
