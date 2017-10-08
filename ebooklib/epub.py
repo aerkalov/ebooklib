@@ -351,7 +351,7 @@ class EpubHtml(EpubItem):
             if tree_str.startswith(six.b('<body>')):
                 n = tree_str.rindex(six.b('</body>'))
 
-                return tree_str[7:n]
+                return tree_str[6:n]
 
             return tree_str
 
