@@ -250,6 +250,7 @@ class EpubHtml(EpubItem):
 
         self.links = []
         self.properties = []
+        self.pages = []
 
     def is_chapter(self):
         """
@@ -333,7 +334,7 @@ class EpubHtml(EpubItem):
 
         # Append a tuple to the pages list: The filename of this EpubHtml
         # object, the id to reference, and a label to be used in the page-list.
-        self.book.pages.append((self.file_name, pageref, label or pageref))
+        self.pages.append((self.file_name, pageref, label or pageref))
 
         # Append this pageref to the HTML content
         self.content += etree.tostring(pageref_elem, encoding='unicode')
@@ -729,6 +730,8 @@ class EpubBook(object):
             if isinstance(item, EpubHtml):
                 item.id = 'chapter_%d' % self._id_html
                 self._id_html += 1
+                # If there's a page list, append it to the book's page list
+                self.pages += item.pages
             elif isinstance(item, EpubImage):
                 item.id = 'image_%d' % self._id_image
                 self._id_image += 1
@@ -1556,7 +1559,23 @@ class EpubReader(object):
         if navtype == 'toc':
             self.book.toc = parse_list(nav_node.find('ol'))
         elif nav_node is not None:
+            # generate the pages list if there is one
             self.book.pages = parse_list(nav_node.find('ol'))
+
+            # generate the per-file pages lists
+            # because of the order of parsing the files, this can't be done
+            # when building the EpubHtml objects
+            htmlfiles = dict()
+            for htmlfile in self.book.items:
+                if isinstance(htmlfile, EpubHtml):
+                    htmlfiles[htmlfile.file_name] = htmlfile
+            for page in self.book.pages:
+                try:
+                    (filename, idref) = page.href.split('#')
+                except ValueError:
+                    filename = page.href
+                if filename in htmlfiles:
+                    htmlfiles[filename].pages.append(page)
 
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
