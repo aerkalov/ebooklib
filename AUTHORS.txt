@@ -21,4 +21,4 @@ Olivier Le Thanh Duong <olivier@lethanh.be>
 Michael Storm <mstorm7@gmail.com>
 Sergey Markelov
 Laurent Laporte <tantale.solutions@gmail.com>
-Deborah Kaplan
+Deborah Kaplan <deborahgu@users.noreply.github.com>

@@ -51,7 +51,7 @@ class BooktypeLinks(BasePlugin):
                 if _link.get('href', '').find('InsertNoteID') != -1:
                     _ln = _link.get('href', '')
                     i = _ln.find('#')
-                    _link.set('href', _ln[i:]);
+                    _link.set('href', _ln[i:])
 
                     continue
 
@@ -106,9 +106,9 @@ class BooktypeFootnotes(BasePlugin):
 
                 footnote_text = body.xpath('//li[@id="%s"]' % footnote_id)[0]
 
-                a.attrib['epub:type'] = 'noteref'
+                a.attrib['{%s}type' % epub.NAMESPACES['EPUB']] = 'noteref'
                 ftn = etree.SubElement(body, 'aside', {'id': footnote_id})
-                ftn.attrib['epub:type'] = 'footnote'
+                ftn.attrib['{%s}type' % epub.NAMESPACES['EPUB']] = 'footnote'
                 ftn_p = etree.SubElement(ftn, 'p')
                 ftn_p.text = footnote_text.text
 
