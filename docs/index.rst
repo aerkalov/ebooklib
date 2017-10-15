@@ -53,6 +53,12 @@ Writing
     c1 = epub.EpubHtml(title='Intro', file_name='chap_01.xhtml', lang='hr')
     c1.content=u'<h1>Intro heading</h1><p>Žaba je skočila u baru.</p>'
 
+    # Add invisible page numbers that match the printed text, for accessibility
+    c1.add_pageref("id_page_1")
+
+    # Add visible page numbers that match the printed text, for accessibility
+    c1.add_pageref("id_page_2", label="Page 2")
+
     # add chapter
     book.add_item(c1)
 
