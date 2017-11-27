@@ -1,12 +1,14 @@
-#from distutils.core import setup
 import io
+import re
 
 from setuptools import setup
 
 
 def read(path):
     with io.open(path, mode="r", encoding="utf-8") as fd:
-        return fd.read()
+        content = fd.read()
+    # Convert Markdown links to reStructuredText links
+    return re.sub(r"\[([^]]+)\]\(([^)]+)\)", r"`\1 <\2>`_", content)
 
 
 setup(
