@@ -1,5 +1,13 @@
 #from distutils.core import setup
+import io
+
 from setuptools import setup
+
+
+def read(path):
+    with io.open(path, mode="r", encoding="utf-8") as fd:
+        return fd.read()
+
 
 setup(
     name = 'EbookLib',
@@ -10,7 +18,7 @@ setup(
     url = 'https://github.com/aerkalov/ebooklib',
     license = 'GNU Affero General Public License',
     description = 'Ebook library which can handle EPUB2/EPUB3 and Kindle format',
-    long_description = open('README.md').read(),
+    long_description = read('README.md'),
     keywords = ['ebook', 'epub', 'kindle'],
     classifiers = [
         "Development Status :: 4 - Beta",
