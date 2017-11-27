@@ -1,3 +1,8 @@
 include *.txt
 include *.md
-recursive-include docs *.txt
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs Makefile
+recursive-include samples *.jpg
+recursive-include samples *.md
+recursive-include samples *.py
