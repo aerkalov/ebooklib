@@ -17,6 +17,8 @@ Usage
 Reading
 -------
 
+::
+
     import ebooklib
     from ebooklib import epub
 
@@ -27,6 +29,8 @@ Reading
 
 Writing
 -------
+
+::
 
     from ebooklib import epub
 
