@@ -50,7 +50,7 @@ class BooktypeLinks(BasePlugin):
                 # This is just temporary for the footnotes
                 if _link.get('href', '').find('InsertNoteID') != -1:
                     _ln = _link.get('href', '')
-                    i = _ln.find('#')                                       
+                    i = _ln.find('#')
                     _link.set('href', _ln[i:]);
 
                     continue
@@ -61,16 +61,16 @@ class BooktypeLinks(BasePlugin):
                 if _u.scheme == '':
                     if _u.path != '':
                         _link.set('href', '%s.xhtml' % _u.path)
-                    
+
                     if _u.fragment != '':
                         _link.set('href', urljoin(_link.get('href'), '#%s' % _u.fragment))
 
                     if _link.get('name') != None:
                         _link.set('id', _link.get('name'))
                         etree.strip_attributes(_link, 'name')
-                    
+
         chapter.content = etree.tostring(tree, pretty_print=True, encoding='utf-8')
-            
+
 
 
 
@@ -103,17 +103,17 @@ class BooktypeFootnotes(BasePlugin):
             for footnote in body.xpath('//span[@class="InsertNoteMarker"]'):
                 footnote_id = footnote.get('id')[:-8]
                 a = footnote.getchildren()[0].getchildren()[0]
-                
+
                 footnote_text = body.xpath('//li[@id="%s"]' % footnote_id)[0]
-                
-                a.attrib['{%s}type' % epub.NAMESPACES['EPUB']] = 'noteref'
+
+                a.attrib['epub:type'] = 'noteref'
                 ftn = etree.SubElement(body, 'aside', {'id': footnote_id})
-                ftn.attrib['{%s}type' % epub.NAMESPACES['EPUB']] = 'footnote'
+                ftn.attrib['epub:type'] = 'footnote'
                 ftn_p = etree.SubElement(ftn, 'p')
                 ftn_p.text = footnote_text.text
 
             old_footnote = body.xpath('//ol[@id="InsertNote_NoteList"]')
             if len(old_footnote) > 0:
                 body.remove(old_footnote[0])
-            
-        chapter.content = etree.tostring(tree, pretty_print=True, encoding='utf-8')        
+
+        chapter.content = etree.tostring(tree, pretty_print=True, encoding='utf-8')
