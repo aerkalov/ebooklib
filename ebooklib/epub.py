@@ -31,7 +31,7 @@ from lxml import etree
 
 import ebooklib
 
-from ebooklib.utils import parse_string, parse_html_string, guess_type
+from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items
 
 
 # Version of EPUB library
@@ -82,7 +82,7 @@ COVER_XML = six.b('''<?xml version="1.0" encoding="UTF-8"?>
 IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
 
 
-# TOC elements
+# TOC and navigation elements
 
 class Section(object):
 
@@ -250,6 +250,7 @@ class EpubHtml(EpubItem):
 
         self.links = []
         self.properties = []
+        self.pages = []
 
     def is_chapter(self):
         """
@@ -533,6 +534,7 @@ class EpubBook(object):
         self.items = []
         self.spine = []
         self.guide = []
+        self.pages = []        
         self.toc = []
         self.bindings = []
 
@@ -702,6 +704,8 @@ class EpubBook(object):
             if isinstance(item, EpubHtml):
                 item.id = 'chapter_%d' % self._id_html
                 self._id_html += 1
+                # If there's a page list, append it to the book's page list
+                self.pages += item.pages
             elif isinstance(item, EpubImage):
                 item.id = 'image_%d' % self._id_image
                 self._id_image += 1
@@ -833,7 +837,9 @@ class EpubWriter(object):
     DEFAULT_OPTIONS = {
         'epub2_guide': True,
         'epub3_landmark': True,
+        'epub3_pages': True,
         'landmark_title': 'Guide',
+        'pages_title': 'Pages',
         'spine_direction': True,
         'package_direction': False
     }
@@ -1147,6 +1153,39 @@ class EpubWriter(object):
                     'href': os.path.relpath(_href, nav_dir_name)
                 })
                 a_item.text = _title
+
+        # PAGE-LIST
+        if self.options.get('epub3_pages'):
+            inserted_pages = get_pages_for_items([item for item in self.book.get_items_of_type(ebooklib.ITEM_DOCUMENT) \
+                if not isinstance(item, EpubNav)])
+
+            if len(inserted_pages) > 0:
+                pagelist_nav = etree.SubElement(
+                    body,
+                    'nav',
+                    {
+                        '{%s}type' % NAMESPACES['EPUB']: 'page-list',
+                        'id': 'pages',
+                        'hidden': 'hidden',
+                    }
+                )
+                pagelist_content_title = etree.SubElement(pagelist_nav, 'h2')
+                pagelist_content_title.text = self.options.get(
+                    'pages_title', 'Pages'
+                )
+
+                pages_ol = etree.SubElement(pagelist_nav, 'ol')
+
+                for filename, pageref, label in inserted_pages:
+                    li_item = etree.SubElement(pages_ol, 'li')
+
+                    _href = '{}#{}'.format(filename, pageref)
+                    _title = label
+
+                    a_item = etree.SubElement(li_item, 'a', {
+                        'href': os.path.relpath(_href, nav_dir_name),
+                    })
+                    a_item.text = _title                
 
         tree_str = etree.tostring(nav_xml, pretty_print=True, encoding='utf-8', xml_declaration=True)
 
@@ -1490,7 +1529,26 @@ class EpubReader(object):
 
             return items
 
-        self.book.toc = parse_list(nav_node.find('ol'))
+        if navtype == 'toc':
+            self.book.toc = parse_list(nav_node.find('ol'))
+        elif nav_node is not None:
+            # generate the pages list if there is one
+            self.book.pages = parse_list(nav_node.find('ol'))
+
+            # generate the per-file pages lists
+            # because of the order of parsing the files, this can't be done
+            # when building the EpubHtml objects
+            htmlfiles = dict()
+            for htmlfile in self.book.items:
+                if isinstance(htmlfile, EpubHtml):
+                    htmlfiles[htmlfile.file_name] = htmlfile
+            for page in self.book.pages:
+                try:
+                    (filename, idref) = page.href.split('#')
+                except ValueError:
+                    filename = page.href
+                if filename in htmlfiles:
+                    htmlfiles[filename].pages.append(page)
 
     def _load_spine(self):
         spine = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'spine'))
@@ -1529,10 +1587,22 @@ class EpubReader(object):
 
         # read nav file if found
         #
-        if not self.book.toc:
-            nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
-            if nav_item:
-                self._parse_nav(nav_item.content, zip_path.dirname(nav_item.file_name))
+
+        # read nav file if found
+        #
+        nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
+        if nav_item:
+            if not self.book.toc:
+                self._parse_nav(
+                    nav_item.content,
+                    zip_path.dirname(nav_item.file_name),
+                    navtype='toc'
+                )
+            self._parse_nav(
+                nav_item.content,
+                zip_path.dirname(nav_item.file_name),
+                navtype='pages'
+            )
 
     def _load(self):
         try:
