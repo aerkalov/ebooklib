@@ -835,7 +835,11 @@ class EpubWriter(object):
         'epub3_landmark': True,
         'landmark_title': 'Guide',
         'spine_direction': True,
-        'package_direction': False
+        'package_direction': False,
+        'play_order': {
+            'enabled': False,
+            'start_from': 1
+        }
     }
 
     def __init__(self, name, book, options=None):
@@ -1178,6 +1182,16 @@ class EpubWriter(object):
         nav_map = etree.SubElement(root, 'navMap')
 
         def _create_section(itm, items, uid):
+            try:
+                play_order_counter = self.options['play_order']['start_from']
+            except KeyError:
+                play_order_counter = None
+
+            try:
+                include_play_order = self.options['play_order']['enabled']
+            except KeyError:
+                include_play_order = False
+
             for item in items:
                 if isinstance(item, tuple) or isinstance(item, list):
                     section, subsection = item[0], item[1]
@@ -1185,6 +1199,10 @@ class EpubWriter(object):
                     np = etree.SubElement(itm, 'navPoint', {
                         'id': section.get_id() if isinstance(section, EpubHtml) else 'sep_%d' % uid
                     })
+
+                    if include_play_order:
+                        np.set('playOrder', str(play_order_counter))
+
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
                     nt.text = section.title
@@ -1210,6 +1228,10 @@ class EpubWriter(object):
                             _content.set('src', item.href)
 
                     np = etree.SubElement(itm, 'navPoint', {'id': item.uid})
+
+                    if include_play_order:
+                        np.set('playOrder', str(play_order_counter))
+
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
                     nt.text = item.title
@@ -1224,11 +1246,17 @@ class EpubWriter(object):
                             _content.set('src', item.file_name)
 
                     np = etree.SubElement(itm, 'navPoint', {'id': item.get_id()})
+
+                    if include_play_order:
+                        np.set('playOrder', str(play_order_counter))
+
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
                     nt.text = item.title
 
                     nc = etree.SubElement(np, 'content', {'src': item.file_name})
+
+                play_order_counter += 1
 
             return uid
 
