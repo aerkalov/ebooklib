@@ -29,6 +29,7 @@ ITEM_FONT = 6
 ITEM_VIDEO = 7
 ITEM_AUDIO = 8
 ITEM_DOCUMENT = 9
+ITEM_COVER = 10
 
 # EXTENSION MAPPER
 EXTENSIONS = {ITEM_IMAGE: ['.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.png'],
@@ -38,5 +39,6 @@ EXTENSIONS = {ITEM_IMAGE: ['.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.png'],
               ITEM_SCRIPT: ['.js'],
               ITEM_NAVIGATION: ['.ncx'],
               ITEM_VIDEO: ['.mov', '.mp4', '.avi'],
-              ITEM_AUDIO: ['.mp3', '.ogg']
+              ITEM_AUDIO: ['.mp3', '.ogg'],
+              ITEM_COVER: ['.jpg', '.jpeg', '.png']
               }

@@ -170,6 +170,7 @@ class EpubItem(object):
           - ITEM_VIDEO = 7
           - ITEM_AUDIO = 8
           - ITEM_DOCUMENT = 9
+          - ITEM_COVER = 10
 
         We map type according to the extensions which are defined in ebooklib.EXTENSIONS.
 
@@ -229,6 +230,9 @@ class EpubCover(EpubItem):
 
     def __init__(self, uid='cover-img', file_name=''):
         super(EpubCover, self).__init__(uid=uid, file_name=file_name)
+
+    def get_type(self):
+        return ebooklib.ITEM_COVER
 
     def __str__(self):
         return '<EpubCover:%s:%s>' % (self.id, self.file_name)
