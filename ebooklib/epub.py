@@ -854,6 +854,20 @@ class EpubWriter(object):
         if options:
             self.options.update(options)
 
+        self._init_play_order()
+
+    def _init_play_order(self):
+        self._play_order = {
+            'enabled': False,
+            'start_from': 1
+        }
+
+        try:
+            self._play_order['enabled'] = self.options['play_order']['enabled']
+            self._play_order['start_from'] = self.options['play_order']['start_from']
+        except KeyError:
+            pass
+
     def process(self):
         # should cache this html parsing so we don't do it for every plugin
         for plg in self.options.get('plugins', []):
@@ -1185,17 +1199,11 @@ class EpubWriter(object):
         # For now just make a very simple navMap
         nav_map = etree.SubElement(root, 'navMap')
 
+        def _add_play_order(nav_point):
+            nav_point.set('playOrder', str(self._play_order['start_from']))
+            self._play_order['start_from'] += 1
+
         def _create_section(itm, items, uid):
-            try:
-                play_order_counter = self.options['play_order']['start_from']
-            except KeyError:
-                play_order_counter = None
-
-            try:
-                include_play_order = self.options['play_order']['enabled']
-            except KeyError:
-                include_play_order = False
-
             for item in items:
                 if isinstance(item, tuple) or isinstance(item, list):
                     section, subsection = item[0], item[1]
@@ -1204,8 +1212,8 @@ class EpubWriter(object):
                         'id': section.get_id() if isinstance(section, EpubHtml) else 'sep_%d' % uid
                     })
 
-                    if include_play_order:
-                        np.set('playOrder', str(play_order_counter))
+                    if self._play_order['enabled']:
+                        _add_play_order(np)
 
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
@@ -1233,8 +1241,8 @@ class EpubWriter(object):
 
                     np = etree.SubElement(itm, 'navPoint', {'id': item.uid})
 
-                    if include_play_order:
-                        np.set('playOrder', str(play_order_counter))
+                    if self._play_order['enabled']:
+                        _add_play_order(np)
 
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
@@ -1251,16 +1259,14 @@ class EpubWriter(object):
 
                     np = etree.SubElement(itm, 'navPoint', {'id': item.get_id()})
 
-                    if include_play_order:
-                        np.set('playOrder', str(play_order_counter))
+                    if self._play_order['enabled']:
+                        _add_play_order(np)
 
                     nl = etree.SubElement(np, 'navLabel')
                     nt = etree.SubElement(nl, 'text')
                     nt.text = item.title
 
                     nc = etree.SubElement(np, 'content', {'src': item.file_name})
-
-                play_order_counter += 1
 
             return uid
 
