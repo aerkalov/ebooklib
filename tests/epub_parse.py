@@ -1,15 +1,23 @@
 import sys
 
+import ebooklib
 from ebooklib import epub
+from ebooklib.utils import debug
 
+book = epub.read_epub(sys.argv[1])
 
-book = epub.readEPUB(sys.argv[1])
+debug(book.metadata)
+debug(book.spine)
+debug(book.toc)
 
-print book.metadata
+#for it in book.items:
+#    debug( it.get_type())
 
-for it in book.items:
-    print it
+for x in  book.get_items_of_type(ebooklib.ITEM_IMAGE):
+    debug( x)
 
-book.add_item(epub.EpubNav())
-epub.writeEPUB('test.epub', book, {})
+from ebooklib.plugins import standard, tidyhtml
 
+opts = {'plugins': [standard.SyntaxPlugin(), tidyhtml.TidyPlugin()]}
+
+epub.write_epub('test.epub', book, opts)

@@ -1,24 +1,32 @@
-About EbookLib
-==============
+.. EbookLib documentation master file, created by
+   sphinx-quickstart on Fri Apr 25 11:49:49 2014.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to EbookLib's documentation!
+====================================
 
 EbookLib is a Python library for managing EPUB2/EPUB3 and Kindle files. It's capable of reading and writing EPUB files programmatically (Kindle support is under development).
 
-The API is designed to be as simple as possible, while at the same time making complex things possible too.  It has support for covers, table of contents, spine, guide, metadata and etc.
+The API is designed to be as simple as possible, while at the same time making complex things possible too. It has support for covers, table of contents, spine, guide, metadata and more. EbookLib works with Python 2.7 and Python 3.3.
 
-EbookLib is used in [Booktype 2.0](https://github.com/sourcefabric/Booktype/) from Sourcefabric, as well as [sprits-it!](https://github.com/the-happy-hippo/sprits-it), [fanfiction2ebook](https://github.com/ltouroumov/fanfiction2ebook) and [deboutlesgens](https://github.com/vjousse/deboutlesgens). 
+Homepage: https://github.com/aerkalov/ebooklib/
 
-Packages of EbookLib for GNU/Linux are available in [Debian](https://packages.debian.org/sid/python-ebooklib) and [Ubuntu](http://packages.ubuntu.com/utopic/python-ebooklib). 
+.. toctree::
+    :maxdepth: 4
 
-Sphinx documentation is generated from the templates in the docs/ directory and made available at http://ebooklib.readthedocs.org
+    ebooklib
+
 
 Usage
 =====
 
 Reading
 -------
+::
 
-    import ebooklib
     from ebooklib import epub
+    import ebooklib
 
     book = epub.read_epub('test.epub')
 
@@ -27,6 +35,7 @@ Reading
 
 Writing
 -------
+::
 
     from ebooklib import epub
 
@@ -42,7 +51,7 @@ Writing
 
     # create chapter
     c1 = epub.EpubHtml(title='Intro', file_name='chap_01.xhtml', lang='hr')
-    c1.content=u'<h1>Intro heading</h1><p>Zaba je skocila u baru.</p>'
+    c1.content=u'<h1>Intro heading</h1><p>Žaba je skočila u baru.</p>'
 
     # add chapter
     book.add_item(c1)
@@ -70,15 +79,12 @@ Writing
     # write to the file
     epub.write_epub('test.epub', book, {})
 
+Further examples are available in https://github.com/aerkalov/ebooklib/tree/master/samples
 
+Indices and tables
+==================
 
-License
-=======
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
-EbookLib is licensed under the AGPL license.
-
-
-Authors
-=======
-
-Full list of authors is in AUTHORS.txt file.

@@ -14,7 +14,7 @@ if __name__ == '__main__':
     book.add_author('Aleksandar Erkalovic')
 
     # add cover image
-    book.set_cover("image.jpg", open('cover.jpg', 'r').read())
+    book.set_cover("image.jpg", open('cover.jpg', 'rb').read())
 
     # intro chapter
     c1 = epub.EpubHtml(title='Introduction', file_name='intro.xhtml', lang='hr')
@@ -84,5 +84,5 @@ nav[epub|type~='toc'] > ol > li > ol > li {
     book.spine = ['cover', 'nav', c1, c2]
 
     # create epub file
-    epub.writeEPUB('test.epub', book, {})
+    epub.write_epub('test.epub', book, {})
 

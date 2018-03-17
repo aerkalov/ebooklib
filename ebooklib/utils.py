@@ -14,29 +14,28 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
-# Version of ebook library
+import io
+from lxml import etree
 
-VERSION = (0, 15, 0)
+def debug(obj):
+    import pprint
 
-# LIST OF POSSIBLE ITEMS
-ITEM_UNKNOWN = 0
-ITEM_IMAGE = 1
-ITEM_STYLE = 2
-ITEM_SCRIPT = 3
-ITEM_NAVIGATION = 4
-ITEM_VECTOR = 5
-ITEM_FONT = 6
-ITEM_VIDEO = 7
-ITEM_AUDIO = 8
-ITEM_DOCUMENT = 9
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(obj)
 
-# EXTENSION MAPPER
-EXTENSIONS = {ITEM_IMAGE: ['.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.png'],
-              ITEM_STYLE: ['.css'],
-              ITEM_VECTOR: ['.svg'],
-              ITEM_FONT: ['.otf', '.woff'],
-              ITEM_SCRIPT: ['.js'],
-              ITEM_NAVIGATION: ['.ncx'],
-              ITEM_VIDEO: ['.mov', '.mp4', '.avi'],
-              ITEM_AUDIO: ['.mp3', '.ogg']
-              }
+def parse_string(s):
+    try:
+        tree = etree.parse(io.BytesIO(s.encode('utf-8')))
+    except:
+        tree = etree.parse(io.BytesIO(s))
+
+    return tree
+
+def parse_html_string(s):
+    from lxml import html
+
+    utf8_parser = html.HTMLParser(encoding='utf-8')
+
+    html_tree = html.document_fromstring(s , parser=utf8_parser)
+
+    return html_tree

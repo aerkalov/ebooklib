@@ -15,21 +15,25 @@
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 from ebooklib.plugins.base import BasePlugin
+from ebooklib.utils import parse_html_string
 
 class SourceHighlighter(BasePlugin):    
     def __init__(self):
         pass
 
-    def process_html(self, book, chapter):
-        from lxml import html, etree
+    def html_before_write(self, book, chapter):
+        from lxml import etree, html
 
         from pygments import highlight
         from pygments.formatters import HtmlFormatter
 
         from ebooklib import epub
 
-        utf8_parser = html.HTMLParser(encoding='utf-8')
-        tree = html.document_fromstring(chapter.content, parser=utf8_parser)
+        try:
+            tree = parse_html_string(chapter.content)
+        except:
+            return
+
         root = tree.getroottree()
 
         had_source = False

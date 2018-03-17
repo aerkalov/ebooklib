@@ -15,6 +15,7 @@
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 from ebooklib.plugins.base import BasePlugin
+from ebooklib.utils import parse_html_string
 
 class BooktypeLinks(BasePlugin):
     NAME = 'Booktype Links'
@@ -22,13 +23,19 @@ class BooktypeLinks(BasePlugin):
     def __init__(self, booktype_book):
         self.booktype_book = booktype_book
 
-    def process_html(self, book, chapter):
-        from urlparse import urlparse, urljoin
+    def html_before_write(self, book, chapter):
+        from lxml import  etree
 
-        from lxml import html, etree
+        try:
+            from urlparse import urlparse, urljoin
+        except ImportError:
+            from urllib.parse import urlparse, urljoin
 
-        utf8_parser = html.HTMLParser(encoding='utf-8')
-        tree = html.document_fromstring(chapter.content, parser=utf8_parser)
+        try:
+            tree = parse_html_string(chapter.content)
+        except:
+            return
+
         root = tree.getroottree()
 
         if len(root.find('body')) != 0:
@@ -73,13 +80,16 @@ class BooktypeFootnotes(BasePlugin):
     def __init__(self, booktype_book):
         self.booktype_book = booktype_book
 
-    def process_html(self, book, chapter):
-        from lxml import html, etree
+    def html_before_write(self, book, chapter):
+        from lxml import etree
 
         from ebooklib import epub
 
-        utf8_parser = html.HTMLParser(encoding='utf-8')
-        tree = html.document_fromstring(chapter.content, parser=utf8_parser)
+        try:
+            tree = parse_html_string(chapter.content)
+        except:
+            return
+
         root = tree.getroottree()
 
         if len(root.find('body')) != 0:

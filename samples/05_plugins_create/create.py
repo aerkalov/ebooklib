@@ -7,7 +7,7 @@ class SamplePlugin(BasePlugin):
     NAME = 'Sample Plugin'
 
     # Very useless but example of what can be done
-    def process_html(self, book, chapter):
+    def html_before_write(self, book, chapter):
         from urlparse import urlparse, urljoin
 
         from lxml import html, etree
