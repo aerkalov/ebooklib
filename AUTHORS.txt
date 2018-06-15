@@ -17,3 +17,8 @@ Edward Betts <edward@4angle.com>
 Kennyl <Kennyl@users.noreply.github.com>
 Oleg Pshenichniy <olegpshenichniy@gmail.com>
 clach04 <Chris.Clark@actian.com>
+Olivier Le Thanh Duong <olivier@lethanh.be>
+Michael Storm <mstorm7@gmail.com>
+Sergey Markelov
+Laurent Laporte <tantale.solutions@gmail.com>
+Deborah Kaplan
