@@ -669,7 +669,7 @@ class EpubBook(object):
         if namespace in NAMESPACES:
             namespace = NAMESPACES[namespace]
 
-        return self.metadata[namespace][name]
+        return self.metadata[namespace].get(name, [])
 
     def set_unique_metadata(self, namespace, name, value, others=None):
         "Add metadata if metadata with this identifier does not already exist, otherwise update existing metadata."
