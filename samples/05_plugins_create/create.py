@@ -8,17 +8,23 @@ class SamplePlugin(BasePlugin):
 
     # Very useless but example of what can be done
     def html_before_write(self, book, chapter):
-        from urlparse import urlparse, urljoin
+        if chapter.content is None:
+            return
+
+        try:
+            from urlparse import urlparse, urljoin
+        except ImportError:
+            from urllib.parse import urlparse, urljoin
 
         from lxml import html, etree
 
         utf8_parser = html.HTMLParser(encoding='utf-8')
+
         tree = html.document_fromstring(chapter.content, parser=utf8_parser)
         root = tree.getroottree()
 
         if len(root.find('body')) != 0:
             body = tree.find('body')
-
 
             for _link in body.xpath("//a[@class='test']"):
                 _link.set('href', 'http://www.binarni.net/')
