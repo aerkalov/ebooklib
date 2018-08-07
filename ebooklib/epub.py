@@ -1579,7 +1579,10 @@ class EpubReader(object):
             nav_node = html_node.xpath("//nav[@*='toc']")[0]
         else:
             # parsing the list of pages
-            nav_node = html_node.xpath("//nav[@*='page-list']")[0]
+            _page_list = html_node.xpath("//nav[@*='page-list']")
+            if len(_page_list) == 0:
+                return
+            nav_node = _page_list[0]
 
         def parse_list(list_node):
             items = []
