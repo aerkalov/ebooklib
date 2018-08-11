@@ -22,3 +22,4 @@ Michael Storm <mstorm7@gmail.com>
 Sergey Markelov
 Laurent Laporte <tantale.solutions@gmail.com>
 Deborah Kaplan <deborahgu@users.noreply.github.com>
+Willem van der Walt <wvdwalt@csir.co.za>
