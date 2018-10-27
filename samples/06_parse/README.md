@@ -1,7 +1,7 @@
 Plugins
 =======
 
-How to parse EPUB fule.
+How to parse EPUB file.
 
 ## Start
 
