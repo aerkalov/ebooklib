@@ -1375,7 +1375,7 @@ class EpubWriter(object):
 
     def write(self):
         # check for the option allowZip64
-        self.out = zipfile.ZipFile(self.file_name, 'w', zipfile.ZIP_DEFLATED)
+        self.out = PermissiveZipFile(self.file_name, 'w', zipfile.ZIP_DEFLATED)
         self.out.writestr('mimetype', 'application/epub+zip', compress_type=zipfile.ZIP_STORED)
 
         self._write_container()
