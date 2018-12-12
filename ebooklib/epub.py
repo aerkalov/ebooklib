@@ -15,6 +15,7 @@
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 import zipfile
+import time
 import six
 import logging
 import uuid
@@ -32,6 +33,24 @@ from lxml import etree
 import ebooklib
 
 from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items
+
+
+class PermissiveZipFile(zipfile.ZipFile):
+    def writestr(self, zinfo_or_arcname, data, compress_type=None):
+        if not isinstance(zinfo_or_arcname, zipfile.ZipInfo):
+            zinfo = zipfile.ZipInfo(filename=zinfo_or_arcname,
+                            date_time=time.localtime(time.time())[:6])
+
+            zinfo.compress_type = self.compression
+            if zinfo.filename[-1] == '/':
+                zinfo.external_attr = 0o40775 << 16   # drwxrwxr-x
+                zinfo.external_attr |= 0x10           # MS-DOS directory flag
+            else:
+                zinfo.external_attr = 0o644 << 16     # ?rw-r--r--
+        else:
+            zinfo = zinfo_or_arcname
+
+        super(PermissiveZipFile, self).writestr(zinfo, data, compress_type)
 
 
 # Version of EPUB library
