@@ -16,7 +16,7 @@
 
 # Version of ebook library
 
-VERSION = (0, 17, 0)
+VERSION = (0, 17, 1)
 
 # LIST OF POSSIBLE ITEMS
 ITEM_UNKNOWN = 0
