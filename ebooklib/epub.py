@@ -423,6 +423,7 @@ class EpubHtml(EpubItem):
         _body = etree.SubElement(tree_root, 'body')
         if self.direction:
             _body.set('dir', self.direction)
+            tree_root.set('dir', self.direction)
 
         body = html_tree.find('body')
         if body is not None:
