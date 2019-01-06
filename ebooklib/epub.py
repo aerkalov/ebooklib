@@ -303,6 +303,9 @@ class EpubHtml(EpubItem):
         >>> add_link(href='styles.css', rel='stylesheet', type='text/css')
         """
         self.links.append(kwgs)
+        if kwgs.get('type') == 'text/javascript':
+            if 'scripted' not in self.properties:
+                self.properties.append('scripted')
 
     def get_links(self):
         """
