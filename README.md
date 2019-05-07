@@ -46,10 +46,16 @@ Writing
 
     # create chapter
     c1 = epub.EpubHtml(title='Intro', file_name='chap_01.xhtml', lang='hr')
-    c1.content=u'<h1>Intro heading</h1><p>Zaba je skocila u baru.</p>'
+    c1.content=u'<h1>Intro heading</h1><p>Zaba je skocila u baru.</p><p><img alt="[ebook logo]" src="istatic/ebooklib.gif"/><br/></p>'
+
+    # create image from the local image
+    image_content = open('ebooklib.gif', 'rb').read()
+    img = epub.EpubImage(uid='image_1', file_name='static/ebooklib.gif', media_type='image/gif', content=image_content)
 
     # add chapter
     book.add_item(c1)
+    # add image
+    book.add_item(img)
 
     # define Table Of Contents
     book.toc = (epub.Link('chap_01.xhtml', 'Introduction', 'intro'),
