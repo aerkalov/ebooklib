@@ -1643,7 +1643,8 @@ class EpubReader(object):
         self.book.set_direction(spine.get('page-progression-direction', None))
 
         # should read ncx or nav file
-        if toc:
+        nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
+        if toc and not nav_item:
             try:
                 ncxFile = self.read_file(zip_path.join(self.opf_dir, self.book.get_item_with_id(toc).get_name()))
             except KeyError:
@@ -1673,12 +1674,11 @@ class EpubReader(object):
         #
         nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
         if nav_item:
-            if not self.book.toc:
-                self._parse_nav(
-                    nav_item.content,
-                    zip_path.dirname(nav_item.file_name),
-                    navtype='toc'
-                )
+            self._parse_nav(
+                nav_item.content,
+                zip_path.dirname(nav_item.file_name),
+                navtype='toc'
+            )
             self._parse_nav(
                 nav_item.content,
                 zip_path.dirname(nav_item.file_name),
