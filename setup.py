@@ -20,7 +20,7 @@ setup(
     url = 'https://github.com/aerkalov/ebooklib',
     license = 'GNU Affero General Public License',
     description = 'Ebook library which can handle EPUB2/EPUB3 and Kindle format',
-    long_description = read('README.md'),
+    long_description = read('README.rst'),
     keywords = ['ebook', 'epub', 'kindle'],
     classifiers = [
         "Development Status :: 4 - Beta",
