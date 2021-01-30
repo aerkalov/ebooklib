@@ -734,8 +734,8 @@ class EpubBook(object):
                 item.id = 'image_%d' % self._id_image
                 self._id_image += 1
             else:
-                item.id = 'static_%d' % self._id_image
-                self._id_image += 1
+                item.id = 'static_%d' % self._id_static
+                self._id_static += 1
 
         item.book = self
         self.items.append(item)
