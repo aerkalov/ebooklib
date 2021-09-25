@@ -129,7 +129,7 @@ class EpubItem(object):
           - manifest: Manifest for this item (optional)
         """
         self.id = uid
-        self.file_name = file_name
+        self._file_name = file_name
         self.media_type = media_type
         self.content = content
         self.is_linear = True
@@ -154,6 +154,24 @@ class EpubItem(object):
           Returns file name for this item.
         """
         return self.file_name
+
+    @property
+    def file_name(self):
+        # To support Python 2 Unicode path, file_name should be decoded.
+        # And because file_name is a public member previously,
+        # so decoding lies here instead of construction.
+        if isinstance(self._file_name, bytes):
+            return self._file_name.decode("utf-8")
+        else:
+            return self._file_name
+
+    @file_name.setter
+    def file_name(self, value):
+        self._file_name = value
+
+    @file_name.deleter
+    def file_name(self):
+        del self._file_name
 
     def get_type(self):
         """
