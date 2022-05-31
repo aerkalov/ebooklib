@@ -31,10 +31,12 @@ def debug(obj):
 
 
 def parse_string(s):
+    parser = etree.XMLParser(resolve_entities=False)
+
     try:
-        tree = etree.parse(io.BytesIO(s.encode('utf-8')))
+        tree = etree.parse(io.BytesIO(s.encode('utf-8')), parser=parser)
     except:
-        tree = etree.parse(io.BytesIO(s))
+        tree = etree.parse(io.BytesIO(s), parser=parser)
 
     return tree
 
