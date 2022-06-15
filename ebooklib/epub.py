@@ -1499,7 +1499,7 @@ class EpubReader(object):
                 ei = EpubNcx(uid=r.get('id'), file_name=unquote(r.get('href')))
 
                 ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
-            if media_type == 'application/smil+xml':
+            elif media_type == 'application/smil+xml':
                 ei = EpubSMIL(uid=r.get('id'), file_name=unquote(r.get('href')))
 
                 ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
