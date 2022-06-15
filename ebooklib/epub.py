@@ -1139,7 +1139,7 @@ class EpubWriter(object):
         })
 
         content_title = etree.SubElement(nav, 'h2')
-        content_title.text = self.book.title
+        content_title.text = "Table of Contents"
 
         def _create_section(itm, items):
             ol = etree.SubElement(itm, 'ol')
