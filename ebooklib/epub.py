@@ -495,8 +495,8 @@ class EpubNav(EpubHtml):
     Represents Navigation Document in the EPUB file.
     """
 
-    def __init__(self, uid='nav', file_name='nav.xhtml', media_type='application/xhtml+xml'):
-        super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type)
+    def __init__(self, uid='nav', file_name='nav.xhtml', media_type='application/xhtml+xml', title=''):
+        super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type, title=title)
 
     def is_chapter(self):
         """
@@ -1123,7 +1123,7 @@ class EpubWriter(object):
 
         head = etree.SubElement(root, 'head')
         title = etree.SubElement(head, 'title')
-        title.text = self.book.title
+        title.text = item.title or self.book.title
 
         # for now this just handles css files and ignores others
         for _link in item.links:
@@ -1139,7 +1139,7 @@ class EpubWriter(object):
         })
 
         content_title = etree.SubElement(nav, 'h2')
-        content_title.text = self.book.title
+        content_title.text = item.title or self.book.title
 
         def _create_section(itm, items):
             ol = etree.SubElement(itm, 'ol')
