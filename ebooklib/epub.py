@@ -49,7 +49,7 @@ NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
 
 CONTAINER_PATH = 'META-INF/container.xml'
 
-CONTAINER_XML = '''<?xml version='1.0' encoding='utf-8'?>
+CONTAINER_XML = '''<?xml version="1.0" encoding="utf-8"?>
 <container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">
   <rootfiles>
     <rootfile media-type="application/oebps-package+xml" full-path="%(folder_name)s/content.opf"/>
