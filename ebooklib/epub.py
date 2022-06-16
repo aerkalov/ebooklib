@@ -1686,18 +1686,32 @@ class EpubReader(object):
             )
 
     def _load(self):
-        try:
-            self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
-        except zipfile.BadZipfile as bz:
-            raise EpubException(0, 'Bad Zip file')
-        except zipfile.LargeZipFile as bz:
-            raise EpubException(1, 'Large Zip file')
+        if os.path.isdir(self.file_name):
+            file_name = self.file_name
+
+            class Directory:
+                def read(self, subname):
+                    with open(os.path.join(file_name, subname), 'rb') as fp:
+                        return fp.read()
+
+                def close(self):
+                    pass
+
+            self.zf = Directory()
+        else:
+            try:
+                self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
+            except zipfile.BadZipfile as bz:
+                raise EpubException(0, 'Bad Zip file')
+            except zipfile.LargeZipFile as bz:
+                raise EpubException(1, 'Large Zip file')
 
         # 1st check metadata
         self._load_container()
         self._load_opf_file()
 
         self.zf.close()
+
 
 
 # WRITE
