@@ -292,12 +292,17 @@ Option              Default value
 epub2_guide         True
 epub3_landmark      True
 epub3_pages         True
+ignore_ncx          False
 landmark_title      "Guide"
 pages_title         "Pages"
 spine_direction     True
 package_direction   False
 play_order          {'enabled': False, 'start_from': 1}
 =================   ====================================
+
+In the future version default value for ignore_ncx will be changed. According to the documentation default
+behaviour should be "EPUB 3 Reading Systems must ignore the NCX in favor of the EPUB Navigation Document".
+Because we have been doing wrong this all time we will keep the default behavior to prepare for the change.
 
 Example when overriding default options:
 

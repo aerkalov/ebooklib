@@ -18,6 +18,7 @@ import zipfile
 import six
 import logging
 import uuid
+import warnings
 import posixpath as zip_path
 import os.path
 from collections import OrderedDict
@@ -1371,7 +1372,9 @@ class EpubWriter(object):
 
 
 class EpubReader(object):
-    DEFAULT_OPTIONS = {}
+    DEFAULT_OPTIONS = {
+        'ignore_ncx': False
+    }
 
     def __init__(self, epub_file_name, options=None):
         self.file_name = epub_file_name
@@ -1384,6 +1387,12 @@ class EpubReader(object):
         self.options = dict(self.DEFAULT_OPTIONS)
         if options:
             self.options.update(options)
+
+        self._check_deprecated()
+
+    def _check_deprecated(self):
+        if not self.options.get('ignore_ncx'):
+            warnings.warn('In the future version we will turn default option ignore_ncx to True.')
 
     def process(self):
         # should cache this html parsing so we don't do it for every plugin
@@ -1644,13 +1653,14 @@ class EpubReader(object):
 
         # should read ncx or nav file
         nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
-        if toc and not nav_item:
-            try:
-                ncxFile = self.read_file(zip_path.join(self.opf_dir, self.book.get_item_with_id(toc).get_name()))
-            except KeyError:
-                raise EpubException(-1, 'Can not find ncx file.')
+        if toc:
+            if not self.options.get('ignore_ncx') or not nav_item:
+                try:
+                    ncxFile = self.read_file(zip_path.join(self.opf_dir, self.book.get_item_with_id(toc).get_name()))
+                except KeyError:
+                    raise EpubException(-1, 'Can not find ncx file.')
 
-            self._parse_ncx(ncxFile)
+                self._parse_ncx(ncxFile)
 
     def _load_guide(self):
         guide = self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'guide'))
@@ -1674,11 +1684,12 @@ class EpubReader(object):
         #
         nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
         if nav_item:
-            self._parse_nav(
-                nav_item.content,
-                zip_path.dirname(nav_item.file_name),
-                navtype='toc'
-            )
+            if self.options.get('ignore_ncx') or not self.book.toc:
+                self._parse_nav(
+                    nav_item.content,
+                    zip_path.dirname(nav_item.file_name),
+                    navtype='toc'
+                )
             self._parse_nav(
                 nav_item.content,
                 zip_path.dirname(nav_item.file_name),
