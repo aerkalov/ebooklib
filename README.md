@@ -12,7 +12,7 @@ Sphinx documentation is generated from the templates in the docs/ directory and 
 
 # Usage
 
-##Reading
+## Reading
 ```py
 import ebooklib
 from ebooklib import epub
