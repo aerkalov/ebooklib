@@ -26,7 +26,7 @@ Method :meth:`ebooklib.epub.EpubBook.get_metadata` is used for fetching metadata
 is name of the namespace ('DC' for Dublin Core and 'OPF' for custom metadata). Second argument is name of the key.
 It always returns a list. List will be empty if nothing is defined for that key.
 
-Minimal required metadata from Dublic Core set (for EPUB3) is:
+Minimal required metadata from Dublin Core set (for EPUB3) is:
 
 * DC:identifier
 * DC:title
@@ -46,7 +46,7 @@ Minimal required metadata from Dublic Core set (for EPUB3) is:
     [('9781416566120', {'id': 'isbn_9781416566120'})]
 
 
-Optional metadata from the Dublic Core set is:
+Optional metadata from the Dublin Core set is:
 
 * DC:creator
 * DC:contributor
@@ -177,7 +177,7 @@ and language used inside. When it comes to language code recommended best practi
 
     book.add_author('Aleksandar Erkalovic')
 
-You can also add custom metadata. First one is from the Dublic Core namespace and second one is purely custom.
+You can also add custom metadata. First one is from the Dublin Core namespace and second one is purely custom.
 
 ::
 
