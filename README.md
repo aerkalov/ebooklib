@@ -46,7 +46,7 @@ Writing
 
     # create chapter
     c1 = epub.EpubHtml(title='Intro', file_name='chap_01.xhtml', lang='hr')
-    c1.content=u'<h1>Intro heading</h1><p>Zaba je skocila u baru.</p><p><img alt="[ebook logo]" src="istatic/ebooklib.gif"/><br/></p>'
+    c1.content=u'<h1>Intro heading</h1><p>Zaba je skocila u baru.</p><p><img alt="[ebook logo]" src="static/ebooklib.gif"/><br/></p>'
 
     # create image from the local image
     image_content = open('ebooklib.gif', 'rb').read()
