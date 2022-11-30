@@ -23,3 +23,15 @@ Sergey Markelov
 Laurent Laporte <tantale.solutions@gmail.com>
 Deborah Kaplan <deborahgu@users.noreply.github.com>
 Willem van der Walt <wvdwalt@csir.co.za>
+Peter <82152909+repeterat@users.noreply.github.com>
+u8slvn <u8slvn@gmail.com>
+tugot17 <piotr635@gmail.com>
+张悦 <zhangyue@xtzx.com>
+Morphus <mr.morphus@gmail.com>
+Kian-Meng, Ang <kianmeng@cpan.org>
+Jared Wong <jaredlwong@gmail.com>
+Michael Timblin <mjtimblin@gmail.com>
+Hsiu-Ming Chang <cges30901@gmail.com>
+Bono Lv <lvscar@gmail.com>
+Tom Ritchford <tom@swirly.com>
+
