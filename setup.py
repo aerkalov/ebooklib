@@ -21,6 +21,7 @@ setup(
     license = 'GNU Affero General Public License',
     description = 'Ebook library which can handle EPUB2/EPUB3 and Kindle format',
     long_description = read('README.md'),
+    long_description_content_type = 'text/markdown',
     keywords = ['ebook', 'epub', 'kindle'],
     classifiers = [
         "Development Status :: 4 - Beta",
