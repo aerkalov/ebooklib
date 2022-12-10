@@ -496,8 +496,8 @@ class EpubNav(EpubHtml):
     Represents Navigation Document in the EPUB file.
     """
 
-    def __init__(self, uid='nav', file_name='nav.xhtml', media_type='application/xhtml+xml', title=''):
-        super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type, title=title)
+    def __init__(self, uid='nav', file_name='nav.xhtml', media_type='application/xhtml+xml', title='', direction=None):
+        super(EpubNav, self).__init__(uid=uid, file_name=file_name, media_type=media_type, title=title, direction=direction)
 
     def is_chapter(self):
         """
@@ -1133,6 +1133,8 @@ class EpubWriter(object):
             })
 
         body = etree.SubElement(root, 'body')
+        if item.direction:
+            body.set('dir', item.direction)
         nav = etree.SubElement(body, 'nav', {
             '{%s}type' % NAMESPACES['EPUB']: 'toc',
             'id': 'id',
