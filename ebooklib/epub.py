@@ -1133,7 +1133,8 @@ class EpubWriter(object):
             })
 
         body = etree.SubElement(root, 'body')
-        body.set('dir', item.direction)
+        if item.direction:
+            body.set('dir', item.direction)
         nav = etree.SubElement(body, 'nav', {
             '{%s}type' % NAMESPACES['EPUB']: 'toc',
             'id': 'id',
