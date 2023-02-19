@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from ebooklib import epub
+from tempfile import TemporaryFile
 
 
 if __name__ == '__main__':
@@ -18,8 +19,10 @@ if __name__ == '__main__':
     c1.set_content(u'<html><head></head><body><h1>Introduction</h1><p>Introduction paragraph where i explain what is happening.</p></body></html>')
 
     # about chapter
-    c2 = epub.EpubHtml(title='About this book', file_name='about.xhtml')
-    c2.content.write(b'<h1>About this book</h1><p>Helou, this is my book! There are many books, but this one is mine.</p>')
+    c2 = epub.EpubHtml(title='About this book', file_name='about.xhtml', content=TemporaryFile())
+    c2.write('<h1>About this book</h1>')
+    for i in range(1024):
+        c2.write('<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin rutrum erat ipsum, at fringilla sem sodales ut. Donec rutrum condimentum leo, non convallis ipsum sodales vel. Sed vulputate, quam dapibus pharetra viverra, nunc magna fermentum ligula, sed placerat enim diam id nisi. Sed justo nunc, placerat vel rutrum eget, lacinia quis ante. Maecenas semper turpis lectus, sed sollicitudin diam feugiat vitae. Mauris massa felis, cursus non enim a, consequat pulvinar mauris. Proin scelerisque neque felis, in fringilla ligula tristique ac. Phasellus interdum lacus neque, ac efficitur nibh consequat a. Donec enim enim, commodo sed finibus in, dignissim sit amet arcu. Nam mollis eu ipsum sed ornare. Maecenas non ipsum molestie, volutpat nulla quis, accumsan arcu. Cras imperdiet augue interdum ipsum laoreet malesuada vitae consectetur ipsum. Quisque vitae tortor augue.</p>')
 
     # add chapters to the book
     book.add_item(c1)

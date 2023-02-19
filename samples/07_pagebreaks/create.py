@@ -17,22 +17,22 @@ if __name__ == '__main__':
 
     # build the chapter HTML and add the page break
     c1 = epub.EpubHtml(title='Introduction', file_name='intro.xhtml', lang='en')
-    c1.content = u'<h1>Introduction</h1><p><span id="page1" epub:type="pagebreak">1</span>This chapter has a visible page number.</p><p><span id="page2" epub:type="pagebreak">2</span>Something else now.</p>'
+    c1.set_content(u'<h1>Introduction</h1><p><span id="page1" epub:type="pagebreak">1</span>This chapter has a visible page number.</p><p><span id="page2" epub:type="pagebreak">2</span>Something else now.</p>')
 
     c2 = epub.EpubHtml(title='Chapter the Second', file_name='chap02.xhtml', lang='en')
-    c2.content = u'<html><head></head><body><h1>Chapter the Second</h1><p>This chapter has two page breaks, both with invisible page numbers.</p>'
+    c2.content.write(u'<html><head></head><body><h1>Chapter the Second</h1><p>This chapter has two page breaks, both with invisible page numbers.</p>'.encode())
 
     # Add invisible page numbers that match the printed text, for accessibility
-    c2.content += create_pagebreak("2")
+    c2.write(create_pagebreak("2"))
 
     # You can add more content  after the page break
-    c2.content += u'<p>This is the second page in the second chapter, after the invisible page break.</p>'
+    c2.write(u'<p>This is the second page in the second chapter, after the invisible page break.</p>')
 
     # Add invisible page numbers that match the printed text, for accessibility
-    c2.content += create_pagebreak("3", label="Page 3")
+    c2.write(create_pagebreak("3", label="Page 3"))
 
     # close the chapter
-    c2.content += u'</body></html>'
+    c2.write(u'</body></html>')
 
     # add chapters to the book
     book.add_item(c1)
