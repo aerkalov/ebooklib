@@ -140,14 +140,16 @@ class EpubItem(object):
 
         self.book = None
     def write(self, buff):
-        if isinstance(buff, str):
+        if buff == None:
+            pass
+        elif isinstance(buff, str):
             self.content.write(buff.encode())
         elif isinstance(buff, six.binary_type):
             self.content.write(buff)
         elif isinstance(buff, io.IOBase):
             self.content.write(buff.read())
         else:
-            raise ValueError("content type not recognized")
+            raise ValueError(f"content type {type(buff)} not recognized")
 
 
     def get_id(self):
