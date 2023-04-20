@@ -1570,7 +1570,7 @@ class EpubReader(object):
 
             for a in elems.getchildren():
                 if a.tag == '{%s}navLabel' % NAMESPACES['DAISY']:
-                    label = a.getchildren()[0].text_content()
+                    label = a.getchildren()[0].text
                 if a.tag == '{%s}content' % NAMESPACES['DAISY']:
                     content = a.get('src', '')
                 if a.tag == '{%s}navPoint' % NAMESPACES['DAISY']:
