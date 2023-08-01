@@ -1418,8 +1418,7 @@ class EpubReader(object):
     def read_file(self, name):
         # Raises KeyError
         name = zip_path.normpath(name)
-        normalized_name = unicodedata.normalize('NFC', name)
-        return self.zf.read(name)
+        return self.zf.read(unicodedata.normalize('NFC', name))
 
     def _load_container(self):
         meta_inf = self.read_file('META-INF/container.xml')
