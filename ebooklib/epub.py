@@ -22,6 +22,8 @@ import warnings
 import posixpath as zip_path
 import os.path
 from collections import OrderedDict
+import unicodedata
+
 
 try:
     from urllib.parse import unquote
@@ -1415,6 +1417,7 @@ class EpubReader(object):
 
     def read_file(self, name):
         # Raises KeyError
+        unicodedata.normalize('NFC', name)
         name = zip_path.normpath(name)
         return self.zf.read(name)
 
