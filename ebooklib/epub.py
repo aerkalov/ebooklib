@@ -23,7 +23,7 @@ import posixpath as zip_path
 import os.path
 from collections import OrderedDict
 import unicodedata
-
+import  urllib
 
 try:
     from urllib.parse import unquote
@@ -1418,7 +1418,9 @@ class EpubReader(object):
     def read_file(self, name):
         # Raises KeyError
         name = zip_path.normpath(name)
-        return self.zf.read(unicodedata.normalize('NFC', name))
+        parsed_name = urllib.parse.unquote(name)
+        normalized_name = unicodedata.normalize('NFC', parsed_name)
+        return self.zf.read(normalized_name)
 
     def _load_container(self):
         meta_inf = self.read_file('META-INF/container.xml')
