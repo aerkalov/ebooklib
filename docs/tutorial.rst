@@ -298,11 +298,14 @@ pages_title         "Pages"
 spine_direction     True
 package_direction   False
 play_order          {'enabled': False, 'start_from': 1}
+compresslevel       6
 =================   ====================================
 
 In the future version default value for ignore_ncx will be changed. According to the documentation default
 behaviour should be "EPUB 3 Reading Systems must ignore the NCX in favor of the EPUB Navigation Document".
 Because we have been doing wrong this all time we will keep the default behavior to prepare for the change.
+
+compresslevel goes from 0 to 9, where 0 is no compression.
 
 Example when overriding default options:
 
