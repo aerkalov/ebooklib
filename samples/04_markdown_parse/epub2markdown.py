@@ -20,11 +20,11 @@ if __name__ == '__main__':
             proc = subprocess.Popen(['pandoc', '-f', 'html', '-t', 'markdown', '-'],
                                     stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE)
-            content, error = proc.communicate(item.content)
+            content, error = proc.communicate(item.get_content())
             file_name = os.path.splitext(item.file_name)[0] + '.md'
         else:
             file_name = item.file_name
-            content = item.content
+            content = item.get_content()
 
         # create needed directories 
         dir_name = '{0}/{1}'.format(base_name, os.path.dirname(file_name))

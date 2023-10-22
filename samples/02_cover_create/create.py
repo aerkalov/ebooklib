@@ -18,11 +18,11 @@ if __name__ == '__main__':
 
     # intro chapter
     c1 = epub.EpubHtml(title='Introduction', file_name='intro.xhtml', lang='hr')
-    c1.content=u'<html><head></head><body><h1>Introduction</h1><p>Introduction paragraph where i explain what is happening.</p></body></html>'
+    c1.set_content(u'<html><head></head><body><h1>Introduction</h1><p>Introduction paragraph where i explain what is happening.</p></body></html>')
 
     # about chapter
     c2 = epub.EpubHtml(title='About this book', file_name='about.xhtml')
-    c2.content='<h1>About this book</h1><p>Helou, this is my book! There are many books, but this one is mine.</p><p><img src="image.jpg" alt="Cover Image"/></p>'
+    c2.content.write(b'<h1>About this book</h1><p>Helou, this is my book! There are many books, but this one is mine.</p><p><img src="image.jpg" alt="Cover Image"/></p>')
 
     # add chapters to the book
     book.add_item(c1)
