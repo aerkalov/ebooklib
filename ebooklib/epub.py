@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
+from io import BytesIO
 import zipfile
 import six
 import logging
@@ -1699,25 +1700,33 @@ class EpubReader(object):
             )
 
     def _load(self):
-        if os.path.isdir(self.file_name):
-            file_name = self.file_name
-
-            class Directory:
-                def read(self, subname):
-                    with open(os.path.join(file_name, subname), 'rb') as fp:
-                        return fp.read()
-
-                def close(self):
-                    pass
-
-            self.zf = Directory()
-        else:
+        if isinstance(self.file_name, BytesIO):
             try:
                 self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
             except zipfile.BadZipfile as bz:
                 raise EpubException(0, 'Bad Zip file')
             except zipfile.LargeZipFile as bz:
                 raise EpubException(1, 'Large Zip file')
+        else:
+            if os.path.isdir(self.file_name):
+                file_name = self.file_name
+    
+                class Directory:
+                    def read(self, subname):
+                        with open(os.path.join(file_name, subname), 'rb') as fp:
+                            return fp.read()
+    
+                    def close(self):
+                        pass
+    
+                self.zf = Directory()
+            else:
+                try:
+                    self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
+                except zipfile.BadZipfile as bz:
+                    raise EpubException(0, 'Bad Zip file')
+                except zipfile.LargeZipFile as bz:
+                    raise EpubException(1, 'Large Zip file')
 
         # 1st check metadata
         self._load_container()
