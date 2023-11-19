@@ -119,15 +119,3 @@ def get_pages_for_items(items):
     pages_from_docs = [get_pages(item) for item in items]
 
     return [item for pages in pages_from_docs for item in pages]
-
-def is_byte_stream(obj, num_bytes=10):
-    try:
-        if not callable(getattr(obj, 'read', None)):
-            return False
-        
-        sample_data = obj.read(num_bytes)
-        obj.seek(0)
-        return isinstance(sample_data, bytes)
-    
-    except Exception:
-        return False

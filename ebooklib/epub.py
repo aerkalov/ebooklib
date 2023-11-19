@@ -1700,52 +1700,49 @@ class EpubReader(object):
             )
 
     def _load(self):
-        if is_byte_stream(self.file_name):
-            zip_buffer = BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
-                zip_file.writestr("unnamed_archive", self.file_name.read())
-            zip_buffer.seek(0)
+        if os.path.isdir(self.file_name):
+            file_name = self.file_name
 
-            class ByteStreamArchive:
+            class Directory:
                 def read(self, subname):
-                    with zipfile.ZipFile(zip_buffer, 'r') as zip_file:
-                        return zip_file.read(subname)
+                    with open(os.path.join(file_name, subname), 'rb') as fp:
+                        return fp.read()
 
                 def close(self):
                     pass
 
-            self.zf = ByteStreamArchive()
-
-        if isinstance(self.file_name, BytesIO):
+            self.zf = Directory()
+        elif isinstance(self.file_name, BytesIO):
             try:
                 self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
             except (zipfile.BadZipfile, zipfile.LargeZipFile) as bz:
                 raise EpubException(0 if isinstance(bz, zipfile.BadZipfile) else 1, 'Bad Zip file')
         else:
-            if os.path.isdir(self.file_name):
-                file_name = self.file_name
-    
-                class Directory:
+            try:
+                # Treat self.file_name as a byte stream
+                zip_buffer = BytesIO()
+                with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
+                    zip_file.writestr("unnamed_archive", self.file_name.read())
+                zip_buffer.seek(0)
+
+                class ByteStreamArchive:
                     def read(self, subname):
-                        with open(os.path.join(file_name, subname), 'rb') as fp:
-                            return fp.read()
-    
+                        with zipfile.ZipFile(zip_buffer, 'r') as zip_file:
+                            return zip_file.read(subname)
+
                     def close(self):
                         pass
-    
-                self.zf = Directory()
-            else:
-                try:
-                    self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
-                except (zipfile.BadZipfile, zipfile.LargeZipFile) as bz:
-                    raise EpubException(0 if isinstance(bz, zipfile.BadZipfile) else 1, 'Bad Zip file')
+
+                self.zf = ByteStreamArchive()
+            except Exception as e:
+                # Catch the error if self.file_name.read() fails
+                raise Exception("Error reading byte stream: {}".format(str(e)))
 
         # 1st check metadata
         self._load_container()
         self._load_opf_file()
 
         self.zf.close()
-
 
 
 # WRITE
