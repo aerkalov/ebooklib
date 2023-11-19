@@ -122,10 +122,11 @@ def get_pages_for_items(items):
 
 def is_byte_stream(obj, num_bytes=10):
     try:
-        if not callable(getattr(obj, 'peek', None)):
+        if not callable(getattr(obj, 'read', None)):
             return False
         
-        sample_data = obj.peek(num_bytes)
+        sample_data = obj.read(num_bytes)
+        obj.seek(0)
         return isinstance(sample_data, bytes)
     
     except Exception:
