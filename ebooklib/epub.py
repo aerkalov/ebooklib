@@ -33,7 +33,7 @@ from lxml import etree
 
 import ebooklib
 
-from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items, is_byte_stream
+from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items
 
 
 # Version of EPUB library
