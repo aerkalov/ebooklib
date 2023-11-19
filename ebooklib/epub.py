@@ -33,7 +33,7 @@ from lxml import etree
 
 import ebooklib
 
-from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items
+from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items, is_byte_stream
 
 
 # Version of EPUB library
@@ -1700,13 +1700,27 @@ class EpubReader(object):
             )
 
     def _load(self):
+        if is_byte_stream(self.file_name):
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
+                zip_file.writestr("unnamed_archive", self.file_name.read())
+            zip_buffer.seek(0)
+
+            class ByteStreamArchive:
+                def read(self, subname):
+                    with zipfile.ZipFile(zip_buffer, 'r') as zip_file:
+                        return zip_file.read(subname)
+
+                def close(self):
+                    pass
+
+            self.zf = ByteStreamArchive()
+
         if isinstance(self.file_name, BytesIO):
             try:
                 self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
-            except zipfile.BadZipfile as bz:
-                raise EpubException(0, 'Bad Zip file')
-            except zipfile.LargeZipFile as bz:
-                raise EpubException(1, 'Large Zip file')
+            except (zipfile.BadZipfile, zipfile.LargeZipFile) as bz:
+                raise EpubException(0 if isinstance(bz, zipfile.BadZipfile) else 1, 'Bad Zip file')
         else:
             if os.path.isdir(self.file_name):
                 file_name = self.file_name
@@ -1723,10 +1737,8 @@ class EpubReader(object):
             else:
                 try:
                     self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
-                except zipfile.BadZipfile as bz:
-                    raise EpubException(0, 'Bad Zip file')
-                except zipfile.LargeZipFile as bz:
-                    raise EpubException(1, 'Large Zip file')
+                except (zipfile.BadZipfile, zipfile.LargeZipFile) as bz:
+                    raise EpubException(0 if isinstance(bz, zipfile.BadZipfile) else 1, 'Bad Zip file')
 
         # 1st check metadata
         self._load_container()
