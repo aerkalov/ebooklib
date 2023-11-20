@@ -1713,6 +1713,13 @@ class EpubReader(object):
                         pass
 
                 self.zf = Directory()
+            else:
+                try:
+                    self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
+                except zipfile.BadZipfile as bz:
+                    raise EpubException(0, 'Bad Zip file')
+                except zipfile.LargeZipFile as bz:
+                    raise EpubException(1, 'Large Zip file')
         elif isinstance(self.file_name, BytesIO):
             try:
                 self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
