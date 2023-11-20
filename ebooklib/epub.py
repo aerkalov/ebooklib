@@ -1700,18 +1700,19 @@ class EpubReader(object):
             )
 
     def _load(self):
-        if os.path.isdir(self.file_name):
-            file_name = self.file_name
+        if isinstance(self.file_name, (str, os.PathLike)):
+            if os.path.isdir(self.file_name):
+                file_name = self.file_name
 
-            class Directory:
-                def read(self, subname):
-                    with open(os.path.join(file_name, subname), 'rb') as fp:
-                        return fp.read()
+                class Directory:
+                    def read(self, subname):
+                        with open(os.path.join(file_name, subname), 'rb') as fp:
+                            return fp.read()
 
-                def close(self):
-                    pass
+                    def close(self):
+                        pass
 
-            self.zf = Directory()
+                self.zf = Directory()
         elif isinstance(self.file_name, BytesIO):
             try:
                 self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
