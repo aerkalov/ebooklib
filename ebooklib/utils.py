@@ -15,12 +15,24 @@
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
+import os
 import mimetypes
 
 from lxml import etree
 
 
 mimetype_initialised = False
+
+class Directory:
+    def __init__(self, directory_path):
+        self.directory_path = directory_path
+
+    def read(self, subname):
+        with open(os.path.join(self.directory_path, subname), 'rb') as fp:
+            return fp.read()
+
+    def close(self):
+        pass
 
 
 def debug(obj):
