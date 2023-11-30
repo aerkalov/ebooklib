@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
-import six
 import subprocess
 
 from ebooklib.plugins.base import BasePlugin
@@ -26,7 +25,7 @@ from ebooklib.utils import parse_html_string
 def tidy_cleanup(content, **extra):
     cmd = []
 
-    for k, v in six.iteritems(extra):
+    for k, v in extra.items():
 
         if v:
             cmd.append('--%s' % k)
