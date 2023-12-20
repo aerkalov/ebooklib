@@ -420,6 +420,9 @@ class EpubHtml(EpubItem):
 
         _head = etree.SubElement(tree_root, 'head')
 
+        for meta in self.metas:
+            _meta = etree.SubElement(_head, 'meta', meta)
+
         if self.title != '':
             _title = etree.SubElement(_head, 'title')
             _title.text = self.title
@@ -431,9 +434,6 @@ class EpubHtml(EpubItem):
                 _lnk.text = ''
             else:
                 _lnk = etree.SubElement(_head, 'link', lnk)
-
-        for meta in self.metas:
-            _meta = etree.SubElement(_head, 'meta', meta)
 
         # this should not be like this
         # head = html_root.find('head')
