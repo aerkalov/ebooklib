@@ -1699,7 +1699,7 @@ class EpubReader(object):
             )
 
     def _load(self):
-        if os.path.isdir(self.file_name):
+        if isinstance(self.file_name, str) and os.path.isdir(self.file_name):
             file_name = self.file_name
 
             class Directory:
