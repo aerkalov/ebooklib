@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
-import six
-
 from ebooklib.plugins.base import BasePlugin
 from ebooklib.utils import parse_html_string
 
@@ -34,7 +32,7 @@ DEPRECATED_TAGS = ['acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'fon
 
 
 def leave_only(item, tag_list):
-    for _attr in six.iterkeys(item.attrib):
+    for _attr in item.attrib.keys():
         if _attr not in tag_list:
             del item.attrib[_attr]
 
@@ -221,7 +219,7 @@ class SyntaxPlugin(BasePlugin):
                     if _item.get('preserveaspectratio', None):
                         del _item.attrib['preserveaspectratio']
                 else:
-                    for _attr in six.iterkeys(_item.attrib):
+                    for _attr in _item.attrib.keys():
                         if _attr not in ATTRIBUTES_GLOBAL:
                             del _item.attrib[_attr]
 
