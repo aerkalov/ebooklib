@@ -1744,10 +1744,7 @@ def write_epub(name, book, options=None):
 
     epub.process()
 
-    try:
-        epub.write()
-    except IOError:
-        pass
+    epub.write()
 
 # READ
 
