@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
+from io import BytesIO
 import zipfile
 import six
 import logging
@@ -32,7 +33,7 @@ from lxml import etree
 
 import ebooklib
 
-from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items
+from ebooklib.utils import Directory, parse_string, parse_html_string, guess_type, get_pages_for_items
 
 
 # Version of EPUB library
@@ -1699,32 +1700,25 @@ class EpubReader(object):
             )
 
     def _load(self):
-        if os.path.isdir(self.file_name):
-            file_name = self.file_name
-
-            class Directory:
-                def read(self, subname):
-                    with open(os.path.join(file_name, subname), 'rb') as fp:
-                        return fp.read()
-
-                def close(self):
-                    pass
-
-            self.zf = Directory()
-        else:
+        if isinstance(self.file_name, (str, os.PathLike)):
+            if os.path.isdir(self.file_name):
+                self.zf = Directory(self.file_name)
+            else:
+                try:
+                    self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
+                except (zipfile.BadZipfile, zipfile.LargeZipFile) as bz:
+                    raise EpubException(0 if isinstance(bz, zipfile.BadZipfile) else 1, 'Bad Zip file')
+        elif isinstance(self.file_name, BytesIO):
             try:
                 self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
-            except zipfile.BadZipfile as bz:
-                raise EpubException(0, 'Bad Zip file')
-            except zipfile.LargeZipFile as bz:
-                raise EpubException(1, 'Large Zip file')
+            except (zipfile.BadZipfile, zipfile.LargeZipFile) as bz:
+                raise EpubException(0 if isinstance(bz, zipfile.BadZipfile) else 1, 'Bad Zip file')
 
         # 1st check metadata
         self._load_container()
         self._load_opf_file()
 
         self.zf.close()
-
 
 
 # WRITE
