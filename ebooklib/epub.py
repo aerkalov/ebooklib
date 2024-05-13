@@ -956,7 +956,7 @@ class EpubWriter(object):
 
                             el.text = v[0]
                         except ValueError:
-                            logging.error('Could not create metadata "{}".'.format(name))
+                            logging.info('Could not create metadata "{}".'.format(name))
 
     def _write_opf_manifest(self, root):
         manifest = etree.SubElement(root, 'manifest')
