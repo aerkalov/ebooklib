@@ -16,6 +16,7 @@
 
 import zipfile
 import six
+import sys
 import logging
 import uuid
 import warnings
@@ -870,7 +871,8 @@ class EpubWriter(object):
         'play_order': {
             'enabled': False,
             'start_from': 1
-        }
+        },
+        'raise_exceptions': False,
     }
 
     def __init__(self, name, book, options=None):
@@ -1747,7 +1749,14 @@ def write_epub(name, book, options=None):
     try:
         epub.write()
     except IOError:
-        pass
+        warnings.warn('In the future throwing exceptions while writing will be default behavior.')
+        t, v, tb = sys.exc_info()
+        if options and options.get('raise_exceptions'):
+            six.reraise(t, v, tb)
+        else:
+            return False
+
+    return True
 
 # READ
 
