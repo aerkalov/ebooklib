@@ -958,7 +958,7 @@ class EpubWriter(object):
 
                             el.text = v[0]
                         except ValueError:
-                            logging.error('Could not create metadata "{}".'.format(name))
+                            logging.info('Could not create metadata "{}".'.format(name))
 
     def _write_opf_manifest(self, root):
         manifest = etree.SubElement(root, 'manifest')
@@ -1610,7 +1610,7 @@ class EpubReader(object):
                 link_node = item_node.find('a')
 
                 if sublist_node is not None:
-                    title = item_node[0].text
+                    title = item_node[0].text_content()
                     children = parse_list(sublist_node)
 
                     if link_node is not None:
@@ -1619,7 +1619,7 @@ class EpubReader(object):
                     else:
                         items.append((Section(title), children))
                 elif link_node is not None:
-                    title = link_node.text
+                    title = link_node.text_content()
                     href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
 
                     items.append(Link(href, title))
