@@ -1395,7 +1395,7 @@ class EpubReader(object):
         self._check_deprecated()
 
     def _check_deprecated(self):
-        if not self.options.get('ignore_ncx'):
+        if self.options.get('ignore_ncx') is None:
             warnings.warn('In the future version we will turn default option ignore_ncx to True.')
 
     def process(self):
