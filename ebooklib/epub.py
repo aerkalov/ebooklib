@@ -15,6 +15,7 @@
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 import zipfile
+import io
 import six
 import sys
 import logging
@@ -37,7 +38,7 @@ from ebooklib.utils import parse_string, parse_html_string, guess_type, get_page
 
 
 # Version of EPUB library
-VERSION = (0, 18, 1)
+VERSION = (0, 18, 2)
 
 NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
               'EPUB': 'http://www.idpf.org/2007/ops',
@@ -121,7 +122,7 @@ class EpubItem(object):
     Base class for the items in a book.
     """
 
-    def __init__(self, uid=None, file_name='', media_type='', content=six.b(''), manifest=True):
+    def __init__(self, uid=None, file_name='', media_type='', content=six.BytesIO(), manifest=True):
         """
         :Args:
           - uid: Unique identifier for this item (optional)
@@ -133,11 +134,24 @@ class EpubItem(object):
         self.id = uid
         self.file_name = file_name
         self.media_type = media_type
-        self.content = content
+        self.content=None
+        self.set_content(content)
         self.is_linear = True
         self.manifest = manifest
 
         self.book = None
+    def write(self, buff):
+        if buff == None:
+            pass
+        elif isinstance(buff, str):
+            self.content.write(buff.encode())
+        elif isinstance(buff, six.binary_type):
+            self.content.write(buff)
+        elif isinstance(buff, io.IOBase):
+            self.content.write(buff.read())
+        else:
+            raise ValueError(f"content type {type(buff)} not recognized")
+
 
     def get_id(self):
         """
@@ -198,7 +212,8 @@ class EpubItem(object):
         :Returns:
           Returns content of the item.
         """
-        return self.content or default
+        self.content.seek(0)
+        return self.content.read() or default
 
     def set_content(self, content):
         """
@@ -207,7 +222,13 @@ class EpubItem(object):
         :Args:
           - content: Content value
         """
-        self.content = content
+        if self.content:
+            self.content.close()
+        if isinstance(content, io.IOBase):
+            self.content = content
+        else:
+            self.content = six.BytesIO()
+            self.write(content)
 
     def __str__(self):
         return '<EpubItem:%s>' % self.id
@@ -350,7 +371,7 @@ class EpubHtml(EpubItem):
         """
 
         try:
-            html_tree = parse_html_string(self.content)
+            html_tree = parse_html_string(self.get_content())
         except:
             return ''
 
@@ -393,7 +414,7 @@ class EpubHtml(EpubItem):
         #  <meta charset="utf-8" />
 
         try:
-            html_tree = parse_html_string(self.content)
+            html_tree = parse_html_string(super().get_content())
         except:
             return ''
 
@@ -473,7 +494,7 @@ class EpubCoverHtml(EpubHtml):
           Returns content of this document.
         """
 
-        self.content = self.book.get_template('cover')
+        self.set_content(self.book.get_template('cover'))
 
         tree = parse_string(super(EpubCoverHtml, self).get_content())
         tree_root = tree.getroot()
@@ -650,7 +671,7 @@ class EpubBook(object):
 
         # as it is now, it can only be called once
         c0 = EpubCover(file_name=file_name)
-        c0.content = content
+        c0.write(content)
         self.add_item(c0)
 
         if create_page:
@@ -1419,7 +1440,7 @@ class EpubReader(object):
     def read_file(self, name):
         # Raises KeyError
         name = zip_path.normpath(name)
-        return self.zf.read(name)
+        return self.zf.open(name)
 
     def _load_container(self):
         meta_inf = self.read_file('META-INF/container.xml')
@@ -1512,20 +1533,20 @@ class EpubReader(object):
             if media_type == 'application/x-dtbncx+xml':
                 ei = EpubNcx(uid=r.get('id'), file_name=unquote(r.get('href')))
 
-                ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
+                ei.set_content(self.read_file(zip_path.join(self.opf_dir, ei.file_name)))
             elif media_type == 'application/smil+xml':
                 ei = EpubSMIL(uid=r.get('id'), file_name=unquote(r.get('href')))
 
-                ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
+                ei.set_content(self.read_file(zip_path.join(self.opf_dir, ei.file_name)))
             elif media_type == 'application/xhtml+xml':
                 if 'nav' in properties:
                     ei = EpubNav(uid=r.get('id'), file_name=unquote(r.get('href')))
 
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, r.get('href')))
+                    ei.set_content(self.read_file(zip_path.join(self.opf_dir, r.get('href'))))
                 elif 'cover' in properties:
                     ei = EpubCoverHtml()
 
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, unquote(r.get('href'))))
+                    ei.set_content(self.read_file(zip_path.join(self.opf_dir, unquote(r.get('href')))))
                 else:
                     ei = EpubHtml()
 
@@ -1534,21 +1555,21 @@ class EpubReader(object):
                     ei.media_type = media_type
                     ei.media_overlay = r.get('media-overlay', None)
                     ei.media_duration = r.get('duration', None)
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                    ei.set_content(self.read_file(zip_path.join(self.opf_dir, ei.get_name())))
                     ei.properties = properties
             elif media_type in IMAGE_MEDIA_TYPES:
                 if 'cover-image' in properties:
                     ei = EpubCover(uid=r.get('id'), file_name=unquote(r.get('href')))
 
                     ei.media_type = media_type
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                    ei.set_content(self.read_file(zip_path.join(self.opf_dir, ei.get_name())))
                 else:
                     ei = EpubImage()
 
                     ei.id = r.get('id')
                     ei.file_name = unquote(r.get('href'))
                     ei.media_type = media_type
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                    ei.set_content(self.read_file(zip_path.join(self.opf_dir, ei.get_name())))
             else:
                 # different types
                 ei = EpubItem()
@@ -1557,7 +1578,7 @@ class EpubReader(object):
                 ei.file_name = unquote(r.get('href'))
                 ei.media_type = media_type
 
-                ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                ei.set_content(self.read_file(zip_path.join(self.opf_dir, ei.get_name())))
 
             self.book.add_item(ei)
 
@@ -1696,7 +1717,7 @@ class EpubReader(object):
                     navtype='toc'
                 )
             self._parse_nav(
-                nav_item.content,
+                nav_item.get_content(),
                 zip_path.dirname(nav_item.file_name),
                 navtype='pages'
             )
@@ -1709,7 +1730,8 @@ class EpubReader(object):
                 def read(self, subname):
                     with open(os.path.join(file_name, subname), 'rb') as fp:
                         return fp.read()
-
+                def open(self, subname):
+                    return open(os.path.join(file_name, subname), 'rb')
                 def close(self):
                     pass
 
