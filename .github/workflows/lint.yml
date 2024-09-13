@@ -13,9 +13,7 @@ jobs:
           - "3.10"
           - "3.9"
           - "3.8"
-          - "3.7"
-          - "3.6"
-          - "3.5"
+          - "3.7" # The oldest version supported by Github Actions
 
     steps:
     - name: Checkout code
