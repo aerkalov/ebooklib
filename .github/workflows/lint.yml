@@ -18,8 +18,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 10 # We need to fetch at least enough to determine the list of files changed between branches
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -31,4 +29,4 @@ jobs:
       run: pipx install black
 
     - name: Lint with Black
-      run: black --check $(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- *.py)
+      run: black --check ebooklib/
