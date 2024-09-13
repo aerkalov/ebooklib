@@ -31,4 +31,4 @@ jobs:
       run: pipx install black
 
     - name: Lint with Black
-      run: black --check $(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+      run: black --check $(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- *.py)
