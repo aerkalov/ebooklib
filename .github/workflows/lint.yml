@@ -27,16 +27,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: pip
 
-    - name: List changed files
-      id: changed-files
-      run: |
-        CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
-        echo "Changed files:"
-        echo $CHANGED_FILES
-        echo "files=${CHANGED_FILES}" >> "$GITHUB_OUTPUTS"
-
     - name: Install black
       run: pipx install black
 
     - name: Lint with Black
-      run: black --check ${{ steps.changed-files.outputs.files }}
+      run: black --check $(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
