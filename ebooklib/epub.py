@@ -334,11 +334,12 @@ class EpubHtml(EpubItem):
         :Args:
           - item: item we want to add defined as instance of EpubItem
         """
+        relative_path = zip_path.relpath(item.get_name(), zip_path.dirname(self.file_name))
         if item.get_type() == ebooklib.ITEM_STYLE:
-            self.add_link(href=item.get_name(), rel='stylesheet', type='text/css')
+            self.add_link(href=relative_path, rel='stylesheet', type='text/css')
 
         if item.get_type() == ebooklib.ITEM_SCRIPT:
-            self.add_link(src=item.get_name(), type='text/javascript')
+            self.add_link(src=relative_path, type='text/javascript')
 
     def get_body_content(self):
         """
