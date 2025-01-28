@@ -1141,7 +1141,7 @@ class EpubWriter(object):
             body.set('dir', item.direction)
         nav = etree.SubElement(body, 'nav', {
             '{%s}type' % NAMESPACES['EPUB']: 'toc',
-            'id': 'id',
+            'id': item.id,
             'role': 'doc-toc',
         })
 
