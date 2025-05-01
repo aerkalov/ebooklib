@@ -33,7 +33,7 @@ from lxml import etree
 
 import ebooklib
 
-from ebooklib.utils import parse_string, parse_html_string, guess_type, get_pages_for_items
+from ebooklib.utils import Directory, parse_string, parse_html_string, guess_type, get_pages_for_items
 
 
 # Version of EPUB library
@@ -1723,19 +1723,13 @@ class EpubReader(object):
             )
 
     def _load(self):
-        if os.path.isdir(self.file_name):
-            file_name = self.file_name
+        self.zf = None
 
-            class Directory:
-                def read(self, subname):
-                    with open(os.path.join(file_name, subname), 'rb') as fp:
-                        return fp.read()
+        if isinstance(self.file_name, (str, bytes, os.PathLike)):
+            if os.path.isdir(self.file_name):
+                self.zf = Directory(self.file_name)
 
-                def close(self):
-                    pass
-
-            self.zf = Directory()
-        else:
+        if self.zf is None:
             try:
                 self.zf = zipfile.ZipFile(self.file_name, 'r', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
             except zipfile.BadZipfile as bz:

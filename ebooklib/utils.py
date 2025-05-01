@@ -15,6 +15,7 @@
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
+import os
 import mimetypes
 
 from lxml import etree
@@ -119,3 +120,15 @@ def get_pages_for_items(items):
     pages_from_docs = [get_pages(item) for item in items]
 
     return [item for pages in pages_from_docs for item in pages]
+
+
+class Directory:
+    def __init__(self, directory_path):
+        self.directory_path = directory_path
+
+    def read(self, subname):
+        with open(os.path.join(self.directory_path, subname), 'rb') as fp:
+            return fp.read()
+
+    def close(self):
+        pass
