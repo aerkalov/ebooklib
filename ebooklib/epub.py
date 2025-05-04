@@ -1614,12 +1614,12 @@ class EpubReader(object):
                     title = item_node[0].text_content()
                     children = parse_list(sublist_node)
 
-                    if link_node is not None:
+                    if link_node is not None and link_node.get('href'):
                         href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
                         items.append((Section(title, href=href), children))
                     else:
                         items.append((Section(title), children))
-                elif link_node is not None:
+                elif link_node is not None and link_node.get('href'):
                     title = link_node.text_content()
                     href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
 
