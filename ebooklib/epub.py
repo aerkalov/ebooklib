@@ -352,7 +352,7 @@ class EpubHtml(EpubItem):
         try:
             html_tree = parse_html_string(self.content)
         except:
-            return ''
+            return six.b('')
 
         html_root = html_tree.getroottree()
 
@@ -369,7 +369,7 @@ class EpubHtml(EpubItem):
 
             return tree_str
 
-        return ''
+        return six.b('')
 
     def get_content(self, default=None):
         """
@@ -395,7 +395,7 @@ class EpubHtml(EpubItem):
         try:
             html_tree = parse_html_string(self.content)
         except:
-            return ''
+            return six.b('')
 
         html_root = html_tree.getroottree()
 
