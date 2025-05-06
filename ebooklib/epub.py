@@ -258,6 +258,7 @@ class EpubHtml(EpubItem):
         self.media_overlay = media_overlay
         self.media_duration = media_duration
 
+        self.metas = []
         self.links = []
         self.properties = []
         self.pages = []
@@ -297,6 +298,23 @@ class EpubHtml(EpubItem):
           As string returns language code.
         """
         return self.lang
+
+    def add_meta(self, **kwgs):
+        """
+        Add additional <meta> to the document. 
+
+        >>> add_meta(name='viewport', content='width=device-width, initial-scale=1')
+        """
+        self.metas.append(kwgs)
+
+    def get_metas(self):
+        """
+        Returns list of additional metas defined for this document.
+
+        :Returns:
+          As tuple return list of metas.
+        """
+        return (meta for meta in self.metas)
 
     def add_link(self, **kwgs):
         """
@@ -402,6 +420,9 @@ class EpubHtml(EpubItem):
         # create and populate head
 
         _head = etree.SubElement(tree_root, 'head')
+
+        for meta in self.metas:
+            _meta = etree.SubElement(_head, 'meta', meta)
 
         if self.title != '':
             _title = etree.SubElement(_head, 'title')
