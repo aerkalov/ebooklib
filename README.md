@@ -9,7 +9,7 @@ to worry about.
 
 The API is designed to be as simple as possible, while at the same time making complex things possible too.  It has support for covers, table of contents, spine, guide, metadata and etc.
 
-EbookLib is used in [Booktype](https://github.com/booktype/Booktype/) from Sourcefabric, as well as [sprits-it!](https://github.com/the-happy-hippo/sprits-it), [fanfiction2ebook](https://github.com/ltouroumov/fanfiction2ebook) and [Telemeta](https://github.com/Parisson/Telemeta).
+EbookLib is used in [Booktype](https://github.com/booktype/Booktype/) from Sourcefabric, as well as [Audiblez](https://github.com/santinic/audiblez), [e2m](https://github.com/wisupai/e2m), [ebook2audiobook](https://github.com/DrewThomasson/ebook2audiobook), [Marker](https://github.com/VikParuchuri/marker) and [Telemeta](https://github.com/Parisson/Telemeta). You can find a more extensive list of projects utilizing EbookLib [here](https://github.com/aerkalov/ebooklib/wiki/Who-uses-ebooklib).
 
 Packages of EbookLib for GNU/Linux are available in [Debian](https://packages.debian.org/python-ebooklib) and [Ubuntu](http://packages.ubuntu.com/python-ebooklib).
 
