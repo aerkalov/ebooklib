@@ -1411,13 +1411,15 @@ class EpubReader(object):
         self.opf_dir = ''
 
         self.options = dict(self.DEFAULT_OPTIONS)
+        self.user_provided_options = options or {}
+        
         if options:
             self.options.update(options)
 
         self._check_deprecated()
 
     def _check_deprecated(self):
-        if self.options.get('ignore_ncx') is None:
+        if 'ignore_ncx' not in self.user_provided_options:
             warnings.warn('In the future version we will turn default option ignore_ncx to True.')
 
     def process(self):
