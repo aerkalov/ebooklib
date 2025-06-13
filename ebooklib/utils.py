@@ -22,6 +22,81 @@ from lxml import etree
 
 mimetype_initialised = False
 
+"""
+https://www.w3.org/TR/SVG/attindex.html
+
+Javascript Code:
+
+```
+let targetList = {};
+document.querySelectorAll("body > table > tbody > tr").forEach(function(trElement) { 
+    var target = trElement.querySelector("th > span > a > span");
+    if (target && target.textContent && /[A-Z]/.test(target.textContent)) {
+        targetList[target.textContent.toLowerCase()] = target.textContent;
+    }
+})
+JSON.stringify(targetList, null, 2);
+```
+
+Updated @ 2023-12-13 15:00 UTC
+"""
+html_element_attributes_case_sensitive_lookup = {
+  "attributename": "attributeName",
+  "basefrequency": "baseFrequency",
+  "calcmode": "calcMode",
+  "clippathunits": "clipPathUnits",
+  "diffuseconstant": "diffuseConstant",
+  "edgemode": "edgeMode",
+  "filterunits": "filterUnits",
+  "gradienttransform": "gradientTransform",
+  "gradientunits": "gradientUnits",
+  "kernelmatrix": "kernelMatrix",
+  "kernelunitlength": "kernelUnitLength",
+  "keypoints": "keyPoints",
+  "keysplines": "keySplines",
+  "keytimes": "keyTimes",
+  "lengthadjust": "lengthAdjust",
+  "limitingconeangle": "limitingConeAngle",
+  "markerheight": "markerHeight",
+  "markerunits": "markerUnits",
+  "markerwidth": "markerWidth",
+  "maskcontentunits": "maskContentUnits",
+  "maskunits": "maskUnits",
+  "numoctaves": "numOctaves",
+  "pathlength": "pathLength",
+  "patterncontentunits": "patternContentUnits",
+  "patterntransform": "patternTransform",
+  "patternunits": "patternUnits",
+  "pointsatx": "pointsAtX",
+  "pointsaty": "pointsAtY",
+  "pointsatz": "pointsAtZ",
+  "preservealpha": "preserveAlpha",
+  "preserveaspectratio": "preserveAspectRatio",
+  "primitiveunits": "primitiveUnits",
+  "refx": "refX",
+  "refy": "refY",
+  "repeatcount": "repeatCount",
+  "repeatdur": "repeatDur",
+  "requiredextensions": "requiredExtensions",
+  "specularconstant": "specularConstant",
+  "specularexponent": "specularExponent",
+  "spreadmethod": "spreadMethod",
+  "startoffset": "startOffset",
+  "stddeviation": "stdDeviation",
+  "stitchtiles": "stitchTiles",
+  "surfacescale": "surfaceScale",
+  "systemlanguage": "systemLanguage",
+  "tablevalues": "tableValues",
+  "targetx": "targetX",
+  "targety": "targetY",
+  "textlength": "textLength",
+  "viewbox": "viewBox",
+  "xchannelselector": "xChannelSelector",
+  "ychannelselector": "yChannelSelector",
+  "zoomandpan": "zoomAndPan"
+}
+
+
 
 def debug(obj):
     import pprint
@@ -46,6 +121,15 @@ def parse_html_string(s):
     utf8_parser = html.HTMLParser(encoding='utf-8')
 
     html_tree = html.document_fromstring(s, parser=utf8_parser)
+
+    try:
+        for element in html_tree.xpath('//*'):
+            for attribute, value in element.attrib.items():
+                if attribute in html_element_attributes_case_sensitive_lookup:
+                    del element.attrib[attribute]
+                    element.attrib[ html_element_attributes_case_sensitive_lookup[attribute] ] = value
+    except:
+        pass
 
     return html_tree
 
