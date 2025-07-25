@@ -4,8 +4,11 @@ Frequently asked questions
 How can I contribute?
 ---------------------
 
-Easily! We don't have any special procedure for contributions. Just send us bug reports, suggestions or Pull Requests!
+Want to contribute? It's easy! We welcome bug reports, suggestions, and Pull Requests. Before submitting a Pull Request,
+`please take a quick look at our simple guidelines <https://github.com/aerkalov/ebooklib/wiki/Contributing>`_. Our contribution
+process is straightforward, with no special procedures to worry about.
 
+* New to Contributing? `Start Here with These Easy Tasks! <https://github.com/aerkalov/ebooklib/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22>`_
 * Find bugs and report them here - https://github.com/aerkalov/ebooklib/issues
 * Have a suggestions or idea for a feature? Write it here - https://github.com/aerkalov/ebooklib/issues
 * Clone and send us Pull Requests - https://github.com/aerkalov/ebooklib/

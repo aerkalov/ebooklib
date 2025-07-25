@@ -13,7 +13,7 @@ def read(path):
 
 setup(
     name = 'EbookLib',
-    version = '0.18',
+    version = '0.19',
     author = 'Aleksandar Erkalovic',
     author_email = 'aerkalov@gmail.com',
     packages = ['ebooklib', 'ebooklib.plugins'],
@@ -32,6 +32,7 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Topic :: Software Development :: Libraries :: Python Modules"
     ],
     install_requires = [

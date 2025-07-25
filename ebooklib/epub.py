@@ -16,6 +16,7 @@
 
 import zipfile
 import six
+import sys
 import logging
 import uuid
 import warnings
@@ -36,7 +37,7 @@ from ebooklib.utils import parse_string, parse_html_string, guess_type, get_page
 
 
 # Version of EPUB library
-VERSION = (0, 18, 1)
+VERSION = (0, 19, 0)
 
 NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
               'EPUB': 'http://www.idpf.org/2007/ops',
@@ -257,6 +258,7 @@ class EpubHtml(EpubItem):
         self.media_overlay = media_overlay
         self.media_duration = media_duration
 
+        self.metas = []
         self.links = []
         self.properties = []
         self.pages = []
@@ -296,6 +298,23 @@ class EpubHtml(EpubItem):
           As string returns language code.
         """
         return self.lang
+
+    def add_meta(self, **kwgs):
+        """
+        Add additional <meta> to the document. 
+
+        >>> add_meta(name='viewport', content='width=device-width, initial-scale=1')
+        """
+        self.metas.append(kwgs)
+
+    def get_metas(self):
+        """
+        Returns list of additional metas defined for this document.
+
+        :Returns:
+          As tuple return list of metas.
+        """
+        return (meta for meta in self.metas)
 
     def add_link(self, **kwgs):
         """
@@ -351,7 +370,7 @@ class EpubHtml(EpubItem):
         try:
             html_tree = parse_html_string(self.content)
         except:
-            return ''
+            return six.b('')
 
         html_root = html_tree.getroottree()
 
@@ -368,7 +387,7 @@ class EpubHtml(EpubItem):
 
             return tree_str
 
-        return ''
+        return six.b('')
 
     def get_content(self, default=None):
         """
@@ -394,13 +413,16 @@ class EpubHtml(EpubItem):
         try:
             html_tree = parse_html_string(self.content)
         except:
-            return ''
+            return six.b('')
 
         html_root = html_tree.getroottree()
 
         # create and populate head
 
         _head = etree.SubElement(tree_root, 'head')
+
+        for meta in self.metas:
+            _meta = etree.SubElement(_head, 'meta', meta)
 
         if self.title != '':
             _title = etree.SubElement(_head, 'title')
@@ -870,7 +892,9 @@ class EpubWriter(object):
         'play_order': {
             'enabled': False,
             'start_from': 1
-        }
+        },
+        'raise_exceptions': False,
+        'compresslevel': 6
     }
 
     def __init__(self, name, book, options=None):
@@ -956,7 +980,7 @@ class EpubWriter(object):
 
                             el.text = v[0]
                         except ValueError:
-                            logging.error('Could not create metadata "{}".'.format(name))
+                            logging.info('Could not create metadata "{}".'.format(name))
 
     def _write_opf_manifest(self, root):
         manifest = etree.SubElement(root, 'manifest')
@@ -1363,7 +1387,7 @@ class EpubWriter(object):
 
     def write(self):
         # check for the option allowZip64
-        self.out = zipfile.ZipFile(self.file_name, 'w', zipfile.ZIP_DEFLATED)
+        self.out = zipfile.ZipFile(self.file_name, 'w', zipfile.ZIP_DEFLATED, compresslevel=self.options['compresslevel'])
         self.out.writestr('mimetype', 'application/epub+zip', compress_type=zipfile.ZIP_STORED)
 
         self._write_container()
@@ -1393,7 +1417,7 @@ class EpubReader(object):
         self._check_deprecated()
 
     def _check_deprecated(self):
-        if not self.options.get('ignore_ncx'):
+        if self.options.get('ignore_ncx') is None:
             warnings.warn('In the future version we will turn default option ignore_ncx to True.')
 
     def process(self):
@@ -1422,7 +1446,7 @@ class EpubReader(object):
         meta_inf = self.read_file('META-INF/container.xml')
         tree = parse_string(meta_inf)
 
-        for root_file in tree.findall('//xmlns:rootfile[@media-type]', namespaces={'xmlns': NAMESPACES['CONTAINERNS']}):
+        for root_file in tree.findall('.//xmlns:rootfile[@media-type]', namespaces={'xmlns': NAMESPACES['CONTAINERNS']}):
             if root_file.get('media-type') == 'application/oebps-package+xml':
                 self.opf_file = root_file.get('full-path')
                 self.opf_dir = zip_path.dirname(self.opf_file)
@@ -1608,16 +1632,16 @@ class EpubReader(object):
                 link_node = item_node.find('a')
 
                 if sublist_node is not None:
-                    title = item_node[0].text
+                    title = item_node[0].text_content()
                     children = parse_list(sublist_node)
 
-                    if link_node is not None:
+                    if link_node is not None and link_node.get('href'):
                         href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
                         items.append((Section(title, href=href), children))
                     else:
                         items.append((Section(title), children))
-                elif link_node is not None:
-                    title = link_node.text
+                elif link_node is not None and link_node.get('href'):
+                    title = link_node.text_content()
                     href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
 
                     items.append(Link(href, title))
@@ -1747,7 +1771,14 @@ def write_epub(name, book, options=None):
     try:
         epub.write()
     except IOError:
-        pass
+        warnings.warn('In the future throwing exceptions while writing will be default behavior.')
+        t, v, tb = sys.exc_info()
+        if options and options.get('raise_exceptions'):
+            six.reraise(t, v, tb)
+        else:
+            return False
+
+    return True
 
 # READ
 

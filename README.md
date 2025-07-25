@@ -1,12 +1,17 @@
 # About EbookLib
 
-EbookLib is a Python library for managing EPUB2/EPUB3 and Kindle files. It's capable of reading and writing EPUB files programmatically (Kindle support is under development).
+EbookLib is a Python library for managing EPUB2/EPUB3. It's capable of reading and writing EPUB files programmatically.
+
+We are working on [refreshing the project](https://github.com/aerkalov/ebooklib/issues/318) so please check and comment if you have your own ideas what needs to happen with the project.
+
+Want to contribute? It's easy! We welcome bug reports, suggestions, and Pull Requests. Before submitting a Pull Request, [please take a quick look at our simple guidelines](https://github.com/aerkalov/ebooklib/wiki/Contributing). Our contribution process is straightforward, with no special procedures
+to worry about.
 
 The API is designed to be as simple as possible, while at the same time making complex things possible too.  It has support for covers, table of contents, spine, guide, metadata and etc.
 
-EbookLib is used in [Booktype](https://github.com/sourcefabric/Booktype/) from Sourcefabric, as well as [sprits-it!](https://github.com/the-happy-hippo/sprits-it), [fanfiction2ebook](https://github.com/ltouroumov/fanfiction2ebook), [viserlalune](https://github.com/vjousse/viserlalune) and [Telemeta](https://github.com/Parisson/Telemeta).
+EbookLib is used in [Booktype](https://github.com/booktype/Booktype/) from Sourcefabric, as well as [Audiblez](https://github.com/santinic/audiblez), [e2m](https://github.com/wisupai/e2m), [ebook2audiobook](https://github.com/DrewThomasson/ebook2audiobook), [Marker](https://github.com/VikParuchuri/marker) and [Telemeta](https://github.com/Parisson/Telemeta). You can find a more extensive list of projects utilizing EbookLib [here](https://github.com/aerkalov/ebooklib/wiki/Who-uses-ebooklib).
 
-Packages of EbookLib for GNU/Linux are available in [Debian](https://packages.debian.org/python-ebooklib) and [Ubuntu](http://packages.ubuntu.com/python-ebooklib). 
+Packages of EbookLib for GNU/Linux are available in [Debian](https://packages.debian.org/python-ebooklib) and [Ubuntu](http://packages.ubuntu.com/python-ebooklib).
 
 Sphinx documentation is generated from the templates in the docs/ directory and made available at http://ebooklib.readthedocs.io
 

@@ -278,7 +278,9 @@ At the end we need to add NCX and Navigation tile. They will not be added automa
 
 
 At the end write down your book. You need to specify full path to the book, you can not write it down to the
-File Object or something else.
+File Object or something else. At the moment exception will not be raised if something goes wrong. In the future
+version this will be changed. Right now you need to check the return value of the function or control 
+it with the option *raise_exceptions*.
 
 ::
 
@@ -298,11 +300,15 @@ pages_title         "Pages"
 spine_direction     True
 package_direction   False
 play_order          {'enabled': False, 'start_from': 1}
+raise_exceptions    False
+compresslevel       6
 =================   ====================================
 
 In the future version default value for ignore_ncx will be changed. According to the documentation default
 behaviour should be "EPUB 3 Reading Systems must ignore the NCX in favor of the EPUB Navigation Document".
 Because we have been doing wrong this all time we will keep the default behavior to prepare for the change.
+
+compresslevel goes from 0 to 9, where 0 is no compression.
 
 Example when overriding default options:
 
