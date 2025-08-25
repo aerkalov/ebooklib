@@ -1448,8 +1448,18 @@ class EpubReader(object):
 
         for root_file in tree.findall('.//xmlns:rootfile[@media-type]', namespaces={'xmlns': NAMESPACES['CONTAINERNS']}):
             if root_file.get('media-type') == 'application/oebps-package+xml':
-                self.opf_file = root_file.get('full-path')
+                opf_file = root_file.get('full-path')
+
+                try:
+                    s = self.read_file(opf_file)
+                except KeyError:
+                    continue
+                
+                self.opf_file = opf_file
                 self.opf_dir = zip_path.dirname(self.opf_file)
+                
+        if self.opf_file == '':
+            raise EpubException(-1, 'Can not find container file')
 
     def _load_metadata(self):
         container_root = self.container.getroot()
