@@ -1,0 +1,21 @@
+[run]
+# Specify directories/files to include for coverage measurement
+source = ebooklib/
+
+# Specify directories/files to exclude from coverage
+omit = samples/*, tests/*
+
+[report]
+# Fail if total coverage is below this percentage
+fail_under = 65
+
+# Exclude lines matching these regular expressions
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:
+    raise NotImplementedError
+    if __name__ == .__main__.:
+
+[html]
+# Directory for the HTML report
+directory = htmlcov_reports
