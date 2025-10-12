@@ -1,5 +1,6 @@
-import ebooklib
 import six
+
+import ebooklib
 from ebooklib import epub
 
 FILENAME_TYPES = [
@@ -63,9 +64,13 @@ class TestEpubItemInitialization:
         book = epub.EpubBook()
 
         for file_name, _, media_type in FILENAME_TYPES:
-            item = epub.EpubItem(uid=f"id-{file_name}", file_name=file_name, media_type=media_type)
+            item = epub.EpubItem(
+                uid="id-{file_name}".format(file_name=file_name),  # noqa: UP032
+                file_name=file_name,
+                media_type=media_type,
+            )
             book.add_item(item)
-            assert book.get_item_with_id(f"id-{file_name}") == item
+            assert book.get_item_with_id("id-{file_name}".format(file_name=file_name)) == item  # noqa: UP032
             assert book.get_item_with_href(file_name) == item
 
         assert len(list(book.get_items_of_type(ebooklib.ITEM_IMAGE))) == 3

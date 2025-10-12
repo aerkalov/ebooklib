@@ -19,13 +19,16 @@ Sphinx documentation is generated from the templates in the docs/ directory and 
 
 ## Reading
 ```py
+import os
 import ebooklib
 from ebooklib import epub
 
 book = epub.read_epub('test.epub')
 
+# Export all images from the Book
 for image in book.get_items_of_type(ebooklib.ITEM_IMAGE):
-    print(image)
+    with open(os.path.basename(image.get_name()), "wb") as f:
+        f.write(image.get_content())
 ```
 
 
@@ -35,68 +38,76 @@ from ebooklib import epub
 
 book = epub.EpubBook()
 
-# set metadata
-book.set_identifier("id123456")
-book.set_title("Sample book")
+# Set metadata
+book.set_identifier("GB33BUKB20201555555555")
+book.set_title("The Book of the Mysterious")
 book.set_language("en")
 
-book.add_author("Author Authorowski")
+book.add_author("John Smith")
 book.add_author(
-    "Danko Bananko",
-    file_as="Gospodin Danko Bananko",
+    "Hans Müller",
+    file_as="Dr. Hans Müller",
     role="ill",
     uid="coauthor",
 )
 
-# create chapter
-c1 = epub.EpubHtml(title="Intro", file_name="chap_01.xhtml", lang="hr")
+book.add_metadata("DC", "description", "A mysterious journey into hidden secrets")
+book.add_metadata("DC", "publisher", "Mystic Books Publishing House")
+
+# Create chapter in English
+c1 = epub.EpubHtml(title="Introduction", file_name="introduction.xhtml", lang="en")
 c1.content = (
-    "<h1>Intro heading</h1>"
-    "<p>Zaba je skocila u baru.</p>"
-    '<p><img alt="[ebook logo]" src="static/ebooklib.gif"/><br/></p>'
+    "<h1>The Book of the Mysterious</h1>"
+    "<p>Welcome to a journey into the unknown. In these pages, you'll discover "
+    "secrets that have remained hidden for centuries.</p>"
+    '<p><img alt="Book Cover" src="static/ebooklib.gif"/></p>'
+)
+# Create chapter in German
+c2 = epub.EpubHtml(title="Einführung", file_name="einfuehrung.xhtml", lang="de")
+c2.content = (
+    "<h1>Das Buch des Geheimnisvollen</h1>"
+    "<p>Willkommen zu einer Reise ins Unbekannte. Auf diesen Seiten werden Sie "
+    "Geheimnisse entdecken, die jahrhundertelang verborgen geblieben sind.</p>"
 )
 
-# create image from the local image
-image_content = open("ebooklib.gif", "rb").read()
+# Create image from the local image
 img = epub.EpubImage(
     uid="image_1",
     file_name="static/ebooklib.gif",
     media_type="image/gif",
-    content=image_content,
+    content=open("ebooklib.gif", "rb").read(),
 )
 
-# add chapter
-book.add_item(c1)
-# add image
-book.add_item(img)
-
-# define Table Of Contents
-book.toc = (
-    epub.Link("chap_01.xhtml", "Introduction", "intro"),
-    (epub.Section("Simple book"), (c1,)),
-)
-
-# add default NCX and Nav file
-book.add_item(epub.EpubNcx())
-book.add_item(epub.EpubNav())
-
-# define CSS style
-style = "BODY {color: white;}"
+# Define CSS style
 nav_css = epub.EpubItem(
     uid="style_nav",
     file_name="style/nav.css",
     media_type="text/css",
-    content=style,
+    content="BODY {color: black; background-color: white;}",
 )
 
-# add CSS file
+# Every chapter must me added to the book
+book.add_item(c1)
+book.add_item(c2)
+# This also includes images, style sheets, etc.
+book.add_item(img)
 book.add_item(nav_css)
 
-# basic spine
-book.spine = ["nav", c1]
+# Define Table Of Contents
+book.toc = (
+    epub.Link("introduction.xhtml", "Introduction", "intro"),
+    (epub.Section("Deutsche Sektion"), (c2,)),
+)
 
-# write to the file
-epub.write_epub("test.epub", book, {})
+# Basic spine
+book.spine = ["nav", c1, c2]
+
+# Add default NCX (not required) and Nav files.
+book.add_item(epub.EpubNcx())
+book.add_item(epub.EpubNav())
+
+# Write to the file
+epub.write_epub("the_book_of_the_mysterious.epub", book)
 ```
 
 

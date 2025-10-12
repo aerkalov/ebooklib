@@ -2,10 +2,17 @@ import io
 import logging
 import os
 import zipfile
-from pathlib import Path
+
+import six
+
+if six.PY3:
+    from pathlib import Path
+else:
+    from pathlib2 import Path
+
+import pytest
 
 import ebooklib
-import pytest
 from ebooklib import epub
 from ebooklib.plugins import booktype, sourcecode, standard
 from ebooklib.utils import parse_html_string, parse_string
@@ -68,9 +75,9 @@ class TestEbook:
     def _test_basic_book(self, book):
         assert len(book.toc) == 2
         assert type(book.toc[0]) is epub.Link
-        assert type(book.toc[1]) is type(tuple())
+        assert type(book.toc[1]) is tuple
         assert type(book.toc[1][0]) is epub.Section
-        assert type(book.toc[1][1]) is type(list())
+        assert type(book.toc[1][1]) is list
         assert book.spine == [("nav", "yes"), ("chap_1", "yes"), ("chap_2", "yes")]
 
         assert book.get_item_with_id("chap_1") is not None
@@ -99,9 +106,9 @@ class TestEbook:
     def test_basic_file(self, session_temp_dir):
         book = self._create_basic_book()
 
-        epub.write_epub(session_temp_dir / "test_basic.epub", book, {})
+        epub.write_epub(os.path.join(str(session_temp_dir), "test_basic.epub"), book, {})
 
-        self._test_basic_book(epub.read_epub(session_temp_dir / "test_basic.epub"))
+        self._test_basic_book(epub.read_epub(os.path.join(str(session_temp_dir), "test_basic.epub")))
 
     def test_basic_read_options(self):
         book = self._create_basic_book()
@@ -123,13 +130,19 @@ class TestEbook:
 
         class FakeFile:
             def write(self, content):
-                raise IOError
+                raise OSError
 
             def writestr(self, filename, content, compress_type):
-                raise IOError
+                raise OSError
 
             def close(self):
                 pass
+
+            def tell(self):
+                return 0
+
+            def seek(self, offset, whence=0):
+                return 0
 
         with pytest.raises(IOError):
             epub.write_epub(FakeFile(), book, {"raise_exceptions": True})
@@ -142,7 +155,7 @@ class TestEbook:
         book.set_direction("ltr")
 
         epub.write_epub(
-            session_temp_dir / "test_basic_on.epub",
+            os.path.join(str(session_temp_dir), "test_basic_on.epub"),
             book,
             {
                 "epub2_guide": True,
@@ -156,7 +169,7 @@ class TestEbook:
             },
         )
         epub.write_epub(
-            session_temp_dir / "test_basic_off.epub",
+            os.path.join(str(session_temp_dir), "test_basic_off.epub"),
             book,
             {
                 "epub2_guide": False,
@@ -169,7 +182,7 @@ class TestEbook:
 
         # Everything turned off
         zf_off = zipfile.ZipFile(
-            session_temp_dir / "test_basic_off.epub",
+            os.path.join(str(session_temp_dir), "test_basic_off.epub"),
             "r",
             compression=zipfile.ZIP_DEFLATED,
             allowZip64=True,
@@ -178,29 +191,29 @@ class TestEbook:
         nav_off = parse_string(zf_off.read("EPUB/nav.xhtml"))
         toc_off = parse_string(zf_off.read("EPUB/toc.ncx"))
 
-        assert content_off.find("{%s}%s" % (epub.NAMESPACES["OPF"], "guide")) is None
+        assert content_off.find("{%s}%s" % (epub.NAMESPACES["OPF"], "guide")) is None  # noqa
         landmarks = nav_off.find(
-            './/{%s}nav[@{%s}type="landmarks"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])
+            './/{%s}nav[@{%s}type="landmarks"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])  # noqa
         )
         assert landmarks is None
 
         page_list = nav_off.find(
-            './/{%s}nav[@{%s}type="page-list"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])
+            './/{%s}nav[@{%s}type="page-list"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])  # noqa
         )
         assert page_list is None
-        assert content_off.find(".//{%s}spine" % epub.NAMESPACES["OPF"]).get("page-progression-direction") is None
+        assert content_off.find(".//{%s}spine" % epub.NAMESPACES["OPF"]).get("page-progression-direction") is None  # noqa
         assert content_off.getroot().get("dir") is None
 
-        nav_points = toc_off.findall(".//{%s}navPoint" % epub.NAMESPACES["DAISY"])
+        nav_points = toc_off.findall(".//{%s}navPoint" % epub.NAMESPACES["DAISY"])  # noqa
         assert len(nav_points) > 0
-        for n, nav_point in enumerate(nav_points, 1):
+        for _n, nav_point in enumerate(nav_points, 1):
             assert "playOrder" not in nav_point.attrib
 
         zf_off.close()
 
         # Everything turned onn
         zf_on = zipfile.ZipFile(
-            session_temp_dir / "test_basic_on.epub",
+            os.path.join(str(session_temp_dir), "test_basic_on.epub"),
             "r",
             compression=zipfile.ZIP_DEFLATED,
             allowZip64=True,
@@ -208,8 +221,9 @@ class TestEbook:
         content_on = parse_string(zf_on.read("EPUB/content.opf"))
         nav_on = parse_string(zf_on.read("EPUB/nav.xhtml"))
         toc_on = parse_string(zf_on.read("EPUB/toc.ncx"))
-        guide = content_on.find("{%s}%s" % (epub.NAMESPACES["OPF"], "guide"))
+        guide = content_on.find("{%s}%s" % (epub.NAMESPACES["OPF"], "guide"))  # noqa
         references = list(guide)
+        print("\n\n\n\n\n", zf_on.read("EPUB/nav.xhtml"), "\n\n\n\n\n")
 
         assert guide is not None
         assert len(references) == 1
@@ -219,37 +233,37 @@ class TestEbook:
         assert references[0].get("type") == "bodymatter"
 
         landmarks = nav_on.find(
-            './/{%s}nav[@{%s}type="landmarks"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])
+            './/{%s}nav[@{%s}type="landmarks"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])  # noqa
         )
         assert landmarks is not None
-        assert landmarks.find(".//{%s}h2" % epub.NAMESPACES["XHTML"]).text == "My Guide"
+        assert landmarks.find(".//{%s}h2" % epub.NAMESPACES["XHTML"]).text == "My Guide"  # noqa
 
         page_list = nav_on.find(
-            './/{%s}nav[@{%s}type="page-list"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])
+            './/{%s}nav[@{%s}type="page-list"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])  # noqa
         )
         assert page_list is not None
-        assert page_list.find(".//{%s}h2" % epub.NAMESPACES["XHTML"]).text == "My Pages"
+        assert page_list.find(".//{%s}h2" % epub.NAMESPACES["XHTML"]).text == "My Pages"  # noqa
 
         assert (
-            page_list.find(".//{%s}ol" % epub.NAMESPACES["XHTML"])
-            .find(".//{%s}li" % epub.NAMESPACES["XHTML"])
-            .find(".//{%s}a" % epub.NAMESPACES["XHTML"])
+            page_list.find(".//{%s}ol" % epub.NAMESPACES["XHTML"])  # noqa
+            .find(".//{%s}li" % epub.NAMESPACES["XHTML"])  # noqa
+            .find(".//{%s}a" % epub.NAMESPACES["XHTML"])  # noqa
             .get("href")
             == "test.xhtml#fn01"
         )
         assert (
-            page_list.find(".//{%s}ol" % epub.NAMESPACES["XHTML"])
-            .find(".//{%s}li" % epub.NAMESPACES["XHTML"])
-            .find(".//{%s}a" % epub.NAMESPACES["XHTML"])
+            page_list.find(".//{%s}ol" % epub.NAMESPACES["XHTML"])  # noqa
+            .find(".//{%s}li" % epub.NAMESPACES["XHTML"])  # noqa
+            .find(".//{%s}a" % epub.NAMESPACES["XHTML"])  # noqa
             .text
             == "fn01"
         )
 
-        assert content_on.find(".//{%s}spine" % epub.NAMESPACES["OPF"]).get("page-progression-direction") == "ltr"
+        assert content_on.find(".//{%s}spine" % epub.NAMESPACES["OPF"]).get("page-progression-direction") == "ltr"  # noqa
 
         assert content_on.getroot().get("dir") == "ltr"
 
-        nav_points = toc_on.findall(".//{%s}navPoint" % epub.NAMESPACES["DAISY"])
+        nav_points = toc_on.findall(".//{%s}navPoint" % epub.NAMESPACES["DAISY"])  # noqa
         assert len(nav_points) > 0
         for n, nav_point in enumerate(nav_points, 1):
             assert "playOrder" in nav_point.attrib
@@ -395,7 +409,10 @@ class TestEbook:
         assert len(list(book.get_items())) == 6
 
     def test_epubbook_read_epub_as_filepath(self):
-        self._test_epubbook(Path(__file__).parent / "resources" / "test01.epub")
+        if six.PY2:
+            self._test_epubbook(os.path.join(os.path.dirname(__file__), "resources", "test01.epub"))
+        else:
+            self._test_epubbook(Path(__file__).parent / "resources" / "test01.epub")
 
     def test_epubbook_read_epub_as_string(self):
         self._test_epubbook(os.path.join(os.path.dirname(__file__), "resources", "test01.epub"))

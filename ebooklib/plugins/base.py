@@ -15,7 +15,7 @@
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class BasePlugin(object):
+class BasePlugin(object):  # noqa: UP004
     def before_write(self, book):
         "Processing before save"
         return True
