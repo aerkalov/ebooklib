@@ -1,0 +1,256 @@
+EbookLib Changelog
+==================
+
+All notable changes to this project will be documented in this file.
+
+
+Version 0.20 (2025-10-26)
+------------------
+
+Added
+~~~~~
+* Add Read the docs configuration file (#333)
+* Add pytest support and GitHub workflow (#349)
+* Add extension method for <meta> to EpubHtml object (#298)
+
+Changed
+~~~~~~~
+* Reformat all code with ruff, fix docs
+* Update the list of software using ebooklib
+* Increase the priority of inserting <meta> into <head>
+* Return bytes in EpubHtml's content getter methods (#319)
+
+Fixed
+~~~~~
+* Fix the version in Sphinx documentation (#335)
+* Bug fix: Prevent None join error when HREF is not found on a link_node (#328)
+* Fix item.get_type() does not recognize webm (#312, #338)
+* Add more informative text for future Contributors (#333)
+
+
+Version 0.19 (2025-05-02)
+-------------------------
+
+Added
+~~~~~
+* Add option to set toc page direction (#234)
+* Add compresslevel parameter for zip compression (#287)
+
+Changed
+~~~~~~~
+* Update README.md with refreshing the project issue
+* Use posix module instead of os.path when managing EPUB references (#305)
+* Change deprecation check for ignore_ncx
+* Using lxml text_content() on all nodes for better ToC parsing
+
+Fixed
+~~~~~
+* Throwing errors while writing EPUB is optional now and behavior will be changed in the future (#316)
+* Fix lxml root warning (#305)
+* Toning down metadata failure to an info log
+* Check truth value of ignore_ncx deprecation, not just truthiness (#283)
+* Add direction to the epub Nav page only if it was set
+
+
+Version 0.18 (2022-11-30)
+-------------------------
+
+Added
+~~~~~
+* Add an example for embedding images into paragraph
+* Add default option ignore_ncx to EpubReader and document it (#183)
+* Add option to set custom title in toc page (#243)
+* Add `scripted` to EpubHtml properties if a script is added (#176)
+* Read un-zipped epub directories (#183)
+* Add direction for HTML tags (#174)
+
+Changed
+~~~~~~~
+* Update AUTHORS.txt file
+* Improved header in README.md
+* Updated README.md; Added python linting, updated file links
+* Use custom XMLParser for security
+* Use double quotes for XML declaration in xml container
+
+Fixed
+~~~~~
+* Define format for the long description
+* Fix dublin core typo in tutorial documentation (#256)
+* Fix EpubImage lacks parameters (#231)
+* Fix the issue toc can not loaded from epub file
+* Fixed #218 - Use correct variable for static item ids
+* Ignore NCX if Navigation Document exists
+* Try hard to parse through broken XML, improve the compatibility
+
+
+Version 0.17.1 (2019-01-03)
+---------------------------
+
+Added
+~~~~~
+* Initial SMIL support (#08_SMIL sample)
+* Adding support for the EPUB3 pagebreak/page-list semantics
+* Page lists are now attached to each EpubHtml item as well as to the book
+
+Fixed
+~~~~~
+* Increase version number to 0.17.1
+* Update README.md
+* Update AUTHORS.txt file
+* Fixed #168 - Improve Sphinx documentation a bit
+* Fixed #166 - Readfile method fails on MS Windows
+* Fixed #165 - Sample file 05_plugins_create files on Python 3+
+* Fixed #164 - Parsing files fails because of page-list
+* Fixed #163 - epub:type is not properly extracted
+
+
+Version 0.17 (2018-07-04)
+-------------------------
+
+Added
+~~~~~
+* Add WAI-ARIA role to the nav element for accessibility
+* Add ability to include playOrder into navPoint (#146)
+* Add get_type method to EpubCover class (#147)
+
+Changed
+~~~~~~~
+* Improve playOrder logic to handle subchapters correctly (#148)
+* Improved `.gitignore` (#144)
+* Make `samples/04_markdown_parse` Python 2+3 compatible (#143)
+* Dynamically change the long-description in project configuration
+* Change double quotes into single quotes
+
+Fixed
+~~~~~
+* Fixed #161 - Provide default value for metadata
+* Fixed #159 - Add doc-toc role programmatically for EPUB accessibility
+* Fixed #137 - Create a PyPi compatible README.md file
+* Fixed #139 - Correct MANIFEST.in file and rename CHANGES.TXT to CHANGES.txt
+* Fixed #132 - Read the README.md file using utf-8 encoding
+* Fixed #125 - Refactor writing of OPF file
+* Fixed #123 - Remove unused test files
+* Fixed #121 - Fix relative path resolving
+* Don't cut off first character of body in EpubHtml.get_body_content()
+* Fix for pop-up footnotes in EPUB 3
+
+
+Version 0.16 (2017-04-03)
+-------------------------
+
+Added
+~~~~~
+* Add ability to set custom prefixes and namespaces to content.opf file
+* Add bindings support (#70)
+
+Changed
+~~~~~~~
+* Remove Booktype version number
+* Reconstruct options for legacy tidy
+* Control attribute order of meta tag
+* Update Readme with new project that uses ebooklib
+
+Fixed
+~~~~~
+* Fixed #119 - Plugin samples file uses obsolete API
+* Fixed #112 - Get body content calls get content for no reason
+* Fixed #111 - Initialize mimetype library only when it is being used
+* Fixed #110 - Add .ttf extension to the list of font files
+* Fixed #109 - spine: text orientation attribute
+* Fixed #101 - Update list of authors
+* Fixed #100 - Fix docstrings
+* Fixed #99 - Change README.md to have ASCII encoding
+* Fixed #98 - Underline tag gets deleted
+* Fixed #97 - Sections are not pointing to any specific content
+* Fixed #92 - set.cover not working in Python 3.4
+* Fixed #85 - Epub2 guide types do not map completely to epub3 landmark types
+* Fixed #84 - Set unique metadata function
+* Fixed #83 - In the sample file read cover image in binary mode
+* Fixed #82 - Ignore vim swapfiles
+* Fixed #81 - Mimetypes library isn't aware of xhtml
+* Fixed #72 - example for reading epub didn't work, wrong module level for ITEM_IMAGE
+* Fixed #71 - Handling sections with content
+* Fixed #69 - Correct rendition URL in OPF file
+* Fixed #64 - embed <script> instead of <link> for javascripts
+* Fixed #61 - Various fixes
+* Fixed #36 - Implement API to add files which are not present in the manifest
+* Missed doctype in the nav.xhtml file
+* Removing some junk code left by git
+* Remove trailing whitespace
+* Tidy the code a bit
+* Set blank title if it is None
+* Ensure only new modified date is included
+* Use relative paths in toc nav
+* Allow overriding modification time for ePub document
+
+
+Version 0.15 (2014-05-15)
+-------------------------
+
+Added
+~~~~~
+* Add basic documentation
+* Support for guide (#37)
+* Plugin which cleans content with Tidy HTML (#39)
+* Add additional item types for audio and video files (#26)
+
+Changed
+~~~~~~~
+* Implement new API for Plugins (#33)
+* Move common functions to ebooklib.utils (#29)
+* Use six package for Python2/Python3 compatibility (#28)
+* Implement different methods for fetching different items from a book (#25)
+* Make some function names more pythonic + update docs + update examples (#24)
+* Make it work on Python 2.7 / Python 3.3 (#22)
+* Update README file
+
+Fixed
+~~~~~
+* Fixed #58 - Add basic documentation
+* Fixed #50 - The EPUB2 guide is loaded
+* Fixed #49 - The cover image item
+* Fixed #48 - Load NAV document if NCX is missing
+* Fixed #47 - Create head and body elements in any case
+* Fixed #46 - Just a typo
+* Fixed #45 - Don't parse the metadata tag itself
+* Fixed #44 - Section navigation points point to the first chapter
+* Fixed #43 - Update book title and UID fields after reading the metadata
+* Fixed #42 - The container XML reflects the assigned EPUB folder
+* Fixed #41 - Implement document type
+* Fixed #40 - We must not use .wait() for waiting Popen to end
+* Fixed #39 - Plugin which cleans content with Tidy HTML
+* Fixed #35 - Delete temporary directory
+* Fixed #34 - Mime type is not correctly guessed when adding items
+* Fixed #32 - Put parsing function in the utils module
+* Fixed #30 - Basic plugin for filtering non HTML5 content
+* Fixed #27 - Do not create new title tag in chapter if it already exists
+* Fixed #23 - Creating EPUB files does not work in Python 3.3
+* Fixed #21 - Remove dependency of itertools module
+* Fixed #19 - Handle properties in manifest file when writing to epub
+* Fixed #18 - Decode filenames when reading them from zip file
+* Fixed #17 - Read linear flag from spine structure
+* Fixed #16 - EpubCoverHtml should extend EpubHtml and use it for processing HTML
+* Fixed #15 - Cover file should also extend EpubHtml class
+* Fixed #14 - Navigation xhtml file should behave like other xhtml files
+* Fixed #13 - Item in spine could have flag linear
+* Fixed #12 - Do not use ZIP_STORED for every item in zip file
+* Fixed #11 - Preserve XML declaration when creating XML files
+* Fixed #10 - Implement add_item method for EpubHtml
+* Fixed #9 - Check type of Item in epub
+* Fixed #8 - Wrong copyright info
+* Fix zip paths to use correct path separator
+* Updated license info in setup.py
+
+
+Version 0.10 (2013-05-07)
+-------------------------
+
+* Initial public release
+* Basic EPUB2/EPUB3 read and write support
+* Plugin system for content manipulation
+* Fixed #6 - Fix typo in setup.py
+* Fixed #5 - Remove print statements from source code
+* Fixed #4 - Fix error in README file
+* Fixed #3 - Add sample files
+* Fixed #2 - Update README file with code samples
+* Fixed #1 - Add copyright, author info and setup.py

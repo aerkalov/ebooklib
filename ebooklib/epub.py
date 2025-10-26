@@ -36,7 +36,7 @@ import ebooklib
 from ebooklib.utils import Directory, get_pages_for_items, guess_type, parse_html_string, parse_string
 
 # Version of EPUB library
-VERSION = (0, 19, 0)
+VERSION = (0, 20, 0)
 
 NAMESPACES = {
     "XML": "http://www.w3.org/XML/1998/namespace",

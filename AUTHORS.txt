@@ -19,7 +19,7 @@ Oleg Pshenichniy <olegpshenichniy@gmail.com>
 clach04 <Chris.Clark@actian.com>
 Olivier Le Thanh Duong <olivier@lethanh.be>
 Michael Storm <mstorm7@gmail.com>
-Sergey Markelov
+Sergey Markelov <smarkelov@versive.com>
 Laurent Laporte <tantale.solutions@gmail.com>
 Deborah Kaplan <deborahgu@users.noreply.github.com>
 Willem van der Walt <wvdwalt@csir.co.za>
@@ -39,4 +39,11 @@ Tom Kuson <mail@tjkuson.me>
 Samuel Clay <samuel@ofbrooklyn.com>
 plu5 <plu5@users.noreply.github.com>
 Youssif Shaaban Alsager <contact@yshalsager.com>
+Soroush Javadi <soroush.javadi@gmail.com>
+Milad <reza.maanijou@gmail.com>
+Tyler Whipple <tylerwhipple@gmail.com>
+João Seckler <jseckler@riseup.net>
+Yuan-Yi Chang <changyy.csie@gmail.com>
+Nicolas Ivan Milicevic <nicolas.milicevic@proton.me>
+林檎 <apple@apples-MacBook-Pro.local>
 
