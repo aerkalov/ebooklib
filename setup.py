@@ -22,10 +22,10 @@ setup(
         'Bug Tracker': 'https://github.com/aerkalov/ebooklib/issues'
     },
     license='GNU Affero General Public License',
-    description='Ebook library which can handle EPUB2/EPUB3 and Kindle format',
+    description='Ebook library which can handle EPUB2/EPUB3 format',
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
-    keywords=['ebook', 'epub', 'kindle'],
+    keywords=['ebook', 'epub'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
