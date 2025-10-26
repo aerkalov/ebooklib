@@ -33,14 +33,15 @@ ITEM_COVER = 10
 ITEM_SMIL = 11
 
 # EXTENSION MAPPER
-EXTENSIONS = {ITEM_IMAGE: ['.jpg', '.jpeg', '.gif', '.tiff', '.tif', '.png'],
-              ITEM_STYLE: ['.css'],
-              ITEM_VECTOR: ['.svg'],
-              ITEM_FONT: ['.otf', '.woff', '.ttf'],
-              ITEM_SCRIPT: ['.js'],
-              ITEM_NAVIGATION: ['.ncx'],
-              ITEM_VIDEO: ['.mov', '.mp4', '.avi', '.webm'],
-              ITEM_AUDIO: ['.mp3', '.ogg'],
-              ITEM_COVER: ['.jpg', '.jpeg', '.png'],
-              ITEM_SMIL: ['.smil']
-              }
+EXTENSIONS = {
+    ITEM_IMAGE: [".jpg", ".jpeg", ".gif", ".tiff", ".tif", ".png"],
+    ITEM_STYLE: [".css"],
+    ITEM_VECTOR: [".svg"],
+    ITEM_FONT: [".otf", ".woff", ".ttf"],
+    ITEM_SCRIPT: [".js"],
+    ITEM_NAVIGATION: [".ncx"],
+    ITEM_VIDEO: [".mov", ".mp4", ".avi", ".webm"],
+    ITEM_AUDIO: [".mp3", ".ogg"],
+    ITEM_COVER: [".jpg", ".jpeg", ".png"],
+    ITEM_SMIL: [".smil"],
+}

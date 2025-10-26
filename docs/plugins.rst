@@ -1,9 +1,9 @@
 Plugins
 =======
 
-Plugins can be used to automate some of the workflow. For instance :mod:`ebooklib.plugins.tidyhtml` plugins automatically cleans HTML
-output for you. FootnotePlugin for instance rewrites custom footnotes into EPUB3 kind of footnotes. Without these plugins you would
-need to do wanted transformations before setting or getting content from your chapters.
+Plugins can be used to automate some of the workflow. For instance, the :mod:`ebooklib.plugins.tidyhtml` plugin automatically cleans HTML
+output for you. FootnotePlugin, for example, rewrites custom footnotes into EPUB3-style footnotes. Without these plugins, you would
+need to do the desired transformations before setting or getting content from your chapters.
 
 There is a :class:`ebooklib.plugins.base.BasePlugin` class which you need to extend. These are the methods you can override.
 
@@ -24,12 +24,12 @@ html_before_write  book, chapter  Processing HTML before save
 Custom plugin
 -------------
 
-This is our use case. We have online WYSIWYG editing system for editing content of our books. In the editor to link
-to our other page we use this syntax *<a href="../page/">Our page</a>* but in the EPUB book we would need to link
-to *page.xhtml* file for instance.
+This is our use case. We have an online WYSIWYG editing system for editing the content of our books. In the editor, to link
+to another page, we use this syntax *<a href="../page/">Our page</a>*, but in the EPUB book we need to link
+to the *page.xhtml* file, for instance.
 
-We could do the transformations manually or we could write a plugin which does all of the work for us. We override *html_before_write*
-method. We parse the content of our chapter, find all links, replace them with new href and finally set new
+We could do the transformations manually, or we could write a plugin that does all the work for us. We override the *html_before_write*
+method. We parse the content of our chapter, find all links, replace them with the new href, and finally set the new
 content to the chapter.
 
 ::
@@ -76,8 +76,8 @@ content to the chapter.
             chapter.content = etree.tostring(tree, pretty_print=True, encoding='utf-8')
 
 
-When you want to use it just pass the list of plugins you want to use as extra option to the write_epub method
-(also to read_epub method). Plugins will be executed in the order they are defined in the list.
+When you want to use it, just pass the list of plugins you want to use as an extra option to the write_epub method
+(also to the read_epub method). Plugins will be executed in the order they are defined in the list.
 
 ::
 

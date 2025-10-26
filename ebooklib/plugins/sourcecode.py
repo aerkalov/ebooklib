@@ -17,45 +17,43 @@
 from ebooklib.plugins.base import BasePlugin
 from ebooklib.utils import parse_html_string
 
-class SourceHighlighter(BasePlugin):    
+
+class SourceHighlighter(BasePlugin):
     def __init__(self):
         pass
 
     def html_before_write(self, book, chapter):
         from lxml import etree, html
-
         from pygments import highlight
         from pygments.formatters import HtmlFormatter
 
-        from ebooklib import epub
-
         try:
             tree = parse_html_string(chapter.content)
-        except:
+        except Exception:
             return
 
         root = tree.getroottree()
 
         had_source = False
 
-        if len(root.find('body')) != 0:
-            body = tree.find('body')
+        if len(root.find("body")) != 0:
+            body = tree.find("body")
             # check for embeded source
             for source in body.xpath('//pre[contains(@class,"source-")]'):
-                css_class = source.get('class')
+                css_class = source.get("class")
 
-                source_text = (source.text or '') + ''.join([html.tostring(child) for child in source.iterchildren()])
+                source_text = (source.text or "") + "".join([html.tostring(child) for child in source.iterchildren()])
 
-                if 'source-python' in css_class:
+                if "source-python" in css_class:
                     from pygments.lexers import PythonLexer
 
-#                    _text =  highlight(source_text, PythonLexer(), HtmlFormatter(linenos="inline"))
-                    _text =  highlight(source_text, PythonLexer(), HtmlFormatter())
+                    #                    _text =  highlight(source_text, PythonLexer(), HtmlFormatter(linenos="inline"))
+                    _text = highlight(source_text, PythonLexer(), HtmlFormatter())
 
-                if 'source-css' in css_class:
+                if "source-css" in css_class:
                     from pygments.lexers import CssLexer
 
-                    _text =  highlight(source_text, CssLexer(), HtmlFormatter())
+                    _text = highlight(source_text, CssLexer(), HtmlFormatter())
 
                 _parent = source.getparent()
                 _parent.replace(source, etree.XML(_text))
@@ -64,5 +62,4 @@ class SourceHighlighter(BasePlugin):
 
         if had_source:
             chapter.add_link(href="style/code.css", rel="stylesheet", type="text/css")
-            chapter.content = etree.tostring(tree, pretty_print=True, encoding='utf-8')        
-
+            chapter.content = etree.tostring(tree, pretty_print=True, encoding="utf-8")
