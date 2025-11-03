@@ -112,6 +112,15 @@ book.add_item(epub.EpubNav())
 epub.write_epub("the_book_of_the_mysterious.epub", book)
 ```
 
+# Popular Projects using Ebooklib
+1.  [Marker](https://github.com/VikParuchuri/marker)
+2.  [ChatDev](https://github.com/OpenBMB/ChatDev)
+3.  [DocsGPT](https://github.com/arc53/DocsGPT)
+4.  [ebook2audiobook](https://github.com/DrewThomasson/ebook2audiobook)
+5.  [SuperAGI](https://github.com/TransformerOptimus/SuperAGI)
+6.  [bilingual_book_maker](https://github.com/yihong0618/bilingual_book_maker)
+7.  [audiblz](https://github.com/santinic/audiblez)
+
 
 # License
 EbookLib is licensed under the [AGPL license](LICENSE.txt).
