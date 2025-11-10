@@ -22,6 +22,8 @@ import uuid
 import warnings
 import zipfile
 from collections import OrderedDict
+import unicodedata
+import  urllib
 
 import six
 
@@ -1467,7 +1469,9 @@ class EpubReader(object):  # noqa: UP004
     def read_file(self, name):
         # Raises KeyError
         name = zip_path.normpath(name)
-        return self.zf.read(name)
+        parsed_name = urllib.parse.unquote(name)
+        normalized_name = unicodedata.normalize('NFC', parsed_name)
+        return self.zf.read(normalized_name)
 
     def _load_container(self):
         meta_inf = self.read_file("META-INF/container.xml")
