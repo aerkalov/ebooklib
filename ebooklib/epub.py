@@ -22,6 +22,7 @@ import uuid
 import warnings
 import zipfile
 from collections import OrderedDict
+import datetime
 
 import six
 
@@ -900,11 +901,33 @@ class EpubWriter(object):  # noqa: UP004
         "compresslevel": 6,
     }
 
+    @classmethod
+    def get_default_options(cls):
+        default = dict(cls.DEFAULT_OPTIONS)
+        default["mtime"] = datetime.datetime.now()
+        return default
+
+    @classmethod
+    def datetime_to_zipinfo_datetime(cls, dt):
+        """
+        Converts a datetime object to a tuple format compatible with zipfile.ZipInfo.
+
+        :Args:
+          - dt: datetime.datetime object
+
+        :Returns:
+          Tuple of (year, month, day, hour, minute, second) for use in ZipInfo
+        """
+        return (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+
+    def zipinfo(self, name):
+        return zipfile.ZipInfo(name, self.datetime_to_zipinfo_datetime(self.options["mtime"]))
+
     def __init__(self, name, book, options=None):
         self.file_name = name
         self.book = book
 
-        self.options = dict(self.DEFAULT_OPTIONS)
+        self.options = self.get_default_options()
         if options:
             self.options.update(options)
 
@@ -933,7 +956,7 @@ class EpubWriter(object):  # noqa: UP004
 
     def _write_container(self):
         container_xml = CONTAINER_XML % {"folder_name": self.book.FOLDER_NAME}
-        self.out.writestr(CONTAINER_PATH, container_xml)
+        self.out.writestr(self.zipinfo(CONTAINER_PATH), container_xml)
 
     def _write_opf_metadata(self, root):
         # This is really not needed
@@ -950,13 +973,7 @@ class EpubWriter(object):  # noqa: UP004
         metadata = etree.SubElement(root, "metadata", nsmap=nsmap)
 
         el = etree.SubElement(metadata, "meta", {"property": "dcterms:modified"})
-        if "mtime" in self.options:
-            mtime = self.options["mtime"]
-        else:
-            import datetime
-
-            mtime = datetime.datetime.now()
-        el.text = mtime.strftime("%Y-%m-%dT%H:%M:%SZ")
+        el.text = self.options["mtime"].strftime("%Y-%m-%dT%H:%M:%SZ")
 
         for ns_name, values in six.iteritems(self.book.metadata):
             if ns_name == NAMESPACES["OPF"]:
@@ -1105,7 +1122,7 @@ class EpubWriter(object):  # noqa: UP004
     def _write_opf_file(self, root):
         tree_str = etree.tostring(root, pretty_print=True, encoding="utf-8", xml_declaration=True)
 
-        self.out.writestr("{FOLDER_NAME}/content.opf".format(FOLDER_NAME=self.book.FOLDER_NAME), tree_str)  # noqa: UP032
+        self.out.writestr(self.zipinfo("{FOLDER_NAME}/content.opf".format(FOLDER_NAME=self.book.FOLDER_NAME)), tree_str)
 
     def _write_opf(self):
         package_attributes = {
@@ -1389,21 +1406,27 @@ class EpubWriter(object):  # noqa: UP004
         for item in self.book.get_items():
             if isinstance(item, EpubNcx):
                 self.out.writestr(
-                    "{FOLDER_NAME}/{file_name}".format(FOLDER_NAME=self.book.FOLDER_NAME, file_name=item.file_name),  # noqa: UP032
+                    self.zipinfo(
+                        "{FOLDER_NAME}/{file_name}".format(FOLDER_NAME=self.book.FOLDER_NAME, file_name=item.file_name)  # noqa: UP032
+                    ),
                     self._get_ncx(),
                 )
             elif isinstance(item, EpubNav):
                 self.out.writestr(
-                    "{FOLDER_NAME}/{file_name}".format(FOLDER_NAME=self.book.FOLDER_NAME, file_name=item.file_name),  # noqa: UP032
+                    self.zipinfo(
+                        "{FOLDER_NAME}/{file_name}".format(FOLDER_NAME=self.book.FOLDER_NAME, file_name=item.file_name)  # noqa: UP032
+                    ),
                     self._get_nav(item),
                 )
             elif item.manifest:
                 self.out.writestr(
-                    "{FOLDER_NAME}/{file_name}".format(FOLDER_NAME=self.book.FOLDER_NAME, file_name=item.file_name),  # noqa: UP032
+                    self.zipinfo(
+                        "{FOLDER_NAME}/{file_name}".format(FOLDER_NAME=self.book.FOLDER_NAME, file_name=item.file_name)
+                    ),  # noqa: UP032
                     item.get_content(),
                 )
             else:
-                self.out.writestr("{file_name}".format(file_name=item.file_name), item.get_content())  # noqa: UP032
+                self.out.writestr(self.zipinfo("{file_name}".format(file_name=item.file_name)), item.get_content())
 
     def write(self):
         if six.PY2:
