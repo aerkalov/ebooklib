@@ -77,15 +77,10 @@ CHAPTER_XML = six.b(
 COVER_XML = six.b("""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
- <head>
-  <style>
-    body { margin: 0em; padding: 0em; }
-    img { max-width: 100%; max-height: 100%; }
-  </style>
- </head>
- <body>
-   <img src="" alt="" />
- </body>
+  <head></head>
+  <body>
+    <img src="" alt="" style="height:100%; text-align:center" />
+  </body>
 </html>""")
 
 
