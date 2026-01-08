@@ -471,6 +471,12 @@ class EpubHtml(EpubItem):
 
         tree_str = etree.tostring(tree, pretty_print=True, encoding="utf-8", xml_declaration=True)
 
+	# lxml processing converts preserveAspectRatio and viewBox svg attributes to lowercase
+	# resulting in epub validation error and resultant epub cover doesn't cover full page.
+	# This hack restores the case of these attributes
+	tree_str = tree_str.replace('preserveaspectratio','preserveAspectRatio')
+	tree_str = tree_str.replace('viewbox','viewBox')
+
         return tree_str
 
     def __str__(self):
