@@ -1515,6 +1515,8 @@ class EpubReader(object):  # noqa: UP004
         nsmap = metadata.nsmap
         nstags = dict(six.iteritems(nsmap))
         default_ns = nstags.get(None, "")
+        if default_ns:
+            default_ns = "{%s}" % default_ns
 
         nsdict = {v: {} for v in nsmap.values()}
 
