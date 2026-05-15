@@ -1724,8 +1724,7 @@ class EpubReader(object):  # noqa: UP004
 
         # should read ncx or nav file
         nav_item = next((item for item in self.book.items if isinstance(item, EpubNav)), None)
-        if toc:
-            if not self.options.get("ignore_ncx") or not nav_item:
+        if toc and not self.options.get("ignore_ncx") and not nav_item:
                 try:
                     ncxFile = self.read_file(zip_path.join(self.opf_dir, self.book.get_item_with_id(toc).get_name()))
                 except KeyError:
