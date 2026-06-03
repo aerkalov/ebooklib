@@ -973,7 +973,8 @@ class EpubWriter(object):  # noqa: UP004
         metadata = etree.SubElement(root, "metadata", nsmap=nsmap)
 
         el = etree.SubElement(metadata, "meta", {"property": "dcterms:modified"})
-        el.text = self.options["mtime"].strftime("%Y-%m-%dT%H:%M:%SZ")
+        time_utc = self.options["mtime"].astimezone(datetime.timezone.utc)
+        el.text = time_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         for ns_name, values in six.iteritems(self.book.metadata):
             if ns_name == NAMESPACES["OPF"]:
