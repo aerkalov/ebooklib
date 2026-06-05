@@ -126,7 +126,14 @@ class Directory(object):  # noqa: UP004
         self.directory_path = directory_path
 
     def read(self, subname):
-        with open(os.path.join(self.directory_path, subname), "rb") as fp:
+        directory_path = os.path.realpath(self.directory_path)
+        path = os.path.realpath(os.path.join(directory_path, subname))
+        # Prevent path traversal: manifest hrefs are attacker-controlled and
+        # URL-decoded, so a crafted value such as "../../etc/passwd" must not
+        # be allowed to escape the source directory. See issue #359.
+        if path != directory_path and not path.startswith(directory_path + os.sep):
+            raise OSError(f"Invalid path, escapes the source directory: {subname!r}")
+        with open(path, "rb") as fp:
             return fp.read()
 
     def close(self):
