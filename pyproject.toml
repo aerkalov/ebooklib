@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "EbookLib"
+version = "0.21"
+description = "Ebook library which can handle EPUB2/EPUB3 format"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "GNU Affero General Public License v3 or later (AGPLv3+)" }
+authors = [
+    { name = "Aleksandar Erkalovic", email = "aerkalov@gmail.com" },
+]
+keywords = ["ebook", "epub"]
+requires-python = ">=3.10"
+dependencies = [
+    "lxml",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/aerkalov/ebooklib"
+Documentation = "https://ebooklib.readthedocs.io"
+Source = "https://github.com/aerkalov/ebooklib"
+"Bug Tracker" = "https://github.com/aerkalov/ebooklib/issues"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "sphinx", "ruff", "ty", "lxml-stubs", "types-Pygments"]
+test = ["pytest", "pytest-cov"]
+docs = ["sphinx"]
+
+[tool.setuptools]
+packages = ["ebooklib", "ebooklib.plugins"]
+
+[tool.setuptools.package-data]
+ebooklib = ["py.typed"]
+
+[tool.ty.environment]
+# Type check against the oldest supported Python version.
+# ty auto-discovers the environment: an activated virtualenv or a local .venv.
+python-version = "3.10"
+
+[tool.ty.src]
+include = ["ebooklib", "tests"]

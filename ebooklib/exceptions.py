@@ -14,34 +14,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
-# Version of ebook library
+"""Exceptions raised by EbookLib."""
 
-VERSION: tuple[int, int, int] = (0, 21, 0)
 
-# LIST OF POSSIBLE ITEMS
-ITEM_UNKNOWN = 0
-ITEM_IMAGE = 1
-ITEM_STYLE = 2
-ITEM_SCRIPT = 3
-ITEM_NAVIGATION = 4
-ITEM_VECTOR = 5
-ITEM_FONT = 6
-ITEM_VIDEO = 7
-ITEM_AUDIO = 8
-ITEM_DOCUMENT = 9
-ITEM_COVER = 10
-ITEM_SMIL = 11
+class EpubException(Exception):
+    def __init__(self, code: int, msg: str) -> None:
+        super().__init__(msg)
+        self.code = code
+        self.msg = msg
 
-# EXTENSION MAPPER
-EXTENSIONS: dict[int, list[str]] = {
-    ITEM_IMAGE: [".jpg", ".jpeg", ".gif", ".tiff", ".tif", ".png"],
-    ITEM_STYLE: [".css"],
-    ITEM_VECTOR: [".svg"],
-    ITEM_FONT: [".otf", ".woff", ".ttf"],
-    ITEM_SCRIPT: [".js"],
-    ITEM_NAVIGATION: [".ncx"],
-    ITEM_VIDEO: [".mov", ".mp4", ".avi", ".webm"],
-    ITEM_AUDIO: [".mp3", ".ogg"],
-    ITEM_COVER: [".jpg", ".jpeg", ".png"],
-    ITEM_SMIL: [".smil"],
-}
+    def __str__(self) -> str:
+        return repr(self.msg)

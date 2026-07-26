@@ -20,6 +20,7 @@ debug("================================")
 debug("DOCUMENTS")
 
 for x in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
-    if x.is_chapter():
-        debug("[{}] media_overlay={}".format(x, x.media_overlay))  # noqa: UP032
+    if isinstance(x, epub.EpubHtml):
+        debug(f"[{x}] media_overlay={x.media_overlay}")
+
 debug("================================")

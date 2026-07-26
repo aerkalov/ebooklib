@@ -1,4 +1,4 @@
-# coding=utf-8  # noqa: UP009
+from typing import cast
 
 from lxml import etree
 
@@ -22,11 +22,12 @@ class SamplePlugin(BasePlugin):
 
         root = tree.getroottree()
 
-        if len(root.find("body")) != 0:
+        if len(root.find("body") or []) != 0:
             body = tree.find("body")
-
-            for _link in body.xpath("//a[@class='test']"):
-                _link.set("href", "http://www.binarni.net/")
+            if body:
+                links = cast("list[etree._Element]", body.xpath("//a[@class='test']"))
+                for _link in links:
+                    _link.set("href", "http://www.binarni.net/")
 
         chapter.content = etree.tostring(tree, pretty_print=True, encoding="utf-8")
 

@@ -1,4 +1,4 @@
-# coding=utf-8  # noqa: UP009
+from typing import cast
 
 from ebooklib import epub
 from ebooklib.plugins import standard
@@ -29,13 +29,13 @@ if __name__ == "__main__":
     )
 
     # Add invisible page numbers that match the printed text, for accessibility
-    c2.content += create_pagebreak("2")
+    c2.content += cast("str", create_pagebreak("2"))
 
     # You can add more content  after the page break
     c2.content += "<p>This is the second page in the second chapter, after the invisible page break.</p>"
 
     # Add invisible page numbers that match the printed text, for accessibility
-    c2.content += create_pagebreak("3", label="Page 3")
+    c2.content += cast("str", create_pagebreak("3", label="Page 3"))
 
     # close the chapter
     c2.content += "</body></html>"

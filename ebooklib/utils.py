@@ -23,24 +23,24 @@ from lxml import etree
 mimetype_initialised = False
 
 
-def debug(obj):
+def debug(obj: object) -> None:
     import pprint
 
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(obj)
 
 
-def parse_string(s):
+def parse_string(s: str | bytes) -> etree._ElementTree:
     parser = etree.XMLParser(recover=True, resolve_entities=False)
-    try:
+    if isinstance(s, str):
         tree = etree.parse(io.BytesIO(s.encode("utf-8")), parser=parser)
-    except Exception:
+    else:
         tree = etree.parse(io.BytesIO(s), parser=parser)
 
     return tree
 
 
-def parse_html_string(s):
+def parse_html_string(s: str | bytes):
     from lxml import html
 
     utf8_parser = html.HTMLParser(encoding="utf-8")
@@ -50,7 +50,7 @@ def parse_html_string(s):
     return html_tree
 
 
-def guess_type(extenstion):
+def guess_type(extenstion: str) -> tuple[str | None, str | None]:
     global mimetype_initialised
 
     if not mimetype_initialised:
@@ -61,13 +61,13 @@ def guess_type(extenstion):
     return mimetypes.guess_type(extenstion)
 
 
-def create_pagebreak(pageref, label=None, html=True):
-    from ebooklib.epub import NAMESPACES
+def create_pagebreak(pageref: str, label: str | None = None, html: bool = True) -> etree._Element | str:
+    from ebooklib.consts import NAMESPACES
 
     pageref_attributes = {
-        "{%s}type" % NAMESPACES["EPUB"]: "pagebreak",  # noqa
-        "title": "{pageref}".format(pageref=pageref),  # noqa: UP032
-        "id": "{pageref}".format(pageref=pageref),  # noqa: UP032
+        f"{{{NAMESPACES['EPUB']}}}type": "pagebreak",
+        "title": pageref,
+        "id": pageref,
     }
 
     pageref_elem = etree.Element("span", pageref_attributes, nsmap={"epub": NAMESPACES["EPUB"]})
@@ -81,9 +81,9 @@ def create_pagebreak(pageref, label=None, html=True):
     return pageref_elem
 
 
-def get_headers(elem):
+def get_headers(elem) -> str | None:
     for n in range(1, 7):
-        headers = elem.xpath("./h{n}".format(n=n))  # noqa: UP032
+        headers = elem.xpath(f"./h{n}")
 
         if len(headers) > 0:
             text = headers[0].text_content().strip()
@@ -92,7 +92,7 @@ def get_headers(elem):
     return None
 
 
-def get_pages(item):
+def get_pages(item) -> list[tuple[str, str, str]]:
     body = parse_html_string(item.get_body_content())
     pages = []
 
@@ -115,19 +115,28 @@ def get_pages(item):
     return pages
 
 
-def get_pages_for_items(items):
+def get_pages_for_items(items) -> list[tuple[str, str, str]]:
     pages_from_docs = [get_pages(item) for item in items]
 
     return [item for pages in pages_from_docs for item in pages]
 
 
-class Directory(object):  # noqa: UP004
-    def __init__(self, directory_path):
+class Directory:
+    """Reads files from an unpacked EPUB directory, using the same interface as ZipFile."""
+
+    def __init__(self, directory_path: str | os.PathLike) -> None:
         self.directory_path = directory_path
 
-    def read(self, subname):
-        with open(os.path.join(self.directory_path, subname), "rb") as fp:
+    def read(self, subname: str) -> bytes:
+        # Guard against path traversal (e.g. "../../secret") escaping the EPUB directory.
+        base_path = os.path.realpath(self.directory_path)
+        full_path = os.path.realpath(os.path.join(base_path, subname))
+
+        if os.path.commonpath([base_path, full_path]) != base_path:
+            raise KeyError(f"There is no item named {subname!r} in the directory")
+
+        with open(full_path, "rb") as fp:
             return fp.read()
 
-    def close(self):
+    def close(self) -> None:
         pass

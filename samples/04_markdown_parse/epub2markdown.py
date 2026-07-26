@@ -20,19 +20,21 @@ if __name__ == "__main__":
             proc = subprocess.Popen(
                 ["pandoc", "-f", "html", "-t", "markdown", "-"], stdin=subprocess.PIPE, stdout=subprocess.PIPE
             )
-            content, error = proc.communicate(item.content)
+            content, error = proc.communicate(item.get_content())
+            content = bytes(content)
             file_name = os.path.splitext(item.file_name)[0] + ".md"
+
         else:
             file_name = item.file_name
-            content = item.content
+            content = item.get_content()
 
         # create needed directories
-        dir_name = "{}/{}".format(base_name, os.path.dirname(file_name))  # noqa: UP032
+        dir_name = f"{base_name}/{os.path.dirname(file_name)}"
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
 
-        print(">> {}".format(file_name))  # noqa: UP032
+        print(f">> {file_name}")
 
         # write content to file
-        with open("{}/{}".format(base_name, file_name), "w") as f:  # noqa: UP032
-            f.write(content)
+        with open(f"{base_name}/{file_name}", "w") as f:
+            f.write(content if isinstance(content, str) else content.decode("utf-8"))

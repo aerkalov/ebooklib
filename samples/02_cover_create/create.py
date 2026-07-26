@@ -1,5 +1,3 @@
-# coding=utf-8  # noqa: UP009
-
 from ebooklib import epub
 
 if __name__ == "__main__":
