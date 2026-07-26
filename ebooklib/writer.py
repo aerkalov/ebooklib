@@ -67,7 +67,7 @@ class EpubWriter:
     @classmethod
     def get_default_options(cls) -> dict[str, Any]:
         default = dict(cls.DEFAULT_OPTIONS)
-        default["mtime"] = datetime.datetime.now()
+        default["mtime"] = datetime.datetime.now(datetime.timezone.utc)
         return default
 
     @classmethod
@@ -81,6 +81,10 @@ class EpubWriter:
         :Returns:
           Tuple of (year, month, day, hour, minute, second) for use in ZipInfo
         """
+        # ZIP timestamps carry no timezone information and are conventionally
+        # interpreted as local time, so convert aware datetimes to local time first.
+        if dt.tzinfo is not None:
+            dt = dt.astimezone()
         return (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def zipinfo(self, name: str) -> zipfile.ZipInfo:
@@ -128,7 +132,10 @@ class EpubWriter:
         metadata = etree.SubElement(root, "metadata", nsmap=nsmap)
 
         el = etree.SubElement(metadata, "meta", {"property": "dcterms:modified"})
-        el.text = self.options["mtime"].strftime("%Y-%m-%dT%H:%M:%SZ")
+        # The EPUB specification requires dcterms:modified to be a UTC timestamp.
+        # astimezone() treats a naive datetime as local time before converting.
+        mtime_utc = self.options["mtime"].astimezone(datetime.timezone.utc)
+        el.text = mtime_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         for ns_name, values in self.book.metadata.items():
             if ns_name == NAMESPACES["OPF"]:
