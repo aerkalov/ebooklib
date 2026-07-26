@@ -1,4 +1,7 @@
 import logging
+from typing import cast
+
+from lxml import etree
 
 import ebooklib
 from ebooklib import epub
@@ -77,15 +80,21 @@ class TestEpubHtml:
 
         html_tree = parse_html_string(doc1.get_content())
 
-        assert len(html_tree.find("head").getchildren()) == 0
-        assert len(html_tree.find("body").getchildren()) == 2
-        assert len(html_tree.xpath("//h1[contains(text(), 'Title')]")) == 1
+        head = html_tree.find("head")
+        body = html_tree.find("body")
+        assert head is not None
+        assert body is not None
+        assert len(head) == 0
+        assert len(body) == 2
+        assert len(cast("list[etree._Element]", html_tree.xpath("//h1[contains(text(), 'Title')]"))) == 1
 
         doc1.title = "This is my title"
         html_tree = parse_html_string(doc1.get_content())
 
-        assert len(html_tree.find("head").getchildren()) == 1
-        assert len(html_tree.xpath("//title[contains(text(), 'This is my title')]")) == 1
+        head = html_tree.find("head")
+        assert head is not None
+        assert len(head) == 1
+        assert len(cast("list[etree._Element]", html_tree.xpath("//title[contains(text(), 'This is my title')]"))) == 1
 
         doc1.set_language("de")
         html_tree = parse_html_string(doc1.get_content())

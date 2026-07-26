@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import cast
+
 from ebooklib.plugins.base import BasePlugin
 from ebooklib.utils import parse_html_string
 
@@ -25,10 +27,7 @@ class BooktypeLinks(BasePlugin):
         self.booktype_book = booktype_book
 
     def html_before_write(self, book, chapter):
-        try:
-            from urlparse import urljoin, urlparse
-        except ImportError:
-            from urllib.parse import urljoin, urlparse
+        from urllib.parse import urljoin, urlparse
 
         from lxml import etree
 
@@ -37,17 +36,15 @@ class BooktypeLinks(BasePlugin):
         except Exception:
             return
 
-        root = tree.getroottree()
+        body = tree.find("body")
 
-        if len(root.find("body")) != 0:
-            body = tree.find("body")
-
+        if body is not None and len(body) != 0:
             # should also be aware to handle
             # ../chapter/
             # ../chapter/#reference
             # ../chapter#reference
 
-            for _link in body.xpath("//a"):
+            for _link in cast("list[etree._Element]", body.xpath("//a")):
                 # This is just temporary for the footnotes
                 if _link.get("href", "").find("InsertNoteID") != -1:
                     _ln = _link.get("href", "")
@@ -61,13 +58,14 @@ class BooktypeLinks(BasePlugin):
                 # Let us care only for internal links at the moment
                 if _u.scheme == "":
                     if _u.path != "":
-                        _link.set("href", "{path}.xhtml".format(path=_u.path))  # noqa: UP032
+                        _link.set("href", f"{_u.path}.xhtml")
 
                     if _u.fragment != "":
-                        _link.set("href", urljoin(_link.get("href"), "#{fragment}".format(fragment=_u.fragment)))  # noqa: UP032
+                        _link.set("href", urljoin(_link.get("href") or "", f"#{_u.fragment}"))
 
-                    if _link.get("name") is not None:
-                        _link.set("id", _link.get("name"))
+                    _name = _link.get("name")
+                    if _name is not None:
+                        _link.set("id", _name)
                         etree.strip_attributes(_link, "name")
 
         chapter.content = etree.tostring(tree, pretty_print=True, encoding="utf-8")
@@ -89,11 +87,9 @@ class BooktypeFootnotes(BasePlugin):
         except Exception:
             return
 
-        root = tree.getroottree()
+        body = tree.find("body")
 
-        if len(root.find("body")) != 0:
-            body = tree.find("body")
-
+        if body is not None and len(body) != 0:
             # <span id="InsertNoteID_1_marker1" class="InsertNoteMarker">
             #   <sup><a href="#InsertNoteID_1">1</a></sup>
             # <span>
@@ -108,19 +104,19 @@ class BooktypeFootnotes(BasePlugin):
 
             # <a epub:type="noteref" href="#n1">1</a></p>
             # <aside epub:type="footnote" id="n1"><p>These have been corrected in this EPUB3 edition.</p></aside>
-            for footnote in body.xpath('//span[@class="InsertNoteMarker"]'):
-                footnote_id = footnote.get("id")[:-8]
-                a = footnote.getchildren()[0].getchildren()[0]
+            for footnote in cast("list[etree._Element]", body.xpath('//span[@class="InsertNoteMarker"]')):
+                footnote_id = (footnote.get("id") or "")[:-8]
+                a = footnote[0][0]
 
-                footnote_text = body.xpath('//li[@id="{footnote_id}"]'.format(footnote_id=footnote_id))[0]  # noqa: UP032
+                footnote_text = cast("list[etree._Element]", body.xpath(f'//li[@id="{footnote_id}"]'))[0]
 
-                a.attrib["{%s}type" % epub.NAMESPACES["EPUB"]] = "noteref"  # noqa
+                a.attrib[f"{{{epub.NAMESPACES['EPUB']}}}type"] = "noteref"
                 ftn = etree.SubElement(body, "aside", {"id": footnote_id})
-                ftn.attrib["{%s}type" % epub.NAMESPACES["EPUB"]] = "footnote"  # noqa
+                ftn.attrib["{{{epub.NAMESPACES['EPUB']}}}type"] = "footnote"
                 ftn_p = etree.SubElement(ftn, "p")
                 ftn_p.text = footnote_text.text
 
-            old_footnote = body.xpath('//ol[@id="InsertNote_NoteList"]')
+            old_footnote = cast("list[etree._Element]", body.xpath('//ol[@id="InsertNote_NoteList"]'))
             if len(old_footnote) > 0:
                 body.remove(old_footnote[0])
 

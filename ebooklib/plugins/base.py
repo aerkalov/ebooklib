@@ -14,36 +14,41 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Any
 
-class BasePlugin(object):  # noqa: UP004
-    def before_write(self, book):
-        "Processing before save"
+
+class BasePlugin:
+    # The return values of these hooks are ignored by EpubReader/EpubWriter,
+    # so subclasses are free to return anything (None, bytes, bool, ...).
+
+    def before_write(self, book) -> Any:
+        """Processing before save"""
         return True
 
-    def after_write(self, book):
-        "Processing after save"
+    def after_write(self, book) -> Any:
+        """Processing after save"""
         return True
 
-    def before_read(self, book):
-        "Processing before save"
+    def before_read(self, book) -> Any:
+        """Processing before save"""
         return True
 
-    def after_read(self, book):
-        "Processing after save"
+    def after_read(self, book) -> Any:
+        """Processing after save"""
         return True
 
-    def item_after_read(self, book, item):
-        "Process general item after read."
+    def item_after_read(self, book, item) -> Any:
+        """Process general item after read."""
         return True
 
-    def item_before_write(self, book, item):
-        "Process general item before write."
+    def item_before_write(self, book, item) -> Any:
+        """Process general item before write."""
         return True
 
-    def html_after_read(self, book, chapter):
-        "Processing HTML before read."
+    def html_after_read(self, book, chapter) -> Any:
+        """Processing HTML before read."""
         return True
 
-    def html_before_write(self, book, chapter):
-        "Processing HTML before save."
+    def html_before_write(self, book, chapter) -> Any:
+        """Processing HTML before save."""
         return True

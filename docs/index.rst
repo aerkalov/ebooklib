@@ -10,7 +10,7 @@ Welcome to EbookLib's documentation!
 
 EbookLib is a Python library for managing EPUB2/EPUB3 files. It is capable of reading and writing EPUB files programmatically.
 
-The API is designed to be as simple as possible while still making complex tasks achievable. It supports covers, table of contents, spine, guide, metadata, SMIL, page breaks, and more. EbookLib works with Python 2.7 and Python 3.3.
+The API is designed to be as simple as possible while still making complex tasks achievable. It supports covers, table of contents, spine, guide, metadata, SMIL, page breaks, and more. EbookLib works with Python 3.10+.
 
 Homepage: https://github.com/aerkalov/ebooklib/
 
@@ -29,4 +29,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

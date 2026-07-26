@@ -1,5 +1,3 @@
-import six
-
 import ebooklib
 from ebooklib import epub
 
@@ -27,7 +25,7 @@ class TestEpubItemInitialization:
         assert item.id is None
         assert item.file_name == ""
         assert item.media_type == ""
-        assert item.content == six.b("")
+        assert item.content == b""
         assert item.is_linear is True
         assert item.manifest is True
         assert item.book is None
@@ -36,22 +34,22 @@ class TestEpubItemInitialization:
         item = epub.EpubItem(
             uid="my_uid",
             file_name="Document/index.xhtml",
-            content=six.b("THIS IS CONTENT"),
+            content=b"THIS IS CONTENT",
         )
 
         assert item.get_id() == "my_uid"
         assert item.get_name() == "Document/index.xhtml"
-        assert item.get_content() == six.b("THIS IS CONTENT")
+        assert item.get_content() == b"THIS IS CONTENT"
 
     def test_content(self):
         item = epub.EpubItem(
-            content=six.b("THIS IS CONTENT"),
+            content=b"THIS IS CONTENT",
         )
 
-        assert item.get_content() == six.b("THIS IS CONTENT")
+        assert item.get_content() == b"THIS IS CONTENT"
 
-        item.set_content(six.b("NEW CONTENT"))
-        assert item.get_content() == six.b("NEW CONTENT")
+        item.set_content(b"NEW CONTENT")
+        assert item.get_content() == b"NEW CONTENT"
 
     def test_get_type(self):
         """Test item.get_type() method."""
@@ -65,12 +63,12 @@ class TestEpubItemInitialization:
 
         for file_name, _, media_type in FILENAME_TYPES:
             item = epub.EpubItem(
-                uid="id-{file_name}".format(file_name=file_name),  # noqa: UP032
+                uid=f"id-{file_name}",
                 file_name=file_name,
                 media_type=media_type,
             )
             book.add_item(item)
-            assert book.get_item_with_id("id-{file_name}".format(file_name=file_name)) == item  # noqa: UP032
+            assert book.get_item_with_id(f"id-{file_name}") == item
             assert book.get_item_with_href(file_name) == item
 
         assert len(list(book.get_items_of_type(ebooklib.ITEM_IMAGE))) == 3

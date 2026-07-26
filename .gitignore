@@ -118,3 +118,6 @@ venv.bak/
 .idea/
 
 .vscode
+
+# uv lock file
+uv.lock

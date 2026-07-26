@@ -2,15 +2,11 @@ import io
 import logging
 import os
 import zipfile
-
-import six
-
-if six.PY3:
-    from pathlib import Path
-else:
-    from pathlib2 import Path
+from pathlib import Path
+from typing import cast
 
 import pytest
+from lxml import etree
 
 import ebooklib
 from ebooklib import epub
@@ -18,6 +14,12 @@ from ebooklib.plugins import booktype, sourcecode, standard
 from ebooklib.utils import parse_html_string, parse_string
 
 logger = logging.getLogger(__name__)
+
+
+def xpath_elements(node, expression: str) -> "list[etree._Element]":
+    """Run an XPath query and return the result as a list of elements (typed helper)."""
+    assert node is not None
+    return cast("list[etree._Element]", node.xpath(expression))
 
 
 @pytest.mark.usefixtures("session_temp_dir")
@@ -191,20 +193,22 @@ class TestEbook:
         nav_off = parse_string(zf_off.read("EPUB/nav.xhtml"))
         toc_off = parse_string(zf_off.read("EPUB/toc.ncx"))
 
-        assert content_off.find("{%s}%s" % (epub.NAMESPACES["OPF"], "guide")) is None  # noqa
+        assert content_off.find(f"{{{epub.NAMESPACES['OPF']}}}guide") is None
         landmarks = nav_off.find(
-            './/{%s}nav[@{%s}type="landmarks"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])  # noqa
+            f'.//{{{epub.NAMESPACES["XHTML"]}}}nav[@{{{epub.NAMESPACES["EPUB"]}}}type="landmarks"]'
         )
         assert landmarks is None
 
         page_list = nav_off.find(
-            './/{%s}nav[@{%s}type="page-list"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])  # noqa
+            f'.//{{{epub.NAMESPACES["XHTML"]}}}nav[@{{{epub.NAMESPACES["EPUB"]}}}type="page-list"]'
         )
         assert page_list is None
-        assert content_off.find(".//{%s}spine" % epub.NAMESPACES["OPF"]).get("page-progression-direction") is None  # noqa
+        spine_off = content_off.find(f".//{{{epub.NAMESPACES['OPF']}}}spine")
+        assert spine_off is not None
+        assert spine_off.get("page-progression-direction") is None
         assert content_off.getroot().get("dir") is None
 
-        nav_points = toc_off.findall(".//{%s}navPoint" % epub.NAMESPACES["DAISY"])  # noqa
+        nav_points = toc_off.findall(f".//{{{epub.NAMESPACES['DAISY']}}}navPoint")
         assert len(nav_points) > 0
         for _n, nav_point in enumerate(nav_points, 1):
             assert "playOrder" not in nav_point.attrib
@@ -221,49 +225,45 @@ class TestEbook:
         content_on = parse_string(zf_on.read("EPUB/content.opf"))
         nav_on = parse_string(zf_on.read("EPUB/nav.xhtml"))
         toc_on = parse_string(zf_on.read("EPUB/toc.ncx"))
-        guide = content_on.find("{%s}%s" % (epub.NAMESPACES["OPF"], "guide"))  # noqa
-        references = list(guide)
+        guide = content_on.find(f"{{{epub.NAMESPACES['OPF']}}}guide")
         print("\n\n\n\n\n", zf_on.read("EPUB/nav.xhtml"), "\n\n\n\n\n")
 
         assert guide is not None
+        references = list(guide)
         assert len(references) == 1
         assert references[0] is not None
         assert references[0].get("href") == "test.xhtml"
         assert references[0].get("title") == "Introduction"
         assert references[0].get("type") == "bodymatter"
 
-        landmarks = nav_on.find(
-            './/{%s}nav[@{%s}type="landmarks"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])  # noqa
-        )
+        landmarks = nav_on.find(f'.//{{{epub.NAMESPACES["XHTML"]}}}nav[@{{{epub.NAMESPACES["EPUB"]}}}type="landmarks"]')
         assert landmarks is not None
-        assert landmarks.find(".//{%s}h2" % epub.NAMESPACES["XHTML"]).text == "My Guide"  # noqa
+        landmarks_title = landmarks.find(f".//{{{epub.NAMESPACES['XHTML']}}}h2")
+        assert landmarks_title is not None
+        assert landmarks_title.text == "My Guide"
 
-        page_list = nav_on.find(
-            './/{%s}nav[@{%s}type="page-list"]' % (epub.NAMESPACES["XHTML"], epub.NAMESPACES["EPUB"])  # noqa
-        )
+        page_list = nav_on.find(f'.//{{{epub.NAMESPACES["XHTML"]}}}nav[@{{{epub.NAMESPACES["EPUB"]}}}type="page-list"]')
         assert page_list is not None
-        assert page_list.find(".//{%s}h2" % epub.NAMESPACES["XHTML"]).text == "My Pages"  # noqa
+        page_list_title = page_list.find(f".//{{{epub.NAMESPACES['XHTML']}}}h2")
+        assert page_list_title is not None
+        assert page_list_title.text == "My Pages"
 
-        assert (
-            page_list.find(".//{%s}ol" % epub.NAMESPACES["XHTML"])  # noqa
-            .find(".//{%s}li" % epub.NAMESPACES["XHTML"])  # noqa
-            .find(".//{%s}a" % epub.NAMESPACES["XHTML"])  # noqa
-            .get("href")
-            == "test.xhtml#fn01"
-        )
-        assert (
-            page_list.find(".//{%s}ol" % epub.NAMESPACES["XHTML"])  # noqa
-            .find(".//{%s}li" % epub.NAMESPACES["XHTML"])  # noqa
-            .find(".//{%s}a" % epub.NAMESPACES["XHTML"])  # noqa
-            .text
-            == "fn01"
-        )
+        pages_ol = page_list.find(f".//{{{epub.NAMESPACES['XHTML']}}}ol")
+        assert pages_ol is not None
+        pages_li = pages_ol.find(f".//{{{epub.NAMESPACES['XHTML']}}}li")
+        assert pages_li is not None
+        pages_a = pages_li.find(f".//{{{epub.NAMESPACES['XHTML']}}}a")
+        assert pages_a is not None
+        assert pages_a.get("href") == "test.xhtml#fn01"
+        assert pages_a.text == "fn01"
 
-        assert content_on.find(".//{%s}spine" % epub.NAMESPACES["OPF"]).get("page-progression-direction") == "ltr"  # noqa
+        spine_on = content_on.find(f".//{{{epub.NAMESPACES['OPF']}}}spine")
+        assert spine_on is not None
+        assert spine_on.get("page-progression-direction") == "ltr"
 
         assert content_on.getroot().get("dir") == "ltr"
 
-        nav_points = toc_on.findall(".//{%s}navPoint" % epub.NAMESPACES["DAISY"])  # noqa
+        nav_points = toc_on.findall(f".//{{{epub.NAMESPACES['DAISY']}}}navPoint")
         assert len(nav_points) > 0
         for n, nav_point in enumerate(nav_points, 1):
             assert "playOrder" in nav_point.attrib
@@ -289,9 +289,10 @@ class TestEbook:
         book2 = epub.read_epub(f)
 
         chapter1 = book2.get_item_with_id("chap_syntax")
+        assert chapter1 is not None
         html_tree = parse_html_string(chapter1.get_content())
         body = html_tree.find("body")
-        link = body.xpath(".//a")
+        link = xpath_elements(body, ".//a")
 
         assert len(link) == 1
         # Make sure plugin erases unwanted attributes
@@ -331,22 +332,25 @@ class TestEbook:
         book2 = epub.read_epub(f)
 
         chapter1 = book2.get_item_with_id("chap_syntax")
+        assert chapter1 is not None
         html_tree = parse_html_string(chapter1.get_content())
         body = html_tree.find("body")
 
-        link01 = body.xpath(".//a[@id='test01']")[0]
-        link02 = body.xpath(".//a[@id='test02']")[0]
+        link01 = xpath_elements(body, ".//a[@id='test01']")[0]
+        link02 = xpath_elements(body, ".//a[@id='test02']")[0]
 
         assert link01.attrib.get("href") == "../test01.xhtml"
         assert link02.attrib.get("href") == "test02.xhtml#something"
 
-        link_noteref = body.xpath(".//a[@href='#InsertNoteID_1']")[0]
+        link_noteref = xpath_elements(body, ".//a[@href='#InsertNoteID_1']")[0]
 
         assert link_noteref.attrib.get("href") == "#InsertNoteID_1"
         assert link_noteref.text == "1"
 
-        aside = body.xpath(".//aside[@id='InsertNoteID_1']")[0]
-        assert aside.find("p").text == "prvi footnote "
+        aside = xpath_elements(body, ".//aside[@id='InsertNoteID_1']")[0]
+        aside_p = aside.find("p")
+        assert aside_p is not None
+        assert aside_p.text == "prvi footnote "
 
     def test_sourcecode_plugin(self):
         book = self._create_basic_book()
@@ -365,10 +369,11 @@ class TestEbook:
         book2 = epub.read_epub(f)
 
         chapter1 = book2.get_item_with_id("chap_syntax")
+        assert chapter1 is not None
         html_tree = parse_html_string(chapter1.get_content())
 
         body = html_tree.find("body")
-        highlight_div = body.xpath(".//div[@class='highlight']")
+        highlight_div = xpath_elements(body, ".//div[@class='highlight']")
 
         assert len(highlight_div) == 1
 
@@ -409,10 +414,7 @@ class TestEbook:
         assert len(list(book.get_items())) == 6
 
     def test_epubbook_read_epub_as_filepath(self):
-        if six.PY2:
-            self._test_epubbook(os.path.join(os.path.dirname(__file__), "resources", "test01.epub"))
-        else:
-            self._test_epubbook(Path(__file__).parent / "resources" / "test01.epub")
+        self._test_epubbook(Path(__file__).parent / "resources" / "test01.epub")
 
     def test_epubbook_read_epub_as_string(self):
         self._test_epubbook(os.path.join(os.path.dirname(__file__), "resources", "test01.epub"))

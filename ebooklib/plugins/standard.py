@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
-import six
-
 from ebooklib.plugins.base import BasePlugin
 from ebooklib.utils import parse_html_string
 
@@ -68,7 +66,7 @@ DEPRECATED_TAGS = [
 
 
 def leave_only(item, tag_list):
-    for _attr in six.iterkeys(item.attrib):
+    for _attr in list(item.attrib.keys()):
         if _attr not in tag_list:
             del item.attrib[_attr]
 
@@ -95,285 +93,288 @@ class SyntaxPlugin(BasePlugin):
 
         if head is not None and len(head) != 0:
             for _item in head:
-                if _item.tag == "base":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["href", "target"])
-                elif _item.tag == "link":
-                    leave_only(
-                        _item, ATTRIBUTES_GLOBAL + ["href", "crossorigin", "rel", "media", "hreflang", "type", "sizes"]
-                    )
-                elif _item.tag == "title":
-                    if _item.text == "":
+                match _item.tag:
+                    case "base":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["href", "target"])
+                    case "link":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL + ["href", "crossorigin", "rel", "media", "hreflang", "type", "sizes"],
+                        )
+                    case "title":
+                        if _item.text == "":
+                            head.remove(_item)
+                    case "meta":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["name", "http-equiv", "content", "charset"])
+                        # just remove for now, but really should not be like this
                         head.remove(_item)
-                elif _item.tag == "meta":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["name", "http-equiv", "content", "charset"])
-                    # just remove for now, but really should not be like this
-                    head.remove(_item)
-                elif _item.tag == "script":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["src", "type", "charset", "async", "defer", "crossorigin"])
-                elif _item.tag == "source":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["src", "type", "media"])
-                elif _item.tag == "style":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["media", "type", "scoped"])
-                else:
-                    leave_only(_item, ATTRIBUTES_GLOBAL)
+                    case "script":
+                        leave_only(
+                            _item, ATTRIBUTES_GLOBAL + ["src", "type", "charset", "async", "defer", "crossorigin"]
+                        )
+                    case "source":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["src", "type", "media"])
+                    case "style":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["media", "type", "scoped"])
+                    case _:
+                        leave_only(_item, ATTRIBUTES_GLOBAL)
 
-        if len(root.find("body")) != 0:
-            body = tree.find("body")
+        body = tree.find("body")
 
+        if body is not None and len(body) != 0:
             for _item in body.iter():
                 # it is not
                 # <a class="indexterm" href="ch05.html#ix_epub:trigger_element">
 
-                if _item.tag == "a":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["href", "target", "download", "rel", "hreflang", "type"])
-                elif _item.tag == "area":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + ["alt", "coords", "shape", "href", "target", "download", "rel", "hreflang", "type"],
-                    )
-                elif _item.tag == "audio":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + ["src", "crossorigin", "preload", "autoplay", "mediagroup", "loop", "muted", "controls"],
-                    )
-                elif _item.tag == "blockquote":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["cite"])
-                elif _item.tag == "button":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + [
-                            "autofocus",
-                            "disabled",
-                            "form",
-                            "formaction",
-                            "formenctype",
-                            "formmethod",
-                            "formnovalidate",
-                            "formtarget",
-                            "name",
-                            "type",
-                            "value",
-                            "menu",
-                        ],
-                    )
-                elif _item.tag == "canvas":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["width", "height"])
-                elif _item.tag == "canvas":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["width", "height"])
-                elif _item.tag == "del":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["cite", "datetime"])
-                elif _item.tag == "details":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["open"])
-                elif _item.tag == "embed":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["src", "type", "width", "height"])
-                elif _item.tag == "fieldset":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["disable", "form", "name"])
-                elif _item.tag == "details":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + [
-                            "accept-charset",
-                            "action",
-                            "autocomplete",
-                            "enctype",
-                            "method",
-                            "name",
-                            "novalidate",
-                            "target",
-                        ],
-                    )
-                elif _item.tag == "iframe":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + ["src", "srcdoc", "name", "sandbox", "seamless", "allowfullscreen", "width", "height"],
-                    )
-                elif _item.tag == "img":
-                    _src = _item.get("src", "").lower()
-                    if _src.startswith("http://") or _src.startswith("https://"):
-                        if "remote-resources" not in chapter.properties:
-                            chapter.properties.append("remote-resources")
-                            # THIS DOES NOT WORK, ONLY VIDEO AND AUDIO FILES CAN BE REMOTE RESOURCES
-                            # THAT MEANS I SHOULD ALSO CATCH <SOURCE TAG
-                            from ebooklib import epub
+                match _item.tag:
+                    case "a":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["href", "target", "download", "rel", "hreflang", "type"])
+                    case "area":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + ["alt", "coords", "shape", "href", "target", "download", "rel", "hreflang", "type"],
+                        )
+                    case "audio":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + ["src", "crossorigin", "preload", "autoplay", "mediagroup", "loop", "muted", "controls"],
+                        )
+                    case "blockquote":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["cite"])
+                    case "button":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + [
+                                "autofocus",
+                                "disabled",
+                                "form",
+                                "formaction",
+                                "formenctype",
+                                "formmethod",
+                                "formnovalidate",
+                                "formtarget",
+                                "name",
+                                "type",
+                                "value",
+                                "menu",
+                            ],
+                        )
+                    case "canvas":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["width", "height"])
+                    case "del":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["cite", "datetime"])
+                    case "details":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["open"])
+                    case "embed":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["src", "type", "width", "height"])
+                    case "fieldset":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["disable", "form", "name"])
+                    case "form":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + [
+                                "accept-charset",
+                                "action",
+                                "autocomplete",
+                                "enctype",
+                                "method",
+                                "name",
+                                "novalidate",
+                                "target",
+                            ],
+                        )
+                    case "iframe":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + ["src", "srcdoc", "name", "sandbox", "seamless", "allowfullscreen", "width", "height"],
+                        )
+                    case "img":
+                        _src = _item.get("src", "").lower()
+                        if _src.startswith(("http://", "https://")):
+                            if "remote-resources" not in chapter.properties:
+                                chapter.properties.append("remote-resources")
+                                # THIS DOES NOT WORK, ONLY VIDEO AND AUDIO FILES CAN BE REMOTE RESOURCES
+                                # THAT MEANS I SHOULD ALSO CATCH <SOURCE TAG
+                                from ebooklib import epub
 
-                            _img = epub.EpubImage(file_name=_item.get("src"))
-                            book.add_item(_img)
-                    leave_only(
-                        _item, ATTRIBUTES_GLOBAL + ["alt", "src", "crossorigin", "usemap", "ismap", "width", "height"]
-                    )
-                elif _item.tag == "input":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + [
-                            "accept",
-                            "alt",
-                            "autocomplete",
-                            "autofocus",
-                            "checked",
-                            "dirname",
-                            "disabled",
-                            "form",
-                            "formaction",
-                            "formenctype",
-                            "formmethod",
-                            "formnovalidate",
-                            "formtarget",
-                            "height",
-                            "inputmode",
-                            "list",
-                            "max",
-                            "maxlength",
-                            "min",
-                            "multiple",
-                            "name",
-                            "pattern",
-                            "placeholder",
-                            "readonly",
-                            "required",
-                            "size",
-                            "src",
-                            "steptype",
-                            "value",
-                            "width",
-                        ],
-                    )
-                elif _item.tag == "ins":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["cite", "datetime"])
-                elif _item.tag == "keygen":
-                    leave_only(
-                        _item, ATTRIBUTES_GLOBAL + ["autofocus", "challenge", "disabled", "form", "keytype", "name"]
-                    )
-                elif _item.tag == "label":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["form", "for"])
-                elif _item.tag == "label":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["form", "for"])
-                elif _item.tag == "map":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["name"])
-                elif _item.tag == "menu":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["type", "label"])
-                elif _item.tag == "object":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + ["data", "type", "typemustmatch", "name", "usemap", "form", "width", "height"],
-                    )
-                elif _item.tag == "ol":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["reversed", "start", "type"])
-                elif _item.tag == "optgroup":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["disabled", "label"])
-                elif _item.tag == "option":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["disabled", "label", "selected", "value"])
-                elif _item.tag == "output":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["for", "form", "name"])
-                elif _item.tag == "param":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["name", "value"])
-                elif _item.tag == "progress":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["value", "max"])
-                elif _item.tag == "q":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["cite"])
-                elif _item.tag == "select":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL + ["autofocus", "disabled", "form", "multiple", "name", "required", "size"],
-                    )
+                                _img = epub.EpubImage(file_name=_item.get("src") or "")
+                                book.add_item(_img)
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL + ["alt", "src", "crossorigin", "usemap", "ismap", "width", "height"],
+                        )
+                    case "input":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + [
+                                "accept",
+                                "alt",
+                                "autocomplete",
+                                "autofocus",
+                                "checked",
+                                "dirname",
+                                "disabled",
+                                "form",
+                                "formaction",
+                                "formenctype",
+                                "formmethod",
+                                "formnovalidate",
+                                "formtarget",
+                                "height",
+                                "inputmode",
+                                "list",
+                                "max",
+                                "maxlength",
+                                "min",
+                                "multiple",
+                                "name",
+                                "pattern",
+                                "placeholder",
+                                "readonly",
+                                "required",
+                                "size",
+                                "src",
+                                "steptype",
+                                "value",
+                                "width",
+                            ],
+                        )
+                    case "ins":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["cite", "datetime"])
+                    case "keygen":
+                        leave_only(
+                            _item, ATTRIBUTES_GLOBAL + ["autofocus", "challenge", "disabled", "form", "keytype", "name"]
+                        )
+                    case "label":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["form", "for"])
+                    case "map":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["name"])
+                    case "menu":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["type", "label"])
+                    case "object":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + ["data", "type", "typemustmatch", "name", "usemap", "form", "width", "height"],
+                        )
+                    case "ol":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["reversed", "start", "type"])
+                    case "optgroup":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["disabled", "label"])
+                    case "option":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["disabled", "label", "selected", "value"])
+                    case "output":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["for", "form", "name"])
+                    case "param":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["name", "value"])
+                    case "progress":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["value", "max"])
+                    case "q":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["cite"])
+                    case "select":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + ["autofocus", "disabled", "form", "multiple", "name", "required", "size"],
+                        )
+                    case "table":
+                        if _item.get("border", None):
+                            if _item.get("border") == "0":
+                                _item.set("border", "")
 
-                elif _item.tag == "table":
-                    if _item.get("border", None):
-                        if _item.get("border") == "0":
-                            _item.set("border", "")
+                        if _item.get("summary", None):
+                            _caption = etree.Element("caption", {})
+                            _caption.text = _item.get("summary")
+                            _item.insert(0, _caption)
 
-                    if _item.get("summary", None):
-                        _caption = etree.Element("caption", {})
-                        _caption.text = _item.get("summary")
-                        _item.insert(0, _caption)
+                            # add it as caption
+                            del _item.attrib["summary"]
 
-                        # add it as caption
-                        del _item.attrib["summary"]
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["border", "sortable"])
+                    case "dl":
+                        _d = _item.find("dd")
+                        if _d is not None and len(_d) == 0:
+                            pass
 
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["border", "sortable"])
-                elif _item.tag == "dl":
-                    _d = _item.find("dd")
-                    if _d is not None and len(_d) == 0:
-                        pass
+                            # http://html5doctor.com/the-dl-element/
+                            # should be like this really
+                            # some of the elements can be missing
+                            # dl
+                            #   dt
+                            #   dd
+                            #   dt
+                            #   dd
+                    case "td":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["colspan", "rowspan", "headers"])
+                    case "textarea":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + [
+                                "autocomplete",
+                                "autofocus",
+                                "cols",
+                                "dirname",
+                                "disabled",
+                                "form",
+                                "inputmode",
+                                "maxlength",
+                                "name",
+                                "placeholder",
+                                "readonly",
+                                "required",
+                                "rows",
+                                "wrap",
+                            ],
+                        )
+                    case "col" | "colgroup":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["span"])
+                    case "th":
+                        leave_only(
+                            _item, ATTRIBUTES_GLOBAL + ["colspan", "rowspan", "headers", "scope", "abbr", "sorted"]
+                        )
+                    case "time":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["datetime"])
+                    case "track":
+                        leave_only(_item, ATTRIBUTES_GLOBAL + ["kind", "src", "srclang", "label", "default"])
+                    case "video":
+                        leave_only(
+                            _item,
+                            ATTRIBUTES_GLOBAL
+                            + [
+                                "src",
+                                "crossorigin",
+                                "poster",
+                                "preload",
+                                "autoplay",
+                                "mediagroup",
+                                "loop",
+                                "muted",
+                                "controls",
+                                "width",
+                                "height",
+                            ],
+                        )
+                    case "svg":
+                        # We need to add property "svg" in case we have embeded svg file
+                        if "svg" not in chapter.properties:
+                            chapter.properties.append("svg")
 
-                        # http://html5doctor.com/the-dl-element/
-                        # should be like this really
-                        # some of the elements can be missing
-                        # dl
-                        #   dt
-                        #   dd
-                        #   dt
-                        #   dd
-                elif _item.tag == "td":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["colspan", "rowspan", "headers"])
-                elif _item.tag == "textarea":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + [
-                            "autocomplete",
-                            "autofocus",
-                            "cols",
-                            "dirname",
-                            "disabled",
-                            "form",
-                            "inputmode",
-                            "maxlength",
-                            "name",
-                            "placeholder",
-                            "readonly",
-                            "required",
-                            "rows",
-                            "wrap",
-                        ],
-                    )
+                        if _item.get("viewbox", None):
+                            del _item.attrib["viewbox"]
 
-                elif _item.tag in ["col", "colgroup"]:
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["span"])
-                elif _item.tag == "th":
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["colspan", "rowspan", "headers", "scope", "abbr", "sorted"])
-                elif _item.tag in ["time"]:
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["datetime"])
-                elif _item.tag in ["track"]:
-                    leave_only(_item, ATTRIBUTES_GLOBAL + ["kind", "src", "srclang", "label", "default"])
-                elif _item.tag == "video":
-                    leave_only(
-                        _item,
-                        ATTRIBUTES_GLOBAL
-                        + [
-                            "src",
-                            "crossorigin",
-                            "poster",
-                            "preload",
-                            "autoplay",
-                            "mediagroup",
-                            "loop",
-                            "muted",
-                            "controls",
-                            "width",
-                            "height",
-                        ],
-                    )
-                elif _item.tag == "svg":
-                    # We need to add property "svg" in case we have embeded svg file
-                    if "svg" not in chapter.properties:
-                        chapter.properties.append("svg")
-
-                    if _item.get("viewbox", None):
-                        del _item.attrib["viewbox"]
-
-                    if _item.get("preserveaspectratio", None):
-                        del _item.attrib["preserveaspectratio"]
-                else:
-                    for _attr in six.iterkeys(_item.attrib):
-                        if _attr not in ATTRIBUTES_GLOBAL:
-                            del _item.attrib[_attr]
+                        if _item.get("preserveaspectratio", None):
+                            del _item.attrib["preserveaspectratio"]
+                    case _:
+                        for _attr in list(_item.attrib.keys()):
+                            if _attr not in ATTRIBUTES_GLOBAL:
+                                del _item.attrib[_attr]
 
         chapter.content = etree.tostring(tree, pretty_print=True, encoding="utf-8", xml_declaration=True)
 

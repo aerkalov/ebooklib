@@ -14,34 +14,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
-# Version of ebook library
+"""Table of contents and navigation elements."""
 
-VERSION: tuple[int, int, int] = (0, 21, 0)
 
-# LIST OF POSSIBLE ITEMS
-ITEM_UNKNOWN = 0
-ITEM_IMAGE = 1
-ITEM_STYLE = 2
-ITEM_SCRIPT = 3
-ITEM_NAVIGATION = 4
-ITEM_VECTOR = 5
-ITEM_FONT = 6
-ITEM_VIDEO = 7
-ITEM_AUDIO = 8
-ITEM_DOCUMENT = 9
-ITEM_COVER = 10
-ITEM_SMIL = 11
+class Section:
+    def __init__(self, title: str, href: str = "") -> None:
+        self.title = title
+        self.href = href
 
-# EXTENSION MAPPER
-EXTENSIONS: dict[int, list[str]] = {
-    ITEM_IMAGE: [".jpg", ".jpeg", ".gif", ".tiff", ".tif", ".png"],
-    ITEM_STYLE: [".css"],
-    ITEM_VECTOR: [".svg"],
-    ITEM_FONT: [".otf", ".woff", ".ttf"],
-    ITEM_SCRIPT: [".js"],
-    ITEM_NAVIGATION: [".ncx"],
-    ITEM_VIDEO: [".mov", ".mp4", ".avi", ".webm"],
-    ITEM_AUDIO: [".mp3", ".ogg"],
-    ITEM_COVER: [".jpg", ".jpeg", ".png"],
-    ITEM_SMIL: [".smil"],
-}
+    def __repr__(self) -> str:
+        return f"<Section:{self.title}:{self.href}>"
+
+
+class Link:
+    def __init__(self, href: str, title: str, uid: str | None = None) -> None:
+        self.href = href
+        self.title = title
+        self.uid = uid
+
+    def __repr__(self) -> str:
+        return f"<Link:{self.uid}:{self.href}>"

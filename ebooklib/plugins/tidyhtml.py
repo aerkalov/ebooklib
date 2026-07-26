@@ -16,8 +16,6 @@
 
 import subprocess
 
-import six
-
 from ebooklib.plugins.base import BasePlugin
 
 # Recommend usage of
@@ -27,12 +25,12 @@ from ebooklib.plugins.base import BasePlugin
 def tidy_cleanup(content, **extra):
     cmd = []
 
-    for k, v in six.iteritems(extra):
+    for k, v in extra.items():
         if v:
-            cmd.append("--{k}".format(k=k))  # noqa: UP032
+            cmd.append(f"--{k}")
             cmd.append(v)
         else:
-            cmd.append("-{k}".format(k=k))  # noqa: UP032
+            cmd.append(f"-{k}")
 
     # must parse all other extra arguments
     try:
@@ -47,9 +45,7 @@ def tidy_cleanup(content, **extra):
     except OSError:
         return (3, None)
 
-    p.stdin.write(content)
-
-    (cont, p_err) = p.communicate()
+    (cont, p_err) = p.communicate(content)
 
     # 0 - all ok
     # 1 - there were warnings

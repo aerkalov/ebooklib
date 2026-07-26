@@ -4,6 +4,49 @@ EbookLib Changelog
 All notable changes to this project will be documented in this file.
 
 
+Version 0.21 (unreleased)
+-------------------------
+
+Added
+~~~~~
+* Add type annotations to the whole library (PEP 561 py.typed marker included), checked with ty in CI
+* Add pyproject.toml (PEP 621) as the single source of packaging metadata; setup.py is now a compatibility shim
+* Add typecheck job (ty) to the GitHub Actions workflow
+* EpubBook.version attribute is now always defined (None for new books, set to the OPF version when reading)
+
+Changed
+~~~~~~~
+* write_epub by default throws exception. Check option raise_exceptions for more details
+* Drop support for Python 2.7 and Python < 3.10; minimal supported version is now Python 3.10
+* Remove the six dependency; lxml is the only runtime dependency now
+* Split the monolithic ebooklib/epub.py into smaller modules (consts, exceptions, toc, items, book, reader, writer);
+  ebooklib.epub re-exports everything, so all existing imports keep working
+* Modernize code to Python 3.10+ idioms: PEP 604 unions (X | Y) in annotations and isinstance(),
+  typing.TypeAlias, structural pattern matching (match/case) in the manifest loader and SyntaxPlugin
+* EpubItem content is now typed as accepting both str and bytes, matching long-standing documented usage
+* EpubReader raises EpubException with a clear message when the OPF is missing metadata, manifest
+  or spine elements, or when the NCX file cannot be found (previously crashed with TypeError/AttributeError)
+* EpubHtml.get_content() / EpubCoverHtml.get_content() raise a descriptive ValueError when the item
+  is not attached to a book (previously crashed with AttributeError)
+
+Fixed
+~~~~~
+* Security: prevent path traversal when reading an unpacked EPUB from a directory
+  (a crafted manifest href like ../../etc/passwd could read files outside the book directory)
+* Fix possibly-unbound variables in EpubWriter guide/landmark generation; a guide entry with
+  a falsy item now falls back to href/title instead of reusing values from the previous entry
+* Fix crash (ValueError: no path specified) when writing a book whose guide contains an entry
+  without href; such entries are now skipped in the EPUB3 landmarks nav
+* SourceHighlighter no longer crashes on <pre class="source-..."> blocks with an unknown
+  language; they are left untouched instead of raising an unbound variable error
+* SyntaxPlugin now preserves <form> attributes (action, method, ...); the form attribute whitelist
+  was previously in an unreachable duplicated details branch, so forms were stripped to global attributes
+* SyntaxPlugin: remove duplicated dead branches for canvas and label tags
+* TidyPlugin no longer risks a pipe deadlock on large documents (content is passed via communicate())
+* EpubWriter closes the output file even when writing fails (no leaked file handles)
+* XML parse errors in parse_string() are no longer masked by the str/bytes fallback path
+
+
 Version 0.20 (2025-10-26)
 ------------------
 
