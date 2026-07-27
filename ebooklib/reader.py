@@ -72,7 +72,7 @@ class EpubReader:
         return self.book
 
     def read_file(self, name: str) -> bytes:
-        # Raises KeyError
+        # Raises KeyError for missing items in an archive, OSError for directory sources
         if self.zf is None:
             raise EpubException(-1, "EPUB file is not opened")
 

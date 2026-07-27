@@ -32,7 +32,8 @@ Changed
 Fixed
 ~~~~~
 * Security: prevent path traversal when reading an unpacked EPUB from a directory
-  (a crafted manifest href like ../../etc/passwd could read files outside the book directory)
+  (a crafted manifest href like ../../etc/passwd could read files outside the book directory);
+  Directory.read() raises OSError for paths escaping the source directory
 * Fix possibly-unbound variables in EpubWriter guide/landmark generation; a guide entry with
   a falsy item now falls back to href/title instead of reusing values from the previous entry
 * Fix crash (ValueError: no path specified) when writing a book whose guide contains an entry
