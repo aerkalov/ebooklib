@@ -128,12 +128,23 @@ class Directory:
         self.directory_path = directory_path
 
     def read(self, subname: str) -> bytes:
+        """Read the file ``subname`` relative to the EPUB directory and return its bytes.
+
+        ``subname`` typically comes from OPF manifest ``href`` attributes, which are
+        attacker-controlled and URL-decoded, so the resolved path must stay inside the
+        EPUB directory.
+
+        :param subname: Path of the file, relative to the EPUB directory.
+        :returns: Raw content of the file.
+        :raises OSError: If ``subname`` escapes the EPUB directory (path traversal,
+            e.g. ``"../../secret"``), or if the file cannot be read.
+        """
         # Guard against path traversal (e.g. "../../secret") escaping the EPUB directory.
         base_path = os.path.realpath(self.directory_path)
         full_path = os.path.realpath(os.path.join(base_path, subname))
 
         if os.path.commonpath([base_path, full_path]) != base_path:
-            raise KeyError(f"There is no item named {subname!r} in the directory")
+            raise OSError(f"Invalid path, escapes the source directory: {subname!r}")
 
         with open(full_path, "rb") as fp:
             return fp.read()
