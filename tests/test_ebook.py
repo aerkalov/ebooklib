@@ -396,6 +396,18 @@ class TestEbook:
 
         self._test_metadata(book)
 
+    def test_epubbook_multiple_authors_have_unique_ids(self):
+        book = epub.EpubBook()
+
+        book.add_author("First Author")
+        book.add_author("Second Author")
+        book.add_author("Third Author", uid="third")
+
+        ids = [others["id"] for _, others in book.get_metadata("DC", "creator")]
+
+        assert ids == ["creator", "creator_1", "third"]
+        assert len(set(ids)) == len(ids)
+
     def _test_epubbook(self, name):
         # TODO:
         # - add other roles here besides creator

@@ -55,6 +55,7 @@ class EpubBook:
         self._id_html = 0
         self._id_image = 0
         self._id_static = 0
+        self._id_creator = 0
 
         self.title = ""
         self.language = "en"
@@ -148,9 +149,15 @@ class EpubBook:
         self.add_metadata(None, "meta", "", OrderedDict([("name", "cover"), ("content", "cover-img")]))
 
     def add_author(
-        self, author: str, file_as: str | None = None, role: str | None = None, uid: str = "creator"
+        self, author: str, file_as: str | None = None, role: str | None = None, uid: str | None = None
     ) -> None:
         """Add author for this document"""
+
+        if uid is None:
+            # ids must be unique within the document, so only the first author can use
+            # the plain "creator" id; subsequent ones get a counter suffix
+            uid = "creator" if self._id_creator == 0 else f"creator_{self._id_creator}"
+            self._id_creator += 1
 
         self.add_metadata("DC", "creator", author, {"id": uid})
 
