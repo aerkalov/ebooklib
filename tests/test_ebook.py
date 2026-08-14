@@ -95,6 +95,21 @@ class TestEbook:
         assert book.get_metadata("DC", "identifier") == [("test123456", {"id": "id"})]
         assert book.get_metadata("DC", "language") == [("en", {})]
 
+    def test_read_malformed_epub_raises_epubexception(self):
+        # A zip missing META-INF/container.xml (or that is not a valid EPUB)
+        # must raise EpubException, not a bare KeyError.
+        def make_zip(files):
+            buf = io.BytesIO()
+            with zipfile.ZipFile(buf, 'w') as zf:
+                for name, data in files.items():
+                    zf.writestr(name, data)
+            buf.seek(0)
+            return buf
+
+        for files in ({}, {'mimetype': b'application/epub+zip'}):
+            with pytest.raises(epub.EpubException):
+                epub.read_epub(make_zip(files))
+
     def test_basic_bytes(self):
         book = self._create_basic_book()
 
