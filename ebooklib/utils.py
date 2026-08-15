@@ -20,6 +20,8 @@ import os
 
 from lxml import etree
 
+from ebooklib.exceptions import EpubException
+
 mimetype_initialised = False
 
 
@@ -32,10 +34,16 @@ def debug(obj: object) -> None:
 
 def parse_string(s: str | bytes) -> etree._ElementTree:
     parser = etree.XMLParser(recover=True, resolve_entities=False)
-    if isinstance(s, str):
-        tree = etree.parse(io.BytesIO(s.encode("utf-8")), parser=parser)
-    else:
-        tree = etree.parse(io.BytesIO(s), parser=parser)
+    try:
+        if isinstance(s, str):
+            tree = etree.parse(io.BytesIO(s.encode("utf-8")), parser=parser)
+        else:
+            tree = etree.parse(io.BytesIO(s), parser=parser)
+    except etree.XMLSyntaxError as e:
+        # Even in recover mode lxml raises on input it cannot recover at all
+        # (e.g. an empty or wholly malformed part in a corrupt EPUB). Surface
+        # it as an EpubException instead of a bare lxml error.
+        raise EpubException(-1, "Can not parse XML: %s" % e) from e
 
     return tree
 

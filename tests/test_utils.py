@@ -3,6 +3,7 @@ import os
 import pytest
 
 from ebooklib import epub, utils
+from ebooklib.exceptions import EpubException
 
 
 class TestEpubItemInitialization:
@@ -62,3 +63,12 @@ class TestDirectory:
 
         with pytest.raises(OSError, match="escapes the source directory"):
             directory.read(os.path.join(os.sep, "etc", "passwd"))
+
+
+class TestParseString:
+    def test_raises_EpubException_on_unrecoverable_xml(self):
+        # A wholly malformed part in a corrupt EPUB used to raise a bare
+        # lxml.etree.XMLSyntaxError; it should be an EpubException.
+        for data in (b"", b"\x00\x01\x02"):
+            with pytest.raises(EpubException):
+                utils.parse_string(data)
