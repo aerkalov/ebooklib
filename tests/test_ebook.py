@@ -95,6 +95,13 @@ class TestEbook:
         assert book.get_metadata("DC", "identifier") == [("test123456", {"id": "id"})]
         assert book.get_metadata("DC", "language") == [("en", {})]
 
+    def test_get_metadata_missing_namespace(self):
+        # get_metadata should return an empty list for a namespace that holds no
+        # metadata, rather than raising KeyError.
+        book = epub.EpubBook()
+        assert book.get_metadata("http://example.com/ns", "foo") == []
+        assert book.get_metadata("DC", "nonexistent") == []
+
     def test_basic_bytes(self):
         book = self._create_basic_book()
 
