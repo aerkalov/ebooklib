@@ -210,15 +210,10 @@ class EpubBook:
           - item: Item instance
         """
         if item.media_type == "":
-            (has_guessed, media_type) = guess_type(item.get_name().lower())
-
-            if has_guessed:
-                if media_type is not None:
-                    item.media_type = media_type
-                else:
-                    item.media_type = has_guessed
-            else:
-                item.media_type = "application/octet-stream"
+            # guess_type returns (type, encoding). The encoding ("gzip" for a
+            # ".svgz" file, say) is not a media type and must not be used as one.
+            media_type = guess_type(item.get_name().lower())[0]
+            item.media_type = media_type or "application/octet-stream"
 
         if not item.get_id():
             # make chapter_, image_ and static_ configurable

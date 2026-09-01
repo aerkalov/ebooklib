@@ -46,6 +46,9 @@ Fixed
 * TidyPlugin no longer risks a pipe deadlock on large documents (content is passed via communicate())
 * EpubWriter closes the output file even when writing fails (no leaked file handles)
 * XML parse errors in parse_string() are no longer masked by the str/bytes fallback path
+* EpubBook.add_item() no longer writes the content encoding into media-type; mimetypes.guess_type
+  returns (type, encoding), and the two were swapped, so an item such as cover.svgz was declared
+  as media-type="gzip" in the manifest
 
 
 Version 0.20 (2025-10-26)
