@@ -172,6 +172,32 @@ returns the entire content of the file, while get_body_content only returns what
             print('==================================')
 
 
+Reading order
+~~~~~~~~~~~~~
+
+``get_items()`` follows manifest/insertion order, not reading order. For a loaded
+book returned by ``read_epub()``, ``book.spine`` contains ``(idref, linear)``
+tuples. Use those IDs to place spine items first, followed by non-spine resources::
+
+    spine_positions = {
+        item_id: position
+        for position, (item_id, _) in enumerate(book.spine)
+    }
+    reading_items = sorted(
+        book.get_items(),
+        key=lambda item: spine_positions.get(item.get_id(), len(book.spine)),
+    )
+    for item in reading_items:
+        print(item.get_id())
+
+The sort is stable, so non-spine items keep their manifest order at the end.
+This includes auxiliary spine entries marked ``linear="no"`` in their declared
+positions, rather than limiting the result to the primary reading sequence.
+Missing spine references add no items: only resources returned by ``get_items()``
+are sorted. This recipe is for loaded books, not the string or item-object spine
+entries used when creating a book; it does not sort by filenames or NCX play order.
+
+
 Creating EPUB
 -------------
 
