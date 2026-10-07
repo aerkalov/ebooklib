@@ -1,5 +1,6 @@
 import ebooklib
 from ebooklib import epub
+from ebooklib.utils import guess_type
 
 FILENAME_TYPES = [
     ("images/image_my_123.jpg", ebooklib.ITEM_IMAGE, "image/jpeg"),
@@ -74,3 +75,27 @@ class TestEpubItemInitialization:
         assert len(list(book.get_items_of_type(ebooklib.ITEM_IMAGE))) == 3
         assert len(list(book.get_items_of_media_type("image/jpeg"))) == 2
         assert len(list(book.get_items())) == len(FILENAME_TYPES)
+
+    def test_add_item_guesses_media_type(self):
+        """add_item() fills in a missing media type from the file name."""
+
+        book = epub.EpubBook()
+
+        def add(uid, file_name):
+            item = epub.EpubItem(uid=uid, file_name=file_name)
+            book.add_item(item)
+            return item
+
+        assert add("id-png", "images/cover.png").media_type == "image/png"
+        assert add("id-xhtml", "text/chapter.xhtml").media_type == "application/xhtml+xml"
+
+        # Nothing recognisable in the file name.
+        assert add("id-unknown", "data/blob.zzz").media_type == "application/octet-stream"
+
+        # A compressed file name: guess_type reports the content encoding
+        # ("gzip") alongside the media type, and only the media type belongs
+        # in the manifest.
+        for uid, file_name in (("id-svgz", "images/map.svgz"), ("id-gz", "text/notes.txt.gz")):
+            media_type, encoding = guess_type(file_name)
+            assert encoding is not None, f"{file_name} no longer carries a content encoding"
+            assert add(uid, file_name).media_type == media_type
