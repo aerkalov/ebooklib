@@ -17,6 +17,7 @@
 import io
 import mimetypes
 import os
+import re
 
 from lxml import etree
 
@@ -97,7 +98,8 @@ def get_pages(item) -> list[tuple[str, str, str]]:
     pages = []
 
     for elem in body.iter():
-        if "epub:type" in elem.attrib:
+        # epub:type is a list of tokens separated by XML whitespace.
+        if "pagebreak" in re.split(r"[ \t\r\n]+", elem.get("epub:type", "")):
             if elem.get("id") is not None:
                 _text = None
 
