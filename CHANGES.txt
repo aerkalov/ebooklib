@@ -31,6 +31,7 @@ Changed
 
 Fixed
 ~~~~~
+* Read TOC and page-list navigation using XML epub:type tokens, retaining legacy HTML parsing fallback
 * Security: prevent path traversal when reading an unpacked EPUB from a directory
   (a crafted manifest href like ../../etc/passwd could read files outside the book directory);
   Directory.read() raises OSError for paths escaping the source directory

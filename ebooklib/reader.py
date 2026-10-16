@@ -18,9 +18,11 @@
 
 import os
 import posixpath as zip_path
+import re
 import warnings
 import zipfile
-from typing import Any, cast
+from copy import deepcopy
+from typing import Any
 from urllib.parse import unquote
 
 from lxml import etree
@@ -259,16 +261,35 @@ class EpubReader:
         self.book.toc = _get_children(nav_map, 0, "")
 
     def _parse_nav(self, data: str | bytes, base_path: str, navtype: str = "toc") -> None:
-        html_node = parse_html_string(data)
-        if navtype == "toc":
-            # parsing the table of contents
-            nav_node = cast("list[etree._Element]", html_node.xpath("//nav[@*='toc']"))[0]
-        else:
-            # parsing the list of pages
-            _page_list = cast("list[etree._Element]", html_node.xpath("//nav[@*='page-list']"))
-            if len(_page_list) == 0:
+        nav_type = "toc" if navtype == "toc" else "page-list"
+        nav_node = None
+        try:
+            # Preserve XML namespaces when identifying semantic navigation. The
+            # legacy HTML parser folds distinct namespace prefixes together.
+            parser = etree.XMLParser(resolve_entities=False, no_network=True, recover=False)
+            xml_node = etree.fromstring(data.encode("utf-8") if isinstance(data, str) else data, parser)
+            for node in xml_node.iter(f"{{{NAMESPACES['XHTML']}}}nav"):
+                if nav_type in re.split(r"[ \t\r\n]+", node.get(f"{{{NAMESPACES['EPUB']}}}type", "")):
+                    nav_node = deepcopy(node)
+                    # Bridge the selected subtree to the existing HTML list
+                    # reader, including explicitly prefixed XHTML elements.
+                    for element in nav_node.iter():
+                        if isinstance(element.tag, str) and element.tag.startswith(f"{{{NAMESPACES['XHTML']}}}"):
+                            element.tag = etree.QName(element).localname
+                    html_node = parse_html_string(etree.tostring(nav_node, encoding="utf-8"))
+                    nav_node = next(html_node.iter("nav"))
+                    break
+        except etree.XMLSyntaxError:
+            pass
+
+        if nav_node is None:
+            # Keep the historical HTML tolerance when semantic XML navigation is
+            # absent, including malformed books and unqualified attributes.
+            html_node = parse_html_string(data)
+            nav_nodes = [node for node in html_node.iter("nav") if nav_type in node.attrib.values()]
+            if navtype != "toc" and not nav_nodes:
                 return
-            nav_node = _page_list[0]
+            nav_node = nav_nodes[0]
 
         def parse_list(list_node):
             items = []
