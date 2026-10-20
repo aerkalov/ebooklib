@@ -31,6 +31,7 @@ Changed
 
 Fixed
 ~~~~~
+* Preserve chapter bodies when Unicode XHTML includes an XML encoding declaration (#354)
 * Security: prevent path traversal when reading an unpacked EPUB from a directory
   (a crafted manifest href like ../../etc/passwd could read files outside the book directory);
   Directory.read() raises OSError for paths escaping the source directory
