@@ -48,6 +48,7 @@ def test_html_encoding_roundtrip(tmp_path, declaration, as_bytes):
         assert parsed.xpath("//link/@href") == ["style.css"]
     restored = epub.read_epub(output)
     restored_chapter = restored.get_item_with_href("chapter.xhtml")
+    assert restored_chapter is not None
     assert "Café 中文 😀 & tea" in utils.parse_html_string(restored_chapter.get_content()).text_content()
     rewritten = tmp_path / "rewritten.epub"
     assert epub.write_epub(rewritten, restored)
