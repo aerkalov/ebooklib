@@ -213,6 +213,14 @@ the title is going to be used when generating the Table of Contents.
 When defining content, you can define it as a valid HTML file or just parts of HTML elements you have as content. It will
 ignore whatever you have in the <head> element.
 
+Content may be a Unicode string or UTF-8 bytes, including an XHTML document with
+an XML encoding declaration. If the parser rejects a Unicode encoding declaration,
+EbookLib retries with UTF-8 bytes; the declaration does not change characters
+that have already been decoded. Byte input is also parsed as UTF-8, so decode other encodings before
+passing the content to EbookLib. Passing bytes does not bypass the chapter
+template or preserve the original <head>. Add stylesheets to both the chapter
+and the book as shown below.
+
 ::
 
     # intro chapter
