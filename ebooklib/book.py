@@ -188,7 +188,18 @@ class EpubBook:
         if namespace in NAMESPACES:
             namespace = NAMESPACES[namespace]
 
-        return self.metadata[namespace].get(name, [])
+        # Package metadata (the <meta> elements) is stored under the None
+        # namespace on a book being written, but read_epub() replaces the
+        # whole metadata dict with one keyed by the OPF namespace URIs, so
+        # look in both places. Any other absent namespace simply has no
+        # entries: return [] instead of raising KeyError.
+        if namespace is None:
+            values = self.metadata.get(None, {}).get(name, [])
+            if not values:
+                values = self.metadata.get(NAMESPACES["OPF"], {}).get(name, [])
+            return values
+
+        return self.metadata.get(namespace, {}).get(name, [])
 
     def set_unique_metadata(self, namespace: str | None, name: str, value: str, others: dict | None = None) -> None:
         """Add metadata if metadata with this identifier does not already exist, otherwise update existing metadata."""

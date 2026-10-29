@@ -14,6 +14,14 @@ Added
 * Add typecheck job (ty) to the GitHub Actions workflow
 * EpubBook.version attribute is now always defined (None for new books, set to the OPF version when reading)
 
+Fixed
+~~~~~
+* EpubBook.get_metadata() no longer raises KeyError when the namespace has
+  no entries. This hit every book loaded with read_epub() queried with the
+  None namespace used for package <meta> entries: the reader keys that
+  metadata by the OPF namespace URI, and get_metadata(None, ...) now looks
+  there too.
+
 Changed
 ~~~~~~~
 * write_epub by default throws exception. Check option raise_exceptions for more details
