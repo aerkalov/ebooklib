@@ -232,10 +232,23 @@ class EpubReader:
             self.book.add_item(ei)
 
     def _parse_ncx(self, data: bytes) -> None:
+        """Parse an NCX (EPUB 2 table of contents) into ``self.book.toc``.
+
+        ``book.toc`` is always a list. An NCX with an empty ``navMap`` (or without one) gives
+        an empty list, so that the book can still be written back and the EPUB 3 navigation
+        document is used when the NCX has no entries.
+
+        :Args:
+          - data: content of the NCX file
+        """
         tree = parse_string(data)
         tree_root = tree.getroot()
 
         nav_map = tree_root.find(f"{{{NAMESPACES['DAISY']}}}navMap")
+        if nav_map is None:
+            # A malformed NCX without navMap has no entries; keep the TOC a (possibly empty) list.
+            self.book.toc = []
+            return
 
         def _get_children(elems, n, nid):
             label, content = "", ""
@@ -243,7 +256,8 @@ class EpubReader:
 
             for a in elems:
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}navLabel":
-                    label = a[0].text
+                    # navLabel without a text child (malformed NCX) gives an empty label
+                    label = a[0].text if len(a) else ""
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}content":
                     content = a.get("src", "")
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}navPoint":

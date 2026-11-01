@@ -200,6 +200,13 @@ only when the semantic lookup found nothing (or the file is not well-formed XML)
 
 A missing page list is ignored because it is optional; ``book.pages`` stays empty.
 
+Whichever source is used, ``book.toc`` is always a list (or tuple, when you set it yourself) of
+:class:`ebooklib.epub.Link` and :class:`ebooklib.epub.Section` entries. A book without any table of
+contents entries gives an empty list, including an EPUB 2 NCX file with an empty ``navMap``
+(or no ``navMap`` at all), so the book can safely be written back with ``write_epub()``. If the NCX has
+no entries and the book has an EPUB 3 navigation document, the table of contents is read from it. The NCX is only
+used when you pass ``{"ignore_ncx": False}`` to ``read_epub()``; by default the navigation document is preferred.
+
 
 Reading order
 ~~~~~~~~~~~~~

@@ -30,7 +30,11 @@ Changed
 
 Fixed
 ~~~~~
-* Read an empty NCX navigation map as an empty table of contents
+* Read an NCX without navigation points as an empty table of contents: book.toc is now an empty list
+  (previously a single blank Link, which made write_epub() fail and, being truthy, also stopped the EPUB 3 nav
+  document from being used as the table of contents). Code that compared book.toc with that blank Link
+  must check for an empty list instead. A missing navMap and a navLabel without a text child in the NCX
+  no longer crash the reader. See the "Reading navigation" tutorial section
 * Avoid collisions with existing item IDs when assigning automatic IDs: add_item() now skips
   chapter_N, image_N and static_N values that are already used (for example by a book loaded with
   read_epub()) instead of creating duplicate IDs, which made get_item_with_id() return the wrong item.
