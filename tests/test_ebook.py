@@ -35,7 +35,8 @@ class TestEbook:
 
         doc1 = epub.EpubHtml(uid="chap_1", file_name="test.xhtml")
         doc1.set_content(
-            """<body><h1>Title</h1><p>lorum ipsum.<a epub:type="noteref" href="#fn01">1</a></p>
+            """<body><h1>Title</h1><span id="page1" epub:type="pagebreak">1</span>
+                 <p>lorum ipsum.<a epub:type="noteref" href="#fn01">1</a></p>
                  <aside epub:type="footnote" id="fn01">
                      <p>These have been corrected in this EPUB3 edition.</p>
                  </aside>
@@ -250,12 +251,13 @@ class TestEbook:
 
         pages_ol = page_list.find(f".//{{{epub.NAMESPACES['XHTML']}}}ol")
         assert pages_ol is not None
+        assert len(pages_ol.findall(f"{{{epub.NAMESPACES['XHTML']}}}li")) == 1
         pages_li = pages_ol.find(f".//{{{epub.NAMESPACES['XHTML']}}}li")
         assert pages_li is not None
         pages_a = pages_li.find(f".//{{{epub.NAMESPACES['XHTML']}}}a")
         assert pages_a is not None
-        assert pages_a.get("href") == "test.xhtml#fn01"
-        assert pages_a.text == "fn01"
+        assert pages_a.get("href") == "test.xhtml#page1"
+        assert pages_a.text == "1"
 
         spine_on = content_on.find(f".//{{{epub.NAMESPACES['OPF']}}}spine")
         assert spine_on is not None
@@ -407,6 +409,17 @@ class TestEbook:
 
         assert ids == ["creator", "creator_1", "third"]
         assert len(set(ids)) == len(ids)
+
+    @pytest.mark.parametrize("namespace", [None, "custom", "urn:example:metadata", "DC", "OPF"])
+    def test_epubbook_missing_metadata(self, namespace):
+        book = epub.EpubBook()
+        namespaces = set(book.metadata)
+
+        assert book.get_metadata(namespace, "missing") == []
+        assert set(book.metadata) == namespaces
+
+        book.add_metadata(namespace, "missing", "value")
+        assert book.get_metadata(namespace, "missing") == [("value", None)]
 
     def _test_epubbook(self, name):
         # TODO:
