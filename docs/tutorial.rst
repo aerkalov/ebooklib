@@ -308,6 +308,26 @@ Any kind of item (style sheet, image, HTML file) must be added to the book.
     book.add_item(c1)
     book.add_item(c2)
 
+Item IDs
+++++++++
+
+Every item in the book needs a unique ID, which is used in the manifest, the spine and by
+:meth:`ebooklib.epub.EpubBook.get_item_with_id`. If you do not pass a ``uid`` to the item,
+:meth:`ebooklib.epub.EpubBook.add_item` generates one: ``chapter_N`` for
+:class:`ebooklib.epub.EpubHtml`, ``image_N`` for :class:`ebooklib.epub.EpubImage` and ``static_N``
+for any other item. Generated IDs skip IDs that are already in the book, so it is safe to add items
+without an ID to a book you loaded with ``read_epub()`` that already contains ``chapter_0``.
+
+``add_item()`` returns the item it added, so you can read the generated ID from it::
+
+    chapter = book.add_item(epub.EpubHtml(title='Extra', file_name='extra.xhtml'))
+    print(chapter.id)  # chapter_0, or the next free number
+
+The exact generated values are an implementation detail and may change. If your code needs to find an item later,
+give it an explicit ``uid`` or keep the returned object. Explicit IDs are not checked: you are responsible for
+keeping the ones you choose unique, because an explicit ID that duplicates an existing one makes
+``get_item_with_id()`` return the first matching item.
+
 
 You can add any kind of file to the book. For instance, in this case we are adding a style sheet file. We define
 the filename, unique id, media_type, and content for it. Just like the chapter files, you need to add it to the book.

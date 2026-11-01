@@ -470,3 +470,46 @@ def test_cover_manifest_identity_is_preserved():
     assert reader.book.get_item_with_href("Text/front cover.xhtml") is cover
     assert cover.media_type == "application/xhtml+xml"
     assert cover.content == content
+
+
+@pytest.mark.parametrize(
+    "item_class, prefix",
+    [(epub.EpubHtml, "chapter"), (epub.EpubImage, "image"), (epub.EpubItem, "static")],
+)
+def test_generated_item_ids_skip_existing_ids(item_class, prefix):
+    book = epub.EpubBook()
+    first = book.add_item(epub.EpubItem(uid=f"{prefix}_0", file_name="first.dat"))
+    second = book.add_item(epub.EpubItem(uid=f"{prefix}_1", file_name="second.dat"))
+    generated = book.add_item(item_class(file_name="generated.dat"))
+    following = book.add_item(item_class(file_name="following.dat"))
+
+    assert generated.id == f"{prefix}_2"
+    assert following.id == f"{prefix}_3"
+    assert book.get_item_with_id(f"{prefix}_0") is first
+    assert book.get_item_with_id(f"{prefix}_1") is second
+    assert book.get_item_with_id(generated.id) is generated
+
+
+def test_generated_ids_do_not_collide_after_read_epub():
+    """Items without an ID added to a loaded book must not reuse IDs from the file."""
+    book = epub.read_epub(Path(__file__).parent / "resources" / "test01.epub")
+    existing_ids = [item.get_id() for item in book.get_items()]
+    assert len(existing_ids) == len(set(existing_ids))
+
+    added = [book.add_item(epub.EpubHtml(file_name=f"extra_{n}.xhtml")) for n in range(3)]
+
+    ids = [item.get_id() for item in book.get_items()]
+    assert len(ids) == len(set(ids))
+    for item in added:
+        assert item.id
+        assert book.get_item_with_id(item.id) is item
+
+
+def test_explicit_item_ids_are_not_checked_for_uniqueness():
+    """Documented behaviour: only generated IDs avoid collisions, explicit IDs are used as given."""
+    book = epub.EpubBook()
+    first = book.add_item(epub.EpubItem(uid="same", file_name="a.dat"))
+    second = book.add_item(epub.EpubItem(uid="same", file_name="b.dat"))
+
+    assert first.id == second.id == "same"
+    assert book.get_item_with_id("same") is first
