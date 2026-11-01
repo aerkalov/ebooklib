@@ -206,8 +206,16 @@ class EpubBook:
         Add additional item to the book. If not defined, media type and chapter id will be defined
         for the item.
 
+        A missing ID is generated as ``chapter_N`` (:class:`EpubHtml`), ``image_N``
+        (:class:`EpubImage`) or ``static_N`` (any other item). Generated IDs skip IDs already
+        used by items in the book. Explicit IDs are used as given and are not checked for
+        uniqueness.
+
         :Args:
           - item: Item instance
+
+        :Returns:
+          The same item that was passed in, now attached to the book.
         """
         if item.media_type == "":
             # guess_type returns (type, encoding). The encoding ("gzip" for a
