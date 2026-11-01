@@ -161,6 +161,11 @@ To get the content from an existing item (regardless of whether it is an image, 
 For HTML items, you also have :meth:`ebooklib.epub.EpubHtml.get_body_content`. What is the difference? The get_content method always
 returns the entire content of the file, while get_body_content only returns whatever is in the <body> part of the HTML document.
 
+Text placed directly in the ``<body>`` (before the first child element), for example ``<body>Before <em>inside</em> after</body>``,
+is kept by both methods, and a body that only contains text is returned by ``get_body_content``. Whitespace-only text, such as the
+newline and indentation before the first element, is ignored when the document is generated, so ordinary indented chapters produce
+the same output as before. A body with only whitespace and no child elements gives an empty ``get_body_content()``.
+
 ::
 
     for item in book.get_items():

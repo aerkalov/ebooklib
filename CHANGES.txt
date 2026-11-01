@@ -30,7 +30,11 @@ Changed
 
 Fixed
 ~~~~~
-* Preserve text directly inside chapter body elements
+* Preserve text directly inside chapter body elements: text before the first child element of <body>
+  is no longer dropped by EpubHtml.get_content(), and EpubHtml.get_body_content() returns a body that
+  contains only text. Whitespace-only text (such as the newline and indentation before the first
+  element) is deliberately not copied, so the generated output of ordinary indented chapters is unchanged
+  and a body with only whitespace and no elements still gives an empty get_body_content()
 * Return an empty list when get_metadata is called for a missing namespace
 * Read EPUB 3 TOC and page-list navigation by the namespaced epub:type token list, as the EPUB
   specification defines it. A multi-token value such as epub:type="toc frontmatter" is now found

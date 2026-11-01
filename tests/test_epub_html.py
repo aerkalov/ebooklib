@@ -111,3 +111,48 @@ def test_body_text_is_preserved(content):
 
     assert parse_html_string(doc.get_content()).find("body").text_content() == expected
     assert parse_html_string(doc.get_body_content()).find("body").text_content() == expected
+
+
+@pytest.mark.parametrize("whitespace", ["\n  ", " ", "\t\r\n", "\f"])
+def test_whitespace_only_body_text_is_not_copied(whitespace):
+    """Indentation before the first element must not change the generated document."""
+    book = epub.EpubBook()
+    indented = epub.EpubHtml(file_name="a.xhtml", content=f"<body>{whitespace}<p>Hi</p>\n<p>there</p></body>")
+    compact = epub.EpubHtml(file_name="b.xhtml", content="<body><p>Hi</p>\n<p>there</p></body>")
+    book.add_item(indented)
+    book.add_item(compact)
+
+    assert indented.get_content() == compact.get_content()
+
+
+def test_no_break_space_body_text_is_preserved():
+    """U+00A0 is visible content, not HTML whitespace, so it is kept."""
+    doc = epub.EpubHtml(file_name="chapter.xhtml", content="<body>\u00a0<p>Hi</p></body>")
+    epub.EpubBook().add_item(doc)
+
+    body = parse_html_string(doc.get_content()).find("body")
+    assert body is not None
+    assert body.text == "\u00a0"
+    assert epub.EpubHtml(file_name="n.xhtml", content="<body>\u00a0</body>").get_body_content() != b""
+
+
+@pytest.mark.parametrize("content", ["<body></body>", "<body>\n  </body>", "<body> \t\r\n</body>"])
+def test_whitespace_only_body_without_children_is_empty(content):
+    """A body with only whitespace and no child elements yields no body content."""
+    doc = epub.EpubHtml(file_name="chapter.xhtml", content=content)
+    epub.EpubBook().add_item(doc)
+
+    assert doc.get_body_content() == b""
+
+
+def test_leading_body_text_keeps_surrounding_whitespace_and_children():
+    """Meaningful leading text is preserved together with the following elements."""
+    doc = epub.EpubHtml(file_name="chapter.xhtml", content="<body>\n  Before <em>inside</em> after\n<p>End</p></body>")
+    epub.EpubBook().add_item(doc)
+
+    body = parse_html_string(doc.get_content()).find("body")
+    assert body is not None
+    assert (body.text or "").strip() == "Before"
+    assert [child.tag for child in body] == ["em", "p"]
+    assert (body[0].tail or "").strip() == "after"
+    assert b"Before" in doc.get_body_content()
