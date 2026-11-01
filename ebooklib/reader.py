@@ -193,8 +193,9 @@ class EpubReader:
 
                     ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
                 case "application/xhtml+xml" if "cover" in properties:
-                    ei = EpubCoverHtml()
+                    ei = EpubCoverHtml(uid=uid or "cover", file_name=href)
 
+                    ei.media_type = media_type
                     ei.content = self.read_file(zip_path.join(self.opf_dir, href))
                 case "application/xhtml+xml":
                     ei = EpubHtml()

@@ -446,3 +446,27 @@ class TestEbook:
 
     def test_epubbook_read_epub_as_bytes(self):
         self._test_epubbook(io.BytesIO((Path(__file__).parent / "resources" / "test01.epub").open("rb").read()))
+
+
+def test_cover_manifest_identity_is_preserved():
+    reader = epub.EpubReader(io.BytesIO())
+    reader.container = parse_string(
+        b'<package xmlns="http://www.idpf.org/2007/opf"><manifest>'
+        b'<item id="front-cover" href="Text/front%20cover.xhtml" '
+        b'media-type="application/xhtml+xml" properties="cover"/>'
+        b"</manifest></package>"
+    )
+    archive = io.BytesIO()
+    content = b"<html><body><p>Cover</p></body></html>"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("Text/front cover.xhtml", content)
+    archive.seek(0)
+    with zipfile.ZipFile(archive) as zf:
+        reader.zf = zf
+        reader._load_manifest()
+
+    cover = reader.book.get_item_with_id("front-cover")
+    assert isinstance(cover, epub.EpubCoverHtml)
+    assert reader.book.get_item_with_href("Text/front cover.xhtml") is cover
+    assert cover.media_type == "application/xhtml+xml"
+    assert cover.content == content

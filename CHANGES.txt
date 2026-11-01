@@ -30,6 +30,7 @@ Changed
 
 Fixed
 ~~~~~
+* Preserve cover page IDs and filenames when reading the manifest
 * Preserve text directly inside chapter body elements: text before the first child element of <body>
   is no longer dropped by EpubHtml.get_content(), and EpubHtml.get_body_content() returns a body that
   contains only text. Whitespace-only text (such as the newline and indentation before the first
