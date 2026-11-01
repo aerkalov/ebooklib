@@ -61,6 +61,13 @@ Minimal required metadata from Dublin Core set (for EPUB3) is:
     >>> book.get_metadata('DC', 'identifier')
     [('9781416566120', {'id': 'isbn_9781416566120'})]
 
+A book can have several ``dc:identifier`` elements (for example an ISBN next to the main identifier). The package
+document's ``unique-identifier`` attribute says which one is the identifier of the publication, and that is the one
+``read_epub()`` uses for ``book.uid`` and ``book.IDENTIFIER_ID``, whatever its position among the other identifiers.
+All identifiers stay available through ``get_metadata('DC', 'identifier')`` and are written back unchanged. Only if
+the attribute is missing, or names an ``id`` that no identifier has (an invalid package), is the last identifier that
+has an ``id`` used.
+
 
 Optional metadata from the Dublin Core set is:
 

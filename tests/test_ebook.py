@@ -113,6 +113,29 @@ class TestEbook:
 
         self._test_basic_book(epub.read_epub(os.path.join(str(session_temp_dir), "test_basic.epub")))
 
+    @pytest.mark.parametrize("primary_first", [True, False])
+    def test_read_preserves_package_identifier(self, primary_first):
+        book = self._create_basic_book()
+        book.add_metadata("DC", "identifier", "9781234567890", {"id": "isbn"})
+        if not primary_first:
+            book.get_metadata("DC", "identifier").reverse()
+
+        source = io.BytesIO()
+        epub.write_epub(source, book)
+        source.seek(0)
+        loaded = epub.read_epub(source)
+
+        assert loaded.IDENTIFIER_ID == "id"
+        assert loaded.uid == "test123456"
+        assert len(loaded.get_metadata("DC", "identifier")) == 2
+
+        destination = io.BytesIO()
+        epub.write_epub(destination, loaded)
+        destination.seek(0)
+        with zipfile.ZipFile(destination) as archive:
+            package = parse_string(archive.read("EPUB/content.opf"))
+        assert package.getroot().get("unique-identifier") == "id"
+
     def test_basic_read_options(self):
         book = self._create_basic_book()
         book.toc = []
@@ -580,3 +603,99 @@ def test_empty_ncx_falls_back_to_nav_document_toc():
     restored = epub.read_epub(_ncx_book(_NCX % b"<navMap/>", nav_entries=True), {"ignore_ncx": False})
 
     assert [(link.href, link.title) for link in restored.toc] == [("chapter.xhtml", "Chapter")]
+
+
+def _book_with_identifiers(identifiers: str, unique_identifier: str | None) -> io.BytesIO:
+    """Write a minimal EPUB, then replace its ``dc:identifier`` elements and ``unique-identifier`` attribute."""
+    book = epub.EpubBook()
+    book.set_identifier("replaced")
+    book.set_title("Identifiers")
+    book.set_language("en")
+    chapter = epub.EpubHtml(title="Chapter", file_name="chapter.xhtml", content="<p>Chapter</p>")
+    book.add_item(chapter)
+    book.add_item(epub.EpubNcx())
+    book.add_item(epub.EpubNav())
+    book.spine = ["nav", chapter]
+    source = io.BytesIO()
+    epub.write_epub(source, book)
+    source.seek(0)
+
+    output = io.BytesIO()
+    with zipfile.ZipFile(source) as src, zipfile.ZipFile(output, "w") as target:
+        for entry in src.infolist():
+            data = src.read(entry.filename)
+            if entry.filename == "EPUB/content.opf":
+                root = etree.fromstring(data)
+                metadata = root.find("{http://www.idpf.org/2007/opf}metadata")
+                assert metadata is not None
+                for old in metadata.findall("{http://purl.org/dc/elements/1.1/}identifier"):
+                    metadata.remove(old)
+                wrapper = etree.fromstring(f'<w xmlns:dc="http://purl.org/dc/elements/1.1/">{identifiers}</w>'.encode())
+                for position, new in enumerate(wrapper):
+                    metadata.insert(position, new)
+                if unique_identifier is None:
+                    del root.attrib["unique-identifier"]
+                else:
+                    root.set("unique-identifier", unique_identifier)
+                data = etree.tostring(root, encoding="utf-8", xml_declaration=True)
+            target.writestr(entry, data)
+    output.seek(0)
+    return output
+
+
+@pytest.mark.parametrize(
+    "identifiers, unique_identifier, expected_id, expected_uid",
+    [
+        # declared identifier wins, whatever its position
+        (
+            '<dc:identifier id="pub">main</dc:identifier><dc:identifier id="isbn">978</dc:identifier>',
+            "pub",
+            "pub",
+            "main",
+        ),
+        (
+            '<dc:identifier id="isbn">978</dc:identifier><dc:identifier id="pub">main</dc:identifier>',
+            "pub",
+            "pub",
+            "main",
+        ),
+        # the declared identifier may be in the middle of several others
+        (
+            '<dc:identifier id="a">1</dc:identifier><dc:identifier id="pub">main</dc:identifier>'
+            '<dc:identifier id="z">9</dc:identifier>',
+            "pub",
+            "pub",
+            "main",
+        ),
+        # identifiers without an id are ignored when choosing
+        ('<dc:identifier id="pub">main</dc:identifier><dc:identifier>no id</dc:identifier>', "pub", "pub", "main"),
+        # no unique-identifier attribute: legacy behaviour, the last identifier with an id
+        ('<dc:identifier id="a">1</dc:identifier><dc:identifier id="b">2</dc:identifier>', None, "b", "2"),
+        # attribute names an id that no identifier has: legacy behaviour, the last identifier with an id
+        ('<dc:identifier id="a">1</dc:identifier><dc:identifier id="b">2</dc:identifier>', "missing", "b", "2"),
+    ],
+    ids=["declared-first", "declared-last", "declared-middle", "ignores-idless", "no-attribute", "dangling-attribute"],
+)
+def test_package_identifier_selection(identifiers, unique_identifier, expected_id, expected_uid):
+    """The identifier named by ``unique-identifier`` is the book's identifier, with a legacy fallback."""
+    book = epub.read_epub(_book_with_identifiers(identifiers, unique_identifier))
+
+    assert book.IDENTIFIER_ID == expected_id
+    assert book.uid == expected_uid
+
+    # the written package refers to an identifier that exists
+    written = io.BytesIO()
+    epub.write_epub(written, book)
+    written.seek(0)
+    with zipfile.ZipFile(written) as archive:
+        package = etree.fromstring(archive.read("EPUB/content.opf"))
+    ids = [e.get("id") for e in package.iter("{http://purl.org/dc/elements/1.1/}identifier")]
+    assert package.get("unique-identifier") == expected_id
+    assert expected_id in ids
+
+
+def test_package_identifier_without_any_identifier_id_keeps_declared_value():
+    """Identifiers without ids leave the declared ``unique-identifier`` value untouched."""
+    book = epub.read_epub(_book_with_identifiers("<dc:identifier>no id</dc:identifier>", "pub"))
+
+    assert book.IDENTIFIER_ID == "pub"
