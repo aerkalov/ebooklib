@@ -123,7 +123,7 @@ class TestEbook:
         f.seek(0)
 
         bk = epub.read_epub(f, {"ignore_ncx": False})
-        assert type(bk.toc) is epub.Link
+        assert bk.toc == []
 
         bk = epub.read_epub(f, {"ignore_ncx": True})
         assert len(bk.toc) == 0
@@ -513,3 +513,70 @@ def test_explicit_item_ids_are_not_checked_for_uniqueness():
 
     assert first.id == second.id == "same"
     assert book.get_item_with_id("same") is first
+
+
+def test_empty_ncx_toc_survives_round_trip():
+    book = epub.EpubBook()
+    book.set_title("Empty table of contents")
+    chapter = epub.EpubHtml(file_name="chapter.xhtml", content="<p>Chapter</p>")
+    book.add_item(chapter)
+    book.add_item(epub.EpubNcx())
+    book.spine = [chapter]
+    archive = io.BytesIO()
+    epub.write_epub(archive, book)
+    archive.seek(0)
+
+    restored = epub.read_epub(archive)
+    assert restored.toc == []
+    epub.write_epub(io.BytesIO(), restored)
+
+
+def _ncx_book(ncx: bytes, nav_entries: bool = False) -> io.BytesIO:
+    """Build an EPUB whose NCX is replaced by ``ncx``, optionally with a populated EPUB 3 nav."""
+    book = epub.EpubBook()
+    book.set_title("Replaced NCX")
+    chapter = epub.EpubHtml(title="Chapter", file_name="chapter.xhtml", content="<p>Chapter</p>")
+    book.add_item(chapter)
+    book.add_item(epub.EpubNcx())
+    book.add_item(epub.EpubNav())
+    book.toc = [chapter] if nav_entries else []
+    book.spine = ["nav", chapter]
+    source = io.BytesIO()
+    epub.write_epub(source, book)
+    source.seek(0)
+
+    output = io.BytesIO()
+    with zipfile.ZipFile(source) as src, zipfile.ZipFile(output, "w") as target:
+        for entry in src.infolist():
+            data = src.read(entry.filename)
+            if entry.filename.endswith(".ncx"):
+                data = ncx
+            target.writestr(entry, data)
+    output.seek(0)
+    return output
+
+
+_NCX = (
+    b'<?xml version="1.0" encoding="utf-8"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">'
+    b"<head/><docTitle><text>t</text></docTitle>%s</ncx>"
+)
+
+
+@pytest.mark.parametrize(
+    "navmap",
+    [b"<navMap/>", b"", b"<navMap><navPoint id='a'><navLabel/><content src='chapter.xhtml'/></navPoint></navMap>"],
+    ids=["empty-navmap", "missing-navmap", "navlabel-without-text"],
+)
+def test_malformed_or_empty_ncx_gives_list_toc_that_can_be_written(navmap):
+    """An NCX without entries or with a broken navLabel must not break reading or writing."""
+    restored = epub.read_epub(_ncx_book(_NCX % navmap), {"ignore_ncx": False})
+
+    assert isinstance(restored.toc, list)
+    epub.write_epub(io.BytesIO(), restored)
+
+
+def test_empty_ncx_falls_back_to_nav_document_toc():
+    """With an empty NCX the table of contents comes from the EPUB 3 nav document."""
+    restored = epub.read_epub(_ncx_book(_NCX % b"<navMap/>", nav_entries=True), {"ignore_ncx": False})
+
+    assert [(link.href, link.title) for link in restored.toc] == [("chapter.xhtml", "Chapter")]
