@@ -32,6 +32,8 @@ Changed
 Fixed
 ~~~~~
 * Preserve chapter bodies when Unicode XHTML includes an XML encoding declaration (#354)
+* Only include elements with a pagebreak token in epub:type when automatically generating
+  page-list navigation; other structural semantics such as copyright-page are no longer included (#339)
 * Security: prevent path traversal when reading an unpacked EPUB from a directory
   (a crafted manifest href like ../../etc/passwd could read files outside the book directory);
   Directory.read() raises OSError for paths escaping the source directory
