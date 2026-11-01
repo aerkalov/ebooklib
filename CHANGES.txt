@@ -3,11 +3,32 @@ EbookLib Changelog
 All notable changes to this project will be documented in this file.
 
 
-Version 0.21 (unreleased)
+Version 0.21 (2026-11-01)
 -------------------------
+
+This is a major modernization release. It is the first release without Python 2 support and the first one with
+type annotations. Please read the upgrade notes before updating.
+
+Upgrade notes
+~~~~~~~~~~~~~
+* Python 3.10 or newer is required (0.20 was the last release supporting Python 2.7 and older Python 3 versions);
+  lxml is now the only runtime dependency (six was removed)
+* write_epub() now raises exceptions by default; the option raise_exceptions defaults to True.
+  Pass {"raise_exceptions": False} to keep the old behaviour of returning False
+* An NCX file without navigation points is now read as book.toc == [] instead of a single blank Link
+* book.uid and the written unique-identifier now follow the package unique-identifier attribute when a book
+  has several dc:identifier entries
+* add_author() without an explicit uid now gives the second and later authors the ids creator_1, creator_2, ...
+  (the first one is still "creator"), so duplicate ids are no longer written
+* dcterms:modified is now the UTC time (it used the local time with a Z suffix before)
+* All imports from ebooklib.epub keep working; the code moved to smaller modules but everything is re-exported
 
 Added
 ~~~~~
+* EpubWriter uses the mtime option as the timestamp of the files in the ZIP archive too, so writing the same book
+  with the same mtime gives identical files (reproducible builds) (#340)
+* Tutorial: reading navigation (how the EPUB 3 nav is selected), reading order of a loaded book, item IDs,
+  and corrected documentation of the reader and writer options
 * Add type annotations to the whole library (PEP 561 py.typed marker included), checked with ty in CI
 * Add pyproject.toml (PEP 621) as the single source of packaging metadata; setup.py is now a compatibility shim
 * Add typecheck job (ty) to the GitHub Actions workflow
@@ -30,6 +51,11 @@ Changed
 
 Fixed
 ~~~~~
+* Generate unique ids for several authors: add_author() used the id "creator" for every author, which wrote duplicate
+  ids into the package document (#356, #366)
+* Write dcterms:modified as UTC time, as the EPUB specification requires (#367)
+* The generated cover.xhtml uses an inline style on the image instead of a style element in the head, so the cover
+  fills the page on readers such as Kobo (#347, #352)
 * Keep the identifier named by the package unique-identifier attribute when a book has several dc:identifier
   entries: previously the last identifier with an id replaced it, so an ISBN listed after the main identifier became
   book.uid and the written package pointed at it. When the attribute is missing or names an id that no identifier has,
