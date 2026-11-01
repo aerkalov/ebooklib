@@ -30,6 +30,10 @@ Changed
 
 Fixed
 ~~~~~
+* Keep the identifier named by the package unique-identifier attribute when a book has several dc:identifier
+  entries: previously the last identifier with an id replaced it, so an ISBN listed after the main identifier became
+  book.uid and the written package pointed at it. When the attribute is missing or names an id that no identifier has,
+  the last identifier with an id is still used, as before
 * Read an NCX without navigation points as an empty table of contents: book.toc is now an empty list
   (previously a single blank Link, which made write_epub() fail and, being truthy, also stopped the EPUB 3 nav
   document from being used as the table of contents). Code that compared book.toc with that blank Link

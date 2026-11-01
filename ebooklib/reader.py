@@ -112,6 +112,9 @@ class EpubReader:
 
         nsdict: dict[str | None, dict[str, list[Any]]] = {v: {} for v in nsmap.values()}
 
+        # ids of all dc:identifier elements, in document order
+        identifier_ids: list[str] = []
+
         def add_item(ns, tag, value, extra):
             if ns not in nsdict:
                 nsdict[ns] = {}
@@ -135,16 +138,22 @@ class EpubReader:
             else:
                 tag = t.tag[t.tag.rfind("}") + 1 :]
 
-                if not unique_identifier and (t.prefix and t.prefix.lower() == "dc") and tag == "identifier":
+                if (t.prefix and t.prefix.lower() == "dc") and tag == "identifier":
                     _id = t.get("id", None)
 
                     if _id:
-                        self.book.IDENTIFIER_ID = _id
+                        identifier_ids.append(_id)
 
                 others = dict(t.items())
                 add_item(t.nsmap[t.prefix], tag, t.text, others)
 
         self.book.metadata = nsdict
+
+        # The package "unique-identifier" names the identifier of the publication, so it wins over
+        # any other dc:identifier (for example an ISBN listed after it). Without that attribute, or when
+        # it does not match any identifier (invalid package), the last dc:identifier with an id is used.
+        if identifier_ids and unique_identifier not in identifier_ids:
+            self.book.IDENTIFIER_ID = identifier_ids[-1]
 
         titles = self.book.get_metadata("DC", "title")
         if len(titles) > 0:
