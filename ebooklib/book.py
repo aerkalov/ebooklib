@@ -188,7 +188,7 @@ class EpubBook:
         if namespace in NAMESPACES:
             namespace = NAMESPACES[namespace]
 
-        return self.metadata[namespace].get(name, [])
+        return self.metadata.get(namespace, {}).get(name, [])
 
     def set_unique_metadata(self, namespace: str | None, name: str, value: str, others: dict | None = None) -> None:
         """Add metadata if metadata with this identifier does not already exist, otherwise update existing metadata."""
@@ -206,8 +206,16 @@ class EpubBook:
         Add additional item to the book. If not defined, media type and chapter id will be defined
         for the item.
 
+        A missing ID is generated as ``chapter_N`` (:class:`EpubHtml`), ``image_N``
+        (:class:`EpubImage`) or ``static_N`` (any other item). Generated IDs skip IDs already
+        used by items in the book. Explicit IDs are used as given and are not checked for
+        uniqueness.
+
         :Args:
           - item: Item instance
+
+        :Returns:
+          The same item that was passed in, now attached to the book.
         """
         if item.media_type == "":
             # guess_type returns (type, encoding). The encoding ("gzip" for a
@@ -218,14 +226,20 @@ class EpubBook:
         if not item.get_id():
             # make chapter_, image_ and static_ configurable
             if isinstance(item, EpubHtml):
+                while self.get_item_with_id(f"chapter_{self._id_html}") is not None:
+                    self._id_html += 1
                 item.id = f"chapter_{self._id_html}"
                 self._id_html += 1
                 # If there's a page list, append it to the book's page list
                 self.pages += item.pages
             elif isinstance(item, EpubImage):
+                while self.get_item_with_id(f"image_{self._id_image}") is not None:
+                    self._id_image += 1
                 item.id = f"image_{self._id_image}"
                 self._id_image += 1
             else:
+                while self.get_item_with_id(f"static_{self._id_static}") is not None:
+                    self._id_static += 1
                 item.id = f"static_{self._id_static}"
                 self._id_static += 1
 

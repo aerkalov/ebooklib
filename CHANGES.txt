@@ -1,5 +1,4 @@
 EbookLib Changelog
-==================
 
 All notable changes to this project will be documented in this file.
 
@@ -31,6 +30,32 @@ Changed
 
 Fixed
 ~~~~~
+* Read an NCX without navigation points as an empty table of contents: book.toc is now an empty list
+  (previously a single blank Link, which made write_epub() fail and, being truthy, also stopped the EPUB 3 nav
+  document from being used as the table of contents). Code that compared book.toc with that blank Link
+  must check for an empty list instead. A missing navMap and a navLabel without a text child in the NCX
+  no longer crash the reader. See the "Reading navigation" tutorial section
+* Avoid collisions with existing item IDs when assigning automatic IDs: add_item() now skips
+  chapter_N, image_N and static_N values that are already used (for example by a book loaded with
+  read_epub()) instead of creating duplicate IDs, which made get_item_with_id() return the wrong item.
+  Explicit IDs are still not checked for uniqueness. See the "Item IDs" tutorial section
+* Preserve cover page IDs and filenames when reading the manifest
+* Preserve text directly inside chapter body elements: text before the first child element of <body>
+  is no longer dropped by EpubHtml.get_content(), and EpubHtml.get_body_content() returns a body that
+  contains only text. Whitespace-only text (such as the newline and indentation before the first
+  element) is deliberately not copied, so the generated output of ordinary indented chapters is unchanged
+  and a body with only whitespace and no elements still gives an empty get_body_content()
+* Return an empty list when get_metadata is called for a missing namespace
+* Read EPUB 3 TOC and page-list navigation by the namespaced epub:type token list, as the EPUB
+  specification defines it. A multi-token value such as epub:type="toc frontmatter" is now found
+  (previously the TOC raised IndexError and the page list was silently lost), any namespace prefix
+  works, and an unrelated <nav class="toc"> menu is no longer chosen over the real table of contents.
+  Books without a semantic match keep the legacy lookup (any attribute exactly equal to toc/page-list);
+  as a new last resort a lone nav element is read as the table of contents. See the "Reading navigation"
+  tutorial section
+* Preserve chapter bodies when Unicode XHTML includes an XML encoding declaration (#354)
+* Only include elements with a pagebreak token in epub:type when automatically generating
+  page-list navigation; other structural semantics such as copyright-page are no longer included (#339)
 * Security: prevent path traversal when reading an unpacked EPUB from a directory
   (a crafted manifest href like ../../etc/passwd could read files outside the book directory);
   Directory.read() raises OSError for paths escaping the source directory

@@ -35,7 +35,8 @@ class TestEbook:
 
         doc1 = epub.EpubHtml(uid="chap_1", file_name="test.xhtml")
         doc1.set_content(
-            """<body><h1>Title</h1><p>lorum ipsum.<a epub:type="noteref" href="#fn01">1</a></p>
+            """<body><h1>Title</h1><span id="page1" epub:type="pagebreak">1</span>
+                 <p>lorum ipsum.<a epub:type="noteref" href="#fn01">1</a></p>
                  <aside epub:type="footnote" id="fn01">
                      <p>These have been corrected in this EPUB3 edition.</p>
                  </aside>
@@ -145,7 +146,7 @@ class TestEbook:
         f.seek(0)
 
         bk = epub.read_epub(f, {"ignore_ncx": False})
-        assert type(bk.toc) is epub.Link
+        assert bk.toc == []
 
         bk = epub.read_epub(f, {"ignore_ncx": True})
         assert len(bk.toc) == 0
@@ -273,12 +274,13 @@ class TestEbook:
 
         pages_ol = page_list.find(f".//{{{epub.NAMESPACES['XHTML']}}}ol")
         assert pages_ol is not None
+        assert len(pages_ol.findall(f"{{{epub.NAMESPACES['XHTML']}}}li")) == 1
         pages_li = pages_ol.find(f".//{{{epub.NAMESPACES['XHTML']}}}li")
         assert pages_li is not None
         pages_a = pages_li.find(f".//{{{epub.NAMESPACES['XHTML']}}}a")
         assert pages_a is not None
-        assert pages_a.get("href") == "test.xhtml#fn01"
-        assert pages_a.text == "fn01"
+        assert pages_a.get("href") == "test.xhtml#page1"
+        assert pages_a.text == "1"
 
         spine_on = content_on.find(f".//{{{epub.NAMESPACES['OPF']}}}spine")
         assert spine_on is not None
@@ -431,6 +433,17 @@ class TestEbook:
         assert ids == ["creator", "creator_1", "third"]
         assert len(set(ids)) == len(ids)
 
+    @pytest.mark.parametrize("namespace", [None, "custom", "urn:example:metadata", "DC", "OPF"])
+    def test_epubbook_missing_metadata(self, namespace):
+        book = epub.EpubBook()
+        namespaces = set(book.metadata)
+
+        assert book.get_metadata(namespace, "missing") == []
+        assert set(book.metadata) == namespaces
+
+        book.add_metadata(namespace, "missing", "value")
+        assert book.get_metadata(namespace, "missing") == [("value", None)]
+
     def _test_epubbook(self, name):
         # TODO:
         # - add other roles here besides creator
@@ -456,3 +469,137 @@ class TestEbook:
 
     def test_epubbook_read_epub_as_bytes(self):
         self._test_epubbook(io.BytesIO((Path(__file__).parent / "resources" / "test01.epub").open("rb").read()))
+
+
+def test_cover_manifest_identity_is_preserved():
+    reader = epub.EpubReader(io.BytesIO())
+    reader.container = parse_string(
+        b'<package xmlns="http://www.idpf.org/2007/opf"><manifest>'
+        b'<item id="front-cover" href="Text/front%20cover.xhtml" '
+        b'media-type="application/xhtml+xml" properties="cover"/>'
+        b"</manifest></package>"
+    )
+    archive = io.BytesIO()
+    content = b"<html><body><p>Cover</p></body></html>"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("Text/front cover.xhtml", content)
+    archive.seek(0)
+    with zipfile.ZipFile(archive) as zf:
+        reader.zf = zf
+        reader._load_manifest()
+
+    cover = reader.book.get_item_with_id("front-cover")
+    assert isinstance(cover, epub.EpubCoverHtml)
+    assert reader.book.get_item_with_href("Text/front cover.xhtml") is cover
+    assert cover.media_type == "application/xhtml+xml"
+    assert cover.content == content
+
+
+@pytest.mark.parametrize(
+    "item_class, prefix",
+    [(epub.EpubHtml, "chapter"), (epub.EpubImage, "image"), (epub.EpubItem, "static")],
+)
+def test_generated_item_ids_skip_existing_ids(item_class, prefix):
+    book = epub.EpubBook()
+    first = book.add_item(epub.EpubItem(uid=f"{prefix}_0", file_name="first.dat"))
+    second = book.add_item(epub.EpubItem(uid=f"{prefix}_1", file_name="second.dat"))
+    generated = book.add_item(item_class(file_name="generated.dat"))
+    following = book.add_item(item_class(file_name="following.dat"))
+
+    assert generated.id == f"{prefix}_2"
+    assert following.id == f"{prefix}_3"
+    assert book.get_item_with_id(f"{prefix}_0") is first
+    assert book.get_item_with_id(f"{prefix}_1") is second
+    assert book.get_item_with_id(generated.id) is generated
+
+
+def test_generated_ids_do_not_collide_after_read_epub():
+    """Items without an ID added to a loaded book must not reuse IDs from the file."""
+    book = epub.read_epub(Path(__file__).parent / "resources" / "test01.epub")
+    existing_ids = [item.get_id() for item in book.get_items()]
+    assert len(existing_ids) == len(set(existing_ids))
+
+    added = [book.add_item(epub.EpubHtml(file_name=f"extra_{n}.xhtml")) for n in range(3)]
+
+    ids = [item.get_id() for item in book.get_items()]
+    assert len(ids) == len(set(ids))
+    for item in added:
+        assert item.id
+        assert book.get_item_with_id(item.id) is item
+
+
+def test_explicit_item_ids_are_not_checked_for_uniqueness():
+    """Documented behaviour: only generated IDs avoid collisions, explicit IDs are used as given."""
+    book = epub.EpubBook()
+    first = book.add_item(epub.EpubItem(uid="same", file_name="a.dat"))
+    second = book.add_item(epub.EpubItem(uid="same", file_name="b.dat"))
+
+    assert first.id == second.id == "same"
+    assert book.get_item_with_id("same") is first
+
+
+def test_empty_ncx_toc_survives_round_trip():
+    book = epub.EpubBook()
+    book.set_title("Empty table of contents")
+    chapter = epub.EpubHtml(file_name="chapter.xhtml", content="<p>Chapter</p>")
+    book.add_item(chapter)
+    book.add_item(epub.EpubNcx())
+    book.spine = [chapter]
+    archive = io.BytesIO()
+    epub.write_epub(archive, book)
+    archive.seek(0)
+
+    restored = epub.read_epub(archive)
+    assert restored.toc == []
+    epub.write_epub(io.BytesIO(), restored)
+
+
+def _ncx_book(ncx: bytes, nav_entries: bool = False) -> io.BytesIO:
+    """Build an EPUB whose NCX is replaced by ``ncx``, optionally with a populated EPUB 3 nav."""
+    book = epub.EpubBook()
+    book.set_title("Replaced NCX")
+    chapter = epub.EpubHtml(title="Chapter", file_name="chapter.xhtml", content="<p>Chapter</p>")
+    book.add_item(chapter)
+    book.add_item(epub.EpubNcx())
+    book.add_item(epub.EpubNav())
+    book.toc = [chapter] if nav_entries else []
+    book.spine = ["nav", chapter]
+    source = io.BytesIO()
+    epub.write_epub(source, book)
+    source.seek(0)
+
+    output = io.BytesIO()
+    with zipfile.ZipFile(source) as src, zipfile.ZipFile(output, "w") as target:
+        for entry in src.infolist():
+            data = src.read(entry.filename)
+            if entry.filename.endswith(".ncx"):
+                data = ncx
+            target.writestr(entry, data)
+    output.seek(0)
+    return output
+
+
+_NCX = (
+    b'<?xml version="1.0" encoding="utf-8"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">'
+    b"<head/><docTitle><text>t</text></docTitle>%s</ncx>"
+)
+
+
+@pytest.mark.parametrize(
+    "navmap",
+    [b"<navMap/>", b"", b"<navMap><navPoint id='a'><navLabel/><content src='chapter.xhtml'/></navPoint></navMap>"],
+    ids=["empty-navmap", "missing-navmap", "navlabel-without-text"],
+)
+def test_malformed_or_empty_ncx_gives_list_toc_that_can_be_written(navmap):
+    """An NCX without entries or with a broken navLabel must not break reading or writing."""
+    restored = epub.read_epub(_ncx_book(_NCX % navmap), {"ignore_ncx": False})
+
+    assert isinstance(restored.toc, list)
+    epub.write_epub(io.BytesIO(), restored)
+
+
+def test_empty_ncx_falls_back_to_nav_document_toc():
+    """With an empty NCX the table of contents comes from the EPUB 3 nav document."""
+    restored = epub.read_epub(_ncx_book(_NCX % b"<navMap/>", nav_entries=True), {"ignore_ncx": False})
+
+    assert [(link.href, link.title) for link in restored.toc] == [("chapter.xhtml", "Chapter")]

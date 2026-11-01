@@ -162,6 +162,21 @@ class EpubCover(EpubItem):
         return f"<EpubCover:{self.id}:{self.file_name}>"
 
 
+def _has_text(text: str | None) -> bool:
+    """Return True if ``text`` contains any character other than HTML whitespace.
+
+    Only space, tab, CR, LF and form feed count as whitespace; other characters such as
+    U+00A0 (no-break space) are visible content and are kept.
+
+    :Args:
+      - text: text of an element (``element.text``), which lxml leaves as ``None`` when absent
+
+    :Returns:
+      ``True`` when there is meaningful text, ``False`` for ``None``, empty or whitespace-only text.
+    """
+    return text is not None and text.strip(" \t\r\n\f") != ""
+
+
 class EpubHtml(EpubItem):
     """
     Represents HTML document in the EPUB file.
@@ -294,8 +309,13 @@ class EpubHtml(EpubItem):
         """
         Returns content of BODY element for this HTML document. Content will be of type 'bytes'.
 
+        Text placed directly in the BODY (before the first child element) is kept, so a body
+        that contains only text is returned too. A body whose only direct text is whitespace
+        (for example the newline and indentation before the first element) and that has no
+        child elements is considered empty.
+
         :Returns:
-          Returns content of this document.
+          Returns content of this document, or ``b""`` if the BODY is empty.
         """
 
         try:
@@ -305,7 +325,7 @@ class EpubHtml(EpubItem):
 
         body = html_tree.find("body")
 
-        if body is not None and len(body) != 0:
+        if body is not None and (len(body) != 0 or _has_text(body.text)):
             tree_str = etree.tostring(body, pretty_print=True, encoding="utf-8", xml_declaration=False)
 
             # this is so stupid
@@ -381,6 +401,10 @@ class EpubHtml(EpubItem):
 
         body = html_tree.find("body")
         if body is not None:
+            # Keep text that precedes the first child element, but ignore whitespace-only
+            # text so the serialized output of ordinary indented chapters is unchanged.
+            if _has_text(body.text):
+                _body.text = body.text
             for i in list(body):
                 _body.append(i)
 

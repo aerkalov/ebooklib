@@ -20,7 +20,7 @@ import os
 import posixpath as zip_path
 import warnings
 import zipfile
-from typing import Any, cast
+from typing import Any
 from urllib.parse import unquote
 
 from lxml import etree
@@ -193,8 +193,9 @@ class EpubReader:
 
                     ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
                 case "application/xhtml+xml" if "cover" in properties:
-                    ei = EpubCoverHtml()
+                    ei = EpubCoverHtml(uid=uid or "cover", file_name=href)
 
+                    ei.media_type = media_type
                     ei.content = self.read_file(zip_path.join(self.opf_dir, href))
                 case "application/xhtml+xml":
                     ei = EpubHtml()
@@ -231,10 +232,23 @@ class EpubReader:
             self.book.add_item(ei)
 
     def _parse_ncx(self, data: bytes) -> None:
+        """Parse an NCX (EPUB 2 table of contents) into ``self.book.toc``.
+
+        ``book.toc`` is always a list. An NCX with an empty ``navMap`` (or without one) gives
+        an empty list, so that the book can still be written back and the EPUB 3 navigation
+        document is used when the NCX has no entries.
+
+        :Args:
+          - data: content of the NCX file
+        """
         tree = parse_string(data)
         tree_root = tree.getroot()
 
         nav_map = tree_root.find(f"{{{NAMESPACES['DAISY']}}}navMap")
+        if nav_map is None:
+            # A malformed NCX without navMap has no entries; keep the TOC a (possibly empty) list.
+            self.book.toc = []
+            return
 
         def _get_children(elems, n, nid):
             label, content = "", ""
@@ -242,16 +256,16 @@ class EpubReader:
 
             for a in elems:
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}navLabel":
-                    label = a[0].text
+                    # navLabel without a text child (malformed NCX) gives an empty label
+                    label = a[0].text if len(a) else ""
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}content":
                     content = a.get("src", "")
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}navPoint":
                     children.append(_get_children(a, n + 1, a.get("id", "")))
 
+            if n == 0:
+                return children
             if len(children) > 0:
-                if n == 0:
-                    return children
-
                 return (Section(label, href=content), children)
             else:
                 return Link(content, label, nid)
@@ -259,26 +273,92 @@ class EpubReader:
         self.book.toc = _get_children(nav_map, 0, "")
 
     def _parse_nav(self, data: str | bytes, base_path: str, navtype: str = "toc") -> None:
-        html_node = parse_html_string(data)
-        if navtype == "toc":
-            # parsing the table of contents
-            nav_node = cast("list[etree._Element]", html_node.xpath("//nav[@*='toc']"))[0]
-        else:
-            # parsing the list of pages
-            _page_list = cast("list[etree._Element]", html_node.xpath("//nav[@*='page-list']"))
-            if len(_page_list) == 0:
+        """Parse the EPUB 3 navigation document into the book's TOC or page list.
+
+        The ``nav`` element is selected in this order:
+
+        1. **Semantic match (EPUB 3 conformant).** The XHTML ``nav`` whose ``epub:type``
+           whitespace-separated token list contains the requested type (``toc`` or
+           ``page-list``). The document is parsed as strict XML with entity resolution
+           and network access disabled, and the attribute is matched by namespace
+           (``http://www.idpf.org/2007/ops``), so any prefix works.
+        2. **Legacy match (non-conformant books).** Used when the document is not
+           well-formed XML or has no semantic match: the first ``nav`` with any
+           attribute whose value is exactly the requested type (e.g. ``type="toc"``).
+           Note that this can pick an unrelated ``<nav class="toc">`` menu, so it is
+           only tried after the semantic lookup found nothing.
+        3. **Single ``nav`` (table of contents only).** If there is still no match
+           and the document contains exactly one ``nav`` element, it is assumed to be
+           the table of contents. A page list is never guessed this way.
+
+        If nothing matches, a missing page list is silently ignored (it is optional in
+        EPUB 3), while a missing table of contents raises ``IndexError`` as before.
+
+        :Args:
+          - data: content of the navigation document
+          - base_path: directory of the navigation document, used to resolve links
+          - navtype: ``"toc"`` for the table of contents, anything else for the page list
+        """
+        nav_type = "toc" if navtype == "toc" else "page-list"
+        nav_node = None
+        try:
+            parser = etree.XMLParser(resolve_entities=False, no_network=True, recover=False)
+            xml_node = etree.fromstring(data.encode("utf-8") if isinstance(data, str) else data, parser)
+            found = xml_node.xpath(
+                "//h:nav[contains(concat(' ', normalize-space(@e:type), ' '), concat(' ', $t, ' '))]",
+                namespaces={"h": NAMESPACES["XHTML"], "e": NAMESPACES["EPUB"]},
+                t=nav_type,
+            )
+            if isinstance(found, list) and found:
+                nav_node = found[0]
+        except etree.XMLSyntaxError:
+            pass
+
+        if nav_node is None:
+            # Keep the historical HTML tolerance when semantic XML navigation is
+            # absent, including malformed books and unqualified attributes.
+            html_node = parse_html_string(data)
+            nav_nodes = [node for node in html_node.iter("nav") if nav_type in node.attrib.values()]
+            if not nav_nodes and navtype == "toc":
+                # Last resort: a lone nav element can only be the table of contents.
+                all_navs = list(html_node.iter("nav"))
+                if len(all_navs) == 1:
+                    nav_nodes = all_navs
+            if navtype != "toc" and not nav_nodes:
                 return
-            nav_node = _page_list[0]
+            nav_node = nav_nodes[0]
+
+        def child(node, name):
+            # Match by local name so both HTML (``li``) and XHTML (``{ns}li``) trees work.
+            for sub in node.iterchildren(etree.Element):
+                if etree.QName(sub).localname == name:
+                    return sub
+            return None
+
+        def children_named(node, name):
+            return [sub for sub in node.iterchildren(etree.Element) if etree.QName(sub).localname == name]
+
+        def text_of(node):
+            # Like ``text_content()`` but also keeps unresolved entity references
+            # (e.g. ``&name;``) as text, since entity resolution is disabled.
+            parts = [node.text or ""]
+            for sub in node:
+                if sub.tag is etree.Entity:
+                    parts.append(sub.text or "")
+                elif isinstance(sub.tag, str):
+                    parts.append(text_of(sub))
+                parts.append(sub.tail or "")
+            return "".join(parts)
 
         def parse_list(list_node):
             items = []
 
-            for item_node in list_node.findall("li"):
-                sublist_node = item_node.find("ol")
-                link_node = item_node.find("a")
+            for item_node in children_named(list_node, "li"):
+                sublist_node = child(item_node, "ol")
+                link_node = child(item_node, "a")
 
                 if sublist_node is not None:
-                    title = item_node[0].text_content()
+                    title = text_of(item_node[0])
                     children = parse_list(sublist_node)
 
                     if link_node is not None and link_node.get("href"):
@@ -287,7 +367,7 @@ class EpubReader:
                     else:
                         items.append((Section(title), children))
                 elif link_node is not None and link_node.get("href"):
-                    title = link_node.text_content()
+                    title = text_of(link_node)
                     href = zip_path.normpath(zip_path.join(base_path, link_node.get("href")))
 
                     items.append(Link(href, title))
@@ -295,10 +375,10 @@ class EpubReader:
             return items
 
         if navtype == "toc":
-            self.book.toc = parse_list(nav_node.find("ol"))
+            self.book.toc = parse_list(child(nav_node, "ol"))
         elif nav_node is not None:
             # generate the pages list if there is one
-            self.book.pages = parse_list(nav_node.find("ol"))
+            self.book.pages = parse_list(child(nav_node, "ol"))
 
             # generate the per-file pages lists
             # because of the order of parsing the files, this can't be done
