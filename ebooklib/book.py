@@ -18,7 +18,7 @@
 
 import uuid
 from collections import OrderedDict
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from typing import Any
 
 from ebooklib.consts import CHAPTER_XML, COVER_XML, NAMESPACES, NAV_XML, NCX_XML, VERSION
@@ -167,6 +167,117 @@ class EpubBook:
             )
         if role:
             self.add_metadata(None, "meta", role, {"refines": "#" + uid, "property": "role", "scheme": "marc:relators"})
+
+    # EPUB Accessibility package metadata (EPUB Accessibility 1.1, section 3).
+    # Each property is written to the package document as a <meta> element,
+    # e.g. <meta property="schema:accessibilityFeature">alternativeText</meta>.
+    # The "schema:" and "dcterms:" prefixes are part of the EPUB 3 default
+    # prefix registry, so no prefix declaration is needed in the package
+    # document for them.
+
+    def _add_package_meta(self, property: str, value: str) -> None:
+        self.add_metadata(None, "meta", value, {"property": property})
+
+    def _set_package_meta(self, property: str, value: str) -> None:
+        """Set a package <meta> property, replacing any value already set for it.
+
+        Unlike set_unique_metadata this only replaces entries carrying the
+        same property attribute, so unrelated <meta> entries (cover, file-as,
+        role, ...) are left untouched.
+        """
+        meta_by_name = self.metadata.setdefault(None, {})
+        entries = meta_by_name.get("meta", [])
+        meta_by_name["meta"] = [
+            (v, o) for v, o in entries if not (isinstance(o, dict) and o.get("property") == property)
+        ]
+        self._add_package_meta(property, value)
+
+    def add_access_mode(self, mode: str) -> None:
+        """
+        Add a ``schema:accessMode`` value: a human sensory perceptual system
+        or cognitive faculty necessary to process the content
+        (e.g. "textual", "visual", "auditory", "tactile").
+        """
+        self._add_package_meta("schema:accessMode", mode)
+
+    def add_access_mode_sufficient(self, modes: str | Iterable[str]) -> None:
+        """
+        Add a ``schema:accessModeSufficient`` value: a set of one or more
+        access modes sufficient to consume the content. Pass either a single
+        comma-separated string (e.g. "textual,visual") or an iterable of
+        modes, which is joined into one set. Call the method again to declare
+        an alternative set.
+        """
+        if not isinstance(modes, str):
+            modes = ",".join(modes)
+        self._add_package_meta("schema:accessModeSufficient", modes)
+
+    def add_accessibility_feature(self, feature: str) -> None:
+        """
+        Add a ``schema:accessibilityFeature`` value: a feature or adaptation
+        that contributes to the accessibility of the content
+        (e.g. "alternativeText", "readingOrder", "structuralNavigation",
+        "tableOfContents", "displayTransformability").
+        """
+        self._add_package_meta("schema:accessibilityFeature", feature)
+
+    def add_accessibility_hazard(self, hazard: str) -> None:
+        """
+        Add a ``schema:accessibilityHazard`` value: a potential hazard the
+        content presents (e.g. "flashing", "motionSimulation", "sound", or
+        "none" when the content presents no hazard).
+        """
+        self._add_package_meta("schema:accessibilityHazard", hazard)
+
+    def add_accessibility_api(self, api: str) -> None:
+        """Add a ``schema:accessibilityAPI`` value (e.g. "ARIA")."""
+        self._add_package_meta("schema:accessibilityAPI", api)
+
+    def add_accessibility_control(self, control: str) -> None:
+        """
+        Add a ``schema:accessibilityControl`` value: an input method that can
+        be used to access the content (e.g. "fullKeyboardControl").
+        """
+        self._add_package_meta("schema:accessibilityControl", control)
+
+    def set_accessibility_summary(self, summary: str) -> None:
+        """
+        Set the ``schema:accessibilitySummary``: a human-readable summary of
+        the overall accessibility of the content, including any known
+        deficiencies. Calling this again replaces the previous summary.
+        """
+        self._set_package_meta("schema:accessibilitySummary", summary)
+
+    def set_conforms_to(self, conformance: str) -> None:
+        """
+        Set the ``dcterms:conformsTo`` statement, e.g. the EPUB Accessibility
+        conformance claim "EPUB Accessibility 1.1 - WCAG 2.2 Level AA".
+        Calling this again replaces the previous statement.
+        """
+        self._set_package_meta("dcterms:conformsTo", conformance)
+
+    def get_accessibility_metadata(self) -> dict[str, list[str]]:
+        """
+        Return the accessibility package metadata set on this book, as a
+        mapping of property name (e.g. "schema:accessMode") to its values.
+
+        Works both for values set with the add_*/set_* accessibility methods
+        above and for books read from an EPUB file, where <meta> entries are
+        stored under the OPF namespace instead of None.
+        """
+        result: dict[str, list[str]] = {}
+        for entries in self.metadata.values():
+            for value, others in entries.get("meta", []):
+                if not isinstance(others, dict):
+                    continue
+                prop = others.get("property")
+                if prop and (
+                    prop.startswith("schema:accessibility")
+                    or prop.startswith("schema:access")
+                    or prop == "dcterms:conformsTo"
+                ):
+                    result.setdefault(prop, []).append(value)
+        return result
 
     def add_metadata(self, namespace: str | None, name: str, value: str, others: dict | None = None) -> None:
         """Add metadata"""

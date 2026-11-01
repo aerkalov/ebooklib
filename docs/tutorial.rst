@@ -102,6 +102,37 @@ Check the official documentation for more info:
 * http://dublincore.org/documents/dces/
 
 
+Accessibility metadata
+++++++++++++++++++++++
+
+EPUB Accessibility requires a publication to declare accessibility metadata
+in the package document: its access modes, the access modes sufficient to
+consume it, its accessibility features and hazards, and a human-readable
+summary. Dedicated methods write these as ``<meta property="schema:...">``
+elements (and the conformance statement as ``dcterms:conformsTo``), so no
+post-processing of the package document is needed.
+
+::
+
+    book.set_conforms_to("EPUB Accessibility 1.1 - WCAG 2.2 Level AA")
+    book.add_access_mode("textual")
+    book.add_access_mode("visual")
+    book.add_access_mode_sufficient("textual")
+    book.add_accessibility_feature("alternativeText")
+    book.add_accessibility_feature("readingOrder")
+    book.add_accessibility_hazard("none")
+    book.set_accessibility_summary(
+        "All content is in a linear reading order; images have text alternatives."
+    )
+
+``add_access_mode_sufficient`` also accepts an iterable of modes, which is
+stored as one comma-separated set; call it again to declare an alternative
+set. The summary and the conformance statement are unique: setting them
+again replaces the previous value. All of the values can be read back with
+``book.get_accessibility_metadata()``, including from a book loaded with
+``read_epub``.
+
+
 Items
 +++++
 

@@ -8,6 +8,11 @@ Version 0.21 (unreleased)
 
 Added
 ~~~~~
+* Add first-class EPUB Accessibility package metadata to EpubBook: add_access_mode, add_access_mode_sufficient,
+  add_accessibility_feature, add_accessibility_hazard, add_accessibility_api, add_accessibility_control,
+  set_accessibility_summary, set_conforms_to and get_accessibility_metadata write and read the
+  schema:accessMode / schema:accessModeSufficient / schema:accessibility* / dcterms:conformsTo
+  <meta property="..."> elements, replacing hand-patching of the package document after writing
 * Add type annotations to the whole library (PEP 561 py.typed marker included), checked with ty in CI
 * Add pyproject.toml (PEP 621) as the single source of packaging metadata; setup.py is now a compatibility shim
 * Add typecheck job (ty) to the GitHub Actions workflow
