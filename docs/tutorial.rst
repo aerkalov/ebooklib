@@ -400,9 +400,9 @@ At the end, we need to add NCX and Navigation files. They will not be added auto
 
 
 At the end, write your book. You need to specify the full path to the book or provide a file-like object.
-At the moment, an exception will not be raised if something goes wrong. In a future
-version, this will be changed. Right now, you need to check the return value of the function or control 
-it with the option *raise_exceptions*.
+By default, an exception is raised if something goes wrong while writing. Pass the option
+*raise_exceptions* as ``False`` to get the old behaviour, where the function returns ``False``
+instead of raising and you need to check the return value.
 
 ::
 
@@ -423,17 +423,23 @@ Option              Default value
 epub2_guide         True
 epub3_landmark      True
 epub3_pages         True
-ignore_ncx          False
 landmark_title      "Guide"
 pages_title         "Pages"
 spine_direction     True
 package_direction   False
 play_order          {'enabled': False, 'start_from': 1}
-raise_exceptions    False
+raise_exceptions    True
 compresslevel       6
 =================   ====================================
 
 The compresslevel ranges from 0 to 9, where 0 is no compression.
+
+The ``mtime`` option (a ``datetime``) sets the ``dcterms:modified`` value and the timestamp of every file in the
+archive. Naive values are treated as local time and converted to UTC for ``dcterms:modified``. Passing the same ``mtime``
+for the same book gives byte-identical files, which is useful for reproducible builds.
+
+``read_epub()`` has its own options. The option ``ignore_ncx`` (default ``True``) makes the reader prefer the EPUB 3
+navigation document over the NCX file; pass ``{"ignore_ncx": False}`` to read the NCX first.
 
 Example of overriding default options:
 
