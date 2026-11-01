@@ -25,6 +25,7 @@ Upgrade notes
 
 Added
 ~~~~~
+* Python 3.15 is tested in CI and listed in the package classifiers
 * EpubWriter uses the mtime option as the timestamp of the files in the ZIP archive too, so writing the same book
   with the same mtime gives identical files (reproducible builds) (#340)
 * Tutorial: reading navigation (how the EPUB 3 nav is selected), reading order of a loaded book, item IDs,
