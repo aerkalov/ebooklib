@@ -172,6 +172,32 @@ returns the entire content of the file, while get_body_content only returns what
             print('==================================')
 
 
+Reading order
+~~~~~~~~~~~~~
+
+``get_items()`` follows manifest/insertion order, not reading order. For a loaded
+book returned by ``read_epub()``, ``book.spine`` contains ``(idref, linear)``
+tuples. Use those IDs to place spine items first, followed by non-spine resources::
+
+    spine_positions = {
+        item_id: position
+        for position, (item_id, _) in enumerate(book.spine)
+    }
+    reading_items = sorted(
+        book.get_items(),
+        key=lambda item: spine_positions.get(item.get_id(), len(book.spine)),
+    )
+    for item in reading_items:
+        print(item.get_id())
+
+The sort is stable, so non-spine items keep their manifest order at the end.
+This includes auxiliary spine entries marked ``linear="no"`` in their declared
+positions, rather than limiting the result to the primary reading sequence.
+Missing spine references add no items: only resources returned by ``get_items()``
+are sorted. This recipe is for loaded books, not the string or item-object spine
+entries used when creating a book; it does not sort by filenames or NCX play order.
+
+
 Creating EPUB
 -------------
 
@@ -212,6 +238,14 @@ the title is going to be used when generating the Table of Contents.
 
 When defining content, you can define it as a valid HTML file or just parts of HTML elements you have as content. It will
 ignore whatever you have in the <head> element.
+
+Content may be a Unicode string or UTF-8 bytes, including an XHTML document with
+an XML encoding declaration. If the parser rejects a Unicode encoding declaration,
+EbookLib retries with UTF-8 bytes; the declaration does not change characters
+that have already been decoded. Byte input is also parsed as UTF-8, so decode other encodings before
+passing the content to EbookLib. Passing bytes does not bypass the chapter
+template or preserve the original <head>. Add stylesheets to both the chapter
+and the book as shown below.
 
 ::
 
