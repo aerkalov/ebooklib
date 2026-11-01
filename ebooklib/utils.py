@@ -17,6 +17,7 @@
 import io
 import mimetypes
 import os
+import re
 
 from lxml import etree
 
@@ -45,7 +46,14 @@ def parse_html_string(s: str | bytes):
 
     utf8_parser = html.HTMLParser(encoding="utf-8")
 
-    html_tree = html.document_fromstring(s, parser=utf8_parser)
+    try:
+        html_tree = html.document_fromstring(s, parser=utf8_parser)
+    except ValueError:
+        if not isinstance(s, str):
+            raise
+        # lxml rejects Unicode input with an XML encoding declaration. Retry
+        # with UTF-8 while preserving the existing parser path for other input.
+        html_tree = html.document_fromstring(s.encode("utf-8"), parser=utf8_parser)
 
     return html_tree
 
@@ -97,7 +105,8 @@ def get_pages(item) -> list[tuple[str, str, str]]:
     pages = []
 
     for elem in body.iter():
-        if "epub:type" in elem.attrib:
+        # epub:type is a list of tokens separated by XML whitespace.
+        if "pagebreak" in re.split(r"[ \t\r\n]+", elem.get("epub:type", "")):
             if elem.get("id") is not None:
                 _text = None
 

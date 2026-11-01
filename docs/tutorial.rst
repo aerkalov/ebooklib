@@ -161,6 +161,11 @@ To get the content from an existing item (regardless of whether it is an image, 
 For HTML items, you also have :meth:`ebooklib.epub.EpubHtml.get_body_content`. What is the difference? The get_content method always
 returns the entire content of the file, while get_body_content only returns whatever is in the <body> part of the HTML document.
 
+Text placed directly in the ``<body>`` (before the first child element), for example ``<body>Before <em>inside</em> after</body>``,
+is kept by both methods, and a body that only contains text is returned by ``get_body_content``. Whitespace-only text, such as the
+newline and indentation before the first element, is ignored when the document is generated, so ordinary indented chapters produce
+the same output as before. A body with only whitespace and no child elements gives an empty ``get_body_content()``.
+
 ::
 
     for item in book.get_items():
@@ -170,6 +175,56 @@ returns the entire content of the file, while get_body_content only returns what
             print('----------------------------------')
             print(item.get_content())
             print('==================================')
+
+
+Reading navigation
+~~~~~~~~~~~~~~~~~~
+
+For EPUB 3 books, ``read_epub()`` fills ``book.toc`` and ``book.pages`` from the
+navigation document (``nav``). The ``nav`` elements are identified the way the EPUB
+specification defines them, by their ``epub:type`` attribute, which holds a
+whitespace-separated list of tokens. For example ``epub:type="toc frontmatter"`` is a valid
+table of contents. The attribute is matched by its namespace
+(``http://www.idpf.org/2007/ops``), so it works with any namespace prefix. ``class``, ``id``
+and other attributes have no meaning for the specification and are not used when a
+semantic ``epub:type`` match exists.
+
+Books that do not follow the specification are still read, using these fallbacks in order,
+only when the semantic lookup found nothing (or the file is not well-formed XML):
+
+1. the first ``nav`` with any attribute whose value is exactly ``toc`` (or ``page-list``),
+   such as ``type="toc"``. This legacy match may select an unrelated ``<nav class="toc">`` menu,
+   so make sure your books declare ``epub:type`` properly;
+2. for the table of contents only, the document's single ``nav`` element, if there is exactly one.
+   A page list is never guessed.
+
+A missing page list is ignored because it is optional; ``book.pages`` stays empty.
+
+
+Reading order
+~~~~~~~~~~~~~
+
+``get_items()`` follows manifest/insertion order, not reading order. For a loaded
+book returned by ``read_epub()``, ``book.spine`` contains ``(idref, linear)``
+tuples. Use those IDs to place spine items first, followed by non-spine resources::
+
+    spine_positions = {
+        item_id: position
+        for position, (item_id, _) in enumerate(book.spine)
+    }
+    reading_items = sorted(
+        book.get_items(),
+        key=lambda item: spine_positions.get(item.get_id(), len(book.spine)),
+    )
+    for item in reading_items:
+        print(item.get_id())
+
+The sort is stable, so non-spine items keep their manifest order at the end.
+This includes auxiliary spine entries marked ``linear="no"`` in their declared
+positions, rather than limiting the result to the primary reading sequence.
+Missing spine references add no items: only resources returned by ``get_items()``
+are sorted. This recipe is for loaded books, not the string or item-object spine
+entries used when creating a book; it does not sort by filenames or NCX play order.
 
 
 Creating EPUB
@@ -213,6 +268,14 @@ the title is going to be used when generating the Table of Contents.
 When defining content, you can define it as a valid HTML file or just parts of HTML elements you have as content. It will
 ignore whatever you have in the <head> element.
 
+Content may be a Unicode string or UTF-8 bytes, including an XHTML document with
+an XML encoding declaration. If the parser rejects a Unicode encoding declaration,
+EbookLib retries with UTF-8 bytes; the declaration does not change characters
+that have already been decoded. Byte input is also parsed as UTF-8, so decode other encodings before
+passing the content to EbookLib. Passing bytes does not bypass the chapter
+template or preserve the original <head>. Add stylesheets to both the chapter
+and the book as shown below.
+
 ::
 
     # intro chapter
@@ -244,6 +307,26 @@ Any kind of item (style sheet, image, HTML file) must be added to the book.
 
     book.add_item(c1)
     book.add_item(c2)
+
+Item IDs
+++++++++
+
+Every item in the book needs a unique ID, which is used in the manifest, the spine and by
+:meth:`ebooklib.epub.EpubBook.get_item_with_id`. If you do not pass a ``uid`` to the item,
+:meth:`ebooklib.epub.EpubBook.add_item` generates one: ``chapter_N`` for
+:class:`ebooklib.epub.EpubHtml`, ``image_N`` for :class:`ebooklib.epub.EpubImage` and ``static_N``
+for any other item. Generated IDs skip IDs that are already in the book, so it is safe to add items
+without an ID to a book you loaded with ``read_epub()`` that already contains ``chapter_0``.
+
+``add_item()`` returns the item it added, so you can read the generated ID from it::
+
+    chapter = book.add_item(epub.EpubHtml(title='Extra', file_name='extra.xhtml'))
+    print(chapter.id)  # chapter_0, or the next free number
+
+The exact generated values are an implementation detail and may change. If your code needs to find an item later,
+give it an explicit ``uid`` or keep the returned object. Explicit IDs are not checked: you are responsible for
+keeping the ones you choose unique, because an explicit ID that duplicates an existing one makes
+``get_item_with_id()`` return the first matching item.
 
 
 You can add any kind of file to the book. For instance, in this case we are adding a style sheet file. We define
