@@ -30,6 +30,7 @@ Changed
 
 Fixed
 ~~~~~
+* Return an empty list when get_metadata is called for a missing namespace
 * Read EPUB 3 TOC and page-list navigation by the namespaced epub:type token list, as the EPUB
   specification defines it. A multi-token value such as epub:type="toc frontmatter" is now found
   (previously the TOC raised IndexError and the page list was silently lost), any namespace prefix

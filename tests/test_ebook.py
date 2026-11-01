@@ -410,6 +410,17 @@ class TestEbook:
         assert ids == ["creator", "creator_1", "third"]
         assert len(set(ids)) == len(ids)
 
+    @pytest.mark.parametrize("namespace", [None, "custom", "urn:example:metadata", "DC", "OPF"])
+    def test_epubbook_missing_metadata(self, namespace):
+        book = epub.EpubBook()
+        namespaces = set(book.metadata)
+
+        assert book.get_metadata(namespace, "missing") == []
+        assert set(book.metadata) == namespaces
+
+        book.add_metadata(namespace, "missing", "value")
+        assert book.get_metadata(namespace, "missing") == [("value", None)]
+
     def _test_epubbook(self, name):
         # TODO:
         # - add other roles here besides creator
