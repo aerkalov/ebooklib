@@ -200,3 +200,45 @@ def test_external_entity_is_not_resolved():
 
     restored = epub.read_epub(_change_nav(change))
     assert restored.toc[0][0].title == "&test;"
+
+
+def test_single_untyped_navigation_is_used_as_table_of_contents():
+    """A lone ``nav`` without any type information is read as the table of contents."""
+
+    def change(content):
+        root = etree.fromstring(content)
+        for nav in root.iter(XHTML + "nav"):
+            if nav.get(f"{{{EPUB_NS}}}type") == "toc":
+                del nav.attrib[f"{{{EPUB_NS}}}type"]
+            else:
+                parent = nav.getparent()
+                assert parent is not None
+                parent.remove(nav)
+        return etree.tostring(root, encoding="utf-8", xml_declaration=True)
+
+    restored = epub.read_epub(_change_nav(change))
+    assert [(section.href, section.title) for section, _ in restored.toc] == [("text/chapter.xhtml#start", "Part")]
+    assert restored.pages == []
+
+
+def test_single_navigation_is_never_guessed_as_page_list():
+    """Only the table of contents may fall back to a lone ``nav``; page lists never do."""
+
+    def change(content):
+        root = etree.fromstring(content)
+        for nav in root.iter(XHTML + "nav"):
+            if nav.get(f"{{{EPUB_NS}}}type") != "toc":
+                parent = nav.getparent()
+                assert parent is not None
+                parent.remove(nav)
+        return etree.tostring(root, encoding="utf-8", xml_declaration=True)
+
+    restored = epub.read_epub(_change_nav(change))
+    assert restored.toc[0][0].title == "Part"
+    assert restored.pages == []
+
+
+def test_legacy_attribute_match_is_preferred_over_lone_navigation_guess():
+    """With several navs, an exact legacy attribute match still wins over any guess."""
+    source = _change_nav(lambda content: content.replace(b'epub:type="toc"', b'class="toc"'))
+    _assert_roundtrip(source)

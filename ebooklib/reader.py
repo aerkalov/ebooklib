@@ -261,10 +261,24 @@ class EpubReader:
     def _parse_nav(self, data: str | bytes, base_path: str, navtype: str = "toc") -> None:
         """Parse the EPUB 3 navigation document into the book's TOC or page list.
 
-        The navigation element is selected by its ``epub:type`` token list using a
-        namespace-aware XML parse (so any namespace prefix works). If the document is
-        not well-formed XML, or has no semantic match, the legacy HTML lookup for
-        any attribute exactly equal to the requested type is used.
+        The ``nav`` element is selected in this order:
+
+        1. **Semantic match (EPUB 3 conformant).** The XHTML ``nav`` whose ``epub:type``
+           whitespace-separated token list contains the requested type (``toc`` or
+           ``page-list``). The document is parsed as strict XML with entity resolution
+           and network access disabled, and the attribute is matched by namespace
+           (``http://www.idpf.org/2007/ops``), so any prefix works.
+        2. **Legacy match (non-conformant books).** Used when the document is not
+           well-formed XML or has no semantic match: the first ``nav`` with any
+           attribute whose value is exactly the requested type (e.g. ``type="toc"``).
+           Note that this can pick an unrelated ``<nav class="toc">`` menu, so it is
+           only tried after the semantic lookup found nothing.
+        3. **Single ``nav`` (table of contents only).** If there is still no match
+           and the document contains exactly one ``nav`` element, it is assumed to be
+           the table of contents. A page list is never guessed this way.
+
+        If nothing matches, a missing page list is silently ignored (it is optional in
+        EPUB 3), while a missing table of contents raises ``IndexError`` as before.
 
         :Args:
           - data: content of the navigation document
@@ -291,6 +305,11 @@ class EpubReader:
             # absent, including malformed books and unqualified attributes.
             html_node = parse_html_string(data)
             nav_nodes = [node for node in html_node.iter("nav") if nav_type in node.attrib.values()]
+            if not nav_nodes and navtype == "toc":
+                # Last resort: a lone nav element can only be the table of contents.
+                all_navs = list(html_node.iter("nav"))
+                if len(all_navs) == 1:
+                    nav_nodes = all_navs
             if navtype != "toc" and not nav_nodes:
                 return
             nav_node = nav_nodes[0]

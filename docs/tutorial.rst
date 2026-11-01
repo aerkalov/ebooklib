@@ -172,6 +172,30 @@ returns the entire content of the file, while get_body_content only returns what
             print('==================================')
 
 
+Reading navigation
+~~~~~~~~~~~~~~~~~~
+
+For EPUB 3 books, ``read_epub()`` fills ``book.toc`` and ``book.pages`` from the
+navigation document (``nav``). The ``nav`` elements are identified the way the EPUB
+specification defines them, by their ``epub:type`` attribute, which holds a
+whitespace-separated list of tokens. For example ``epub:type="toc frontmatter"`` is a valid
+table of contents. The attribute is matched by its namespace
+(``http://www.idpf.org/2007/ops``), so it works with any namespace prefix. ``class``, ``id``
+and other attributes have no meaning for the specification and are not used when a
+semantic ``epub:type`` match exists.
+
+Books that do not follow the specification are still read, using these fallbacks in order,
+only when the semantic lookup found nothing (or the file is not well-formed XML):
+
+1. the first ``nav`` with any attribute whose value is exactly ``toc`` (or ``page-list``),
+   such as ``type="toc"``. This legacy match may select an unrelated ``<nav class="toc">`` menu,
+   so make sure your books declare ``epub:type`` properly;
+2. for the table of contents only, the document's single ``nav`` element, if there is exactly one.
+   A page list is never guessed.
+
+A missing page list is ignored because it is optional; ``book.pages`` stays empty.
+
+
 Reading order
 ~~~~~~~~~~~~~
 
