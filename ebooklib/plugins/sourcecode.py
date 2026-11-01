@@ -50,12 +50,12 @@ class SourceHighlighter(BasePlugin):
                     from pygments.lexers import PythonLexer
 
                     #                    _text =  highlight(source_text, PythonLexer(), HtmlFormatter(linenos="inline"))
-                    _text = highlight(source_text, PythonLexer(), HtmlFormatter())
+                    _text = highlight(source_text, PythonLexer(), HtmlFormatter(encoding=None))
 
                 if "source-css" in css_class:
                     from pygments.lexers import CssLexer
 
-                    _text = highlight(source_text, CssLexer(), HtmlFormatter())
+                    _text = highlight(source_text, CssLexer(), HtmlFormatter(encoding=None))
 
                 if _text is None:
                     # unknown source language; leave the element untouched
