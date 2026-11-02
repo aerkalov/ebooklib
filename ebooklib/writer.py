@@ -557,6 +557,20 @@ class EpubWriter:
 
         _create_section(nav_map, self.book.toc, 0)
 
+        # Nav-derived Links have no UID. Allocate per output occurrence, after
+        # reserving all IDs so a later explicit or template ID cannot collide.
+        used_ids = {element.get("id") for element in root.iter() if element.get("id")}
+        next_id = 0
+        for point in root.iter("navPoint", f"{{{NAMESPACES['DAISY']}}}navPoint"):
+            if point.get("id"):
+                continue
+            while f"navpoint_{next_id}" in used_ids:
+                next_id += 1
+            generated_id = f"navpoint_{next_id}"
+            point.set("id", generated_id)
+            used_ids.add(generated_id)
+            next_id += 1
+
         tree_str = etree.tostring(root, pretty_print=True, encoding="utf-8", xml_declaration=True)
 
         return tree_str

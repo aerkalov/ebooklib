@@ -17,6 +17,7 @@
 """Items which can be part of an EPUB book."""
 
 import posixpath as zip_path
+import re
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, cast
 
@@ -180,6 +181,11 @@ def _has_text(text: str | None) -> bool:
 class EpubHtml(EpubItem):
     """
     Represents HTML document in the EPUB file.
+
+    ``preserve_content`` opts ordinary chapters into writing their current complete
+    document without the chapter template. Bytes are returned unchanged; strings
+    are encoded as UTF-8. The caller is responsible for valid, complete XHTML and
+    resource links. Navigation and cover documents retain their generated behavior.
     """
 
     _template_name = "chapter"
@@ -195,6 +201,7 @@ class EpubHtml(EpubItem):
         direction: str | None = None,
         media_overlay: str | None = None,
         media_duration: str | None = None,
+        preserve_content: bool = False,
     ) -> None:
         super().__init__(uid, file_name, media_type, content)
 
@@ -204,6 +211,7 @@ class EpubHtml(EpubItem):
 
         self.media_overlay = media_overlay
         self.media_duration = media_duration
+        self.preserve_content = preserve_content
 
         self.metas: list[dict[str, Any]] = []
         self.links: list[dict[str, Any]] = []
@@ -342,6 +350,12 @@ class EpubHtml(EpubItem):
         """
         Returns content for this document as HTML string. Content will be of type 'bytes'.
 
+        For ordinary chapters with ``preserve_content=True``, return the current
+        ``content`` without parsing or serialization. No title, language, direction,
+        links or metas are injected. Plugins and subclass overrides still run.
+        Strings use UTF-8 and must not declare another encoding. This mode does
+        not validate, sanitize or repair XHTML, including empty or fragment input.
+
         :Args:
           - default: Default value for the content if it is not defined.
 
@@ -352,6 +366,18 @@ class EpubHtml(EpubItem):
         book = self.book
         if book is None:
             raise ValueError("EpubHtml item is not attached to a book. Call book.add_item() first.")
+
+        if self.preserve_content and self.is_chapter():
+            if isinstance(self.content, bytes):
+                return self.content
+            if isinstance(self.content, str):
+                declaration = re.match(r"""\A\ufeff?<\?xml\s+[^?]*\bencoding\s*=\s*(['"])(.*?)\1""", self.content)
+                if declaration and declaration.group(2).lower() not in {"utf-8", "utf8"}:
+                    raise ValueError(
+                        "Preserved str content must declare UTF-8, or supply bytes in the declared encoding."
+                    )
+                return self.content.encode("utf-8")
+            raise TypeError("Preserved content must be str or bytes.")
 
         template = book.get_template(self._template_name)
         if template is None:
