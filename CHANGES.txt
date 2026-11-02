@@ -25,6 +25,9 @@ Upgrade notes
 
 Added
 ~~~~~
+* Add opt-in EpubHtml.preserve_content for writing selected complete chapter documents without
+  parsing or serialization, retaining existing head elements, body attributes and whitespace.
+  Default chapter generation and generated navigation, NCX and covers are unchanged (#221)
 * Python 3.15 is tested in CI and listed in the package classifiers
 * EpubWriter uses the mtime option as the timestamp of the files in the ZIP archive too, so writing the same book
   with the same mtime gives identical files (reproducible builds) (#340)
@@ -52,6 +55,8 @@ Changed
 
 Fixed
 ~~~~~
+* Generate unique NCX navPoint IDs for TOC entries without an ID, including links read from EPUB 3
+  navigation. Previously these wrote invalid empty IDs. Existing nonempty IDs and TOC objects are unchanged
 * Generate unique ids for several authors: add_author() used the id "creator" for every author, which wrote duplicate
   ids into the package document (#356, #366)
 * Write dcterms:modified as UTC time, as the EPUB specification requires (#367)
