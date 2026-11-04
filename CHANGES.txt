@@ -3,6 +3,15 @@ EbookLib Changelog
 All notable changes to this project will be documented in this file.
 
 
+Unreleased
+----------
+
+Fixed
+~~~~~
+* write_epub() now really raises by default: the default of the raise_exceptions option was ignored unless it was
+  passed explicitly, so a failed write still returned False (#266)
+
+
 Version 0.21 (2026-11-01)
 -------------------------
 
