@@ -152,7 +152,15 @@ class Directory:
         base_path = os.path.realpath(self.directory_path)
         full_path = os.path.realpath(os.path.join(base_path, subname))
 
-        if os.path.commonpath([base_path, full_path]) != base_path:
+        try:
+            outside = os.path.commonpath([base_path, full_path]) != base_path
+        except ValueError:
+            # Paths cannot be compared (e.g. an absolute href on a different
+            # drive than the source directory), so containment cannot be
+            # established; fail closed.
+            outside = True
+
+        if outside:
             raise OSError(f"Invalid path, escapes the source directory: {subname!r}")
 
         with open(full_path, "rb") as fp:
