@@ -175,6 +175,13 @@ class TestEbook:
 
         assert epub.write_epub(FakeFile(), book, {"raise_exceptions": False}) is False
 
+    @pytest.mark.parametrize("options", [None, {}, {"compresslevel": 1}])
+    def test_write_epub_raises_by_default(self, tmp_path, options):
+        book = self._create_basic_book()
+
+        with pytest.raises(OSError):
+            epub.write_epub(tmp_path / "missing" / "book.epub", book, options)
+
     def test_basic_file_save_options(self, session_temp_dir):
         book = self._create_basic_book()
         book.guide = [{"href": "test.xhtml", "title": "Introduction", "type": "bodymatter"}]

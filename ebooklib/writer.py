@@ -604,7 +604,7 @@ def write_epub(name: EpubTarget, book: EpubBook, options: dict[str, Any] | None 
     try:
         epub.write()
     except Exception as e:
-        if options and options.get("raise_exceptions"):
+        if epub.options.get("raise_exceptions"):
             raise e
         else:
             return False
