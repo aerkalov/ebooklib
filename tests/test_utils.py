@@ -129,3 +129,18 @@ class TestDirectory:
 
         with pytest.raises(OSError, match="escapes the source directory"):
             directory.read(os.path.join(os.sep, "etc", "passwd"))
+
+    def test_read_rejects_uncomparable_path_as_oserror(self, tmp_path, monkeypatch):
+        # See #359: os.path.commonpath() raises ValueError (not OSError) when
+        # the paths cannot be compared (e.g. an attacker-controlled absolute
+        # href on a different drive than the source directory). The read must
+        # still fail closed with OSError, per the documented contract.
+        directory = utils.Directory(str(tmp_path))
+
+        def _raise_value_error(paths):
+            raise ValueError("Paths don't have the same drive")
+
+        monkeypatch.setattr(os.path, "commonpath", _raise_value_error)
+
+        with pytest.raises(OSError, match="escapes the source directory"):
+            directory.read("evil.txt")
