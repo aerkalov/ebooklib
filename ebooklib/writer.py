@@ -29,7 +29,7 @@ from lxml import etree
 import ebooklib
 from ebooklib.book import EpubBook
 from ebooklib.consts import CONTAINER_PATH, CONTAINER_XML, NAMESPACES
-from ebooklib.items import EpubCover, EpubHtml, EpubItem, EpubNav, EpubNcx
+from ebooklib.items import EpubCover, EpubCoverHtml, EpubHtml, EpubItem, EpubNav, EpubNcx
 from ebooklib.toc import Link, Section
 from ebooklib.utils import get_pages_for_items, parse_string
 
@@ -255,13 +255,41 @@ class EpubWriter:
 
             etree.SubElement(spine, "itemref", opts)
 
+    def _get_guide(self) -> list[dict[str, Any]]:
+        """
+        Returns the guide entries written as the EPUB 2 guide and the EPUB 3 landmarks.
+
+        The cover page is usually a non-linear spine item, and non-linear content must be reachable through a
+        hyperlink (EPUBCheck OPF-096). When the cover page is in the spine and the guide has no "cover" entry,
+        one is added for it.
+        """
+
+        guide = list(self.book.guide)
+
+        if any(entry.get("type") == "cover" for entry in guide):
+            return guide
+
+        for entry in self.book.spine:
+            item = entry[0] if isinstance(entry, tuple) else entry
+
+            if isinstance(item, str):
+                item = self.book.get_item_with_id(item)
+
+            if isinstance(item, EpubCoverHtml):
+                guide.insert(0, {"type": "cover", "item": item})
+                break
+
+        return guide
+
     def _write_opf_guide(self, root: etree._Element) -> None:
         # - http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6
 
-        if len(self.book.guide) > 0 and self.options.get("epub2_guide"):
+        book_guide = self._get_guide()
+
+        if len(book_guide) > 0 and self.options.get("epub2_guide"):
             guide = etree.SubElement(root, "guide", {})
 
-            for item in self.book.guide:
+            for item in book_guide:
                 chap = item.get("item")
                 if chap is not None:
                     _href = chap.file_name
@@ -385,7 +413,9 @@ class EpubWriter:
         # LANDMARKS / GUIDE
         # - http://www.idpf.org/epub/30/spec/epub30-contentdocs.html#sec-xhtml-nav-def-types-landmarks
 
-        if len(self.book.guide) > 0 and self.options.get("epub3_landmark"):
+        book_guide = self._get_guide()
+
+        if len(book_guide) > 0 and self.options.get("epub3_landmark"):
             # Epub2 guide types do not map completely to epub3 landmark types.
             guide_to_landscape_map = {"notes": "rearnotes", "text": "bodymatter"}
 
@@ -396,7 +426,7 @@ class EpubWriter:
 
             guild_ol = etree.SubElement(guide_nav, "ol")
 
-            for elem in self.book.guide:
+            for elem in book_guide:
                 chap = elem.get("item")
                 if chap is not None:
                     _href = chap.file_name
