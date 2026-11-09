@@ -163,6 +163,14 @@ class EpubReader:
             if others.get("id") == self.book.IDENTIFIER_ID:
                 self.book.uid = value
 
+    def _read_manifest_file(self, name: str) -> bytes:
+        # One missing or remote file should not cost the whole book
+        try:
+            return self.read_file(name)
+        except KeyError:
+            warnings.warn(f"Manifest item {name} is not in the archive, its content is empty", stacklevel=2)
+            return b""
+
     def _load_manifest(self) -> None:
         manifest = self.container.find(f"{{{NAMESPACES['OPF']}}}manifest")
         if manifest is None:
@@ -192,20 +200,20 @@ class EpubReader:
                 case "application/x-dtbncx+xml":
                     ei = EpubNcx(uid=uid, file_name=href)
 
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
+                    ei.content = self._read_manifest_file(zip_path.join(self.opf_dir, ei.file_name))
                 case "application/smil+xml":
                     ei = EpubSMIL(uid=uid, file_name=href)
 
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
+                    ei.content = self._read_manifest_file(zip_path.join(self.opf_dir, ei.file_name))
                 case "application/xhtml+xml" if "nav" in properties:
                     ei = EpubNav(uid=uid, file_name=href)
 
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
+                    ei.content = self._read_manifest_file(zip_path.join(self.opf_dir, ei.file_name))
                 case "application/xhtml+xml" if "cover" in properties:
                     ei = EpubCoverHtml(uid=uid or "cover", file_name=href)
 
                     ei.media_type = media_type
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, href))
+                    ei.content = self._read_manifest_file(zip_path.join(self.opf_dir, href))
                 case "application/xhtml+xml":
                     ei = EpubHtml()
 
@@ -214,20 +222,20 @@ class EpubReader:
                     ei.media_type = media_type
                     ei.media_overlay = r.get("media-overlay", None)
                     ei.media_duration = r.get("duration", None)
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                    ei.content = self._read_manifest_file(zip_path.join(self.opf_dir, ei.get_name()))
                     ei.properties = properties
                 case _ if media_type in IMAGE_MEDIA_TYPES and "cover-image" in properties:
                     ei = EpubCover(uid=uid, file_name=href)
 
                     ei.media_type = media_type
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                    ei.content = self._read_manifest_file(zip_path.join(self.opf_dir, ei.get_name()))
                 case _ if media_type in IMAGE_MEDIA_TYPES:
                     ei = EpubImage()
 
                     ei.id = uid
                     ei.file_name = href
                     ei.media_type = media_type
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                    ei.content = self._read_manifest_file(zip_path.join(self.opf_dir, ei.get_name()))
                 case _:
                     # different types
                     ei = EpubItem()
@@ -236,7 +244,7 @@ class EpubReader:
                     ei.file_name = href
                     ei.media_type = media_type
 
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                    ei.content = self._read_manifest_file(zip_path.join(self.opf_dir, ei.get_name()))
 
             self.book.add_item(ei)
 
